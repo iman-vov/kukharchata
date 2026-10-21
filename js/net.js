@@ -93,7 +93,9 @@ export class Net {
 
   // ICE-сервери: Google STUN + твій TURN (Metered/ExpressTURN) — потрібно для гри через кордон
   async iceServers(cfg) {
-    const list = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
+    const list = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+      // безкоштовні ретранслятори PeerJS (вбудовані в PeerJS; раніше ми їх випадково вимикали)
+      { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }];
     if (cfg && cfg.meteredUrl) {
       try { const r = await fetch(cfg.meteredUrl); const j = await r.json(); if (Array.isArray(j)) list.push(...j); } catch (_) { }
     }
@@ -123,7 +125,7 @@ export class Net {
     return new Promise((res, rej) => {
       const peer = new Peer({ config: { iceServers } }); this.peer = peer;
       let done = false;
-      const to = setTimeout(() => { if (!done) { done = true; rej({ type: 'timeout' }); } }, 20000);
+      const to = setTimeout(() => { if (!done) { done = true; rej({ type: 'timeout' }); } }, 30000);
       peer.on('open', () => {
         const c = peer.connect(PREFIX + code, { reliable: true });
         const conn = new Conn('peer', c);
@@ -187,6 +189,7 @@ export class Net {
     conn.onData = d => this.emit('data', conn, d);
     conn.onClose = () => { this.hostConn = null; this.role = 'solo'; this.emit('lost'); };
   }
+  wake() { try { if (this.peer && this.peer.disconnected && !this.peer.destroyed) this.peer.reconnect(); } catch (_) { } }
   send(o) { if (this.role === 'guest' && this.hostConn) this.hostConn.send(o); }
   broadcast(o, except) { for (const c of this.conns) if (c !== except) c.send(o); }
   get connected() { return this.role === 'host' ? this.conns.length : this.role === 'guest' ? (this.hostConn ? 1 : 0) : 0; }

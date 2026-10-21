@@ -13,7 +13,7 @@ import { initLang, tr, LANGS, LANG } from './i18n.js';
 const $ = s => document.querySelector(s);
 const HAT_ICONS = ['👨‍🍳', '🎀', '🧢', '👑', '🐻', '🌸'];
 const HAT_NAMES = ['ковпак', 'бандана', 'кепка', 'корона', 'вушка', 'квітка'];
-const VERSION = '1.4';
+const VERSION = '1.5';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -836,7 +836,7 @@ function padMenu(nav) {
 $('#modal').addEventListener('pointerdown', e => { if (e.target.id === 'modal' && app.modal && app.modal.card === undefined && app.scene !== 'level') closeModal(); });
 
 /* ---------- старт ---------- */
-document.addEventListener('visibilitychange', () => { if (document.hidden && app.scene === 'level' && net.role === 'solo' && !app.modal) openPause(); if (!document.hidden && app.scene === 'level') keepAwake(true); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) net.wake(); if (document.hidden && app.scene === 'level' && net.role === 'solo' && !app.modal) openPause(); if (!document.hidden && app.scene === 'level') keepAwake(true); });
 document.addEventListener('pointerdown', () => audioInit(), { once: true });
 initLang(S.set.lang);
 goTitle();
