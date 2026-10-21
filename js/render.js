@@ -237,7 +237,11 @@ export function makeCook(colorIdx, hat = 0, isBot = false, name = '') {
   const fL = mesh(G.sph, fM, 0.09, 0.06, 0.11, -0.12, 0.05, 0.02), fR = mesh(G.sph, fM, 0.09, 0.06, 0.11, 0.12, 0.05, 0.02);
   g.add(fL, fR);
   const carry = new THREE.Group(); carry.position.set(0, 0.42, 0.36); g.add(carry);
-  const knife = new THREE.Group(); knife.add(mesh(G.box, mat(0xdfe6ee, { metalness: 0.7, roughness: 0.2 }), 0.04, 0.02, 0.2, 0, 0, 0.12)); knife.add(mesh(G.box, mat(0x5a3a22), 0.05, 0.04, 0.1)); knife.visible = false; hR.add(knife); knife.scale.setScalar(1 / 0.075);
+  const knife = new THREE.Group();
+  knife.add(mesh(G.box, mat(0x7a4a2a), 0.08, 0.08, 0.2, 0, 0, -0.04)); // руків'я
+  knife.add(mesh(G.box, mat(0xffffff, { metalness: 0.6, roughness: 0.2, emissive: 0xcfe0f0, emissiveIntensity: 0.5 }), 0.035, 0.26, 0.4, 0, -0.09, 0.26)); // лезо
+  knife.add(mesh(G.box, mat(0x2b2b2b), 0.04, 0.04, 0.4, 0, 0.04, 0.26));
+  knife.visible = false; g.add(knife);
   let label = null;
   if (name) { label = textSprite(name, '#' + new THREE.Color(col).getHexString(), 0.26, 'rgba(255,255,255,.95)'); label.position.y = 1.35; root.add(label); }
   // тінь-коло, щоб краще видно
@@ -255,14 +259,21 @@ export function animateCook(c, p, dt) {
   const act = p.act;
   c.knife.visible = act === 'chop';
   if (act === 'chop') {
-    const k = Math.sin(performance.now() / 55);
-    c.hR.position.set(0.18, 0.5 + k * 0.12, 0.3); c.hL.position.set(-0.2, 0.36, 0.3);
+    const ph = performance.now() / 70, k = Math.sin(ph), down = Math.max(0, -k);
+    c.hR.position.set(0.16, 0.62 + k * 0.22, 0.42); c.hL.position.set(-0.18, 0.4, 0.42);
+    c.knife.position.set(0.16, 0.6 + k * 0.22, 0.46);
+    c.knife.rotation.x = -0.3 + k * 0.5;
+    c.g.rotation.x = 0.12 + down * 0.08; // нахиляється над дошкою
+    c.head.rotation.x = 0.25;
   } else if (act === 'wash') {
+    c.g.rotation.x = 0.08;
     const k = performance.now() / 120;
     c.hR.position.set(0.15 + Math.cos(k) * 0.06, 0.38, 0.32 + Math.sin(k) * 0.05); c.hL.position.set(-0.15 - Math.cos(k) * 0.06, 0.38, 0.32 - Math.sin(k) * 0.05);
   } else if (holding) {
+    c.g.rotation.x = 0; c.head.rotation.x = 0;
     c.hR.position.set(0.2, 0.42, 0.3); c.hL.position.set(-0.2, 0.42, 0.3);
   } else {
+    c.g.rotation.x = 0; c.head.rotation.x = 0;
     c.hR.position.set(0.27, 0.3 + Math.sin(c.t) * 0.03 * mv, 0.05 - Math.sin(c.t) * 0.08 * mv);
     c.hL.position.set(-0.27, 0.3 - Math.sin(c.t) * 0.03 * mv, 0.05 + Math.sin(c.t) * 0.08 * mv);
   }
@@ -351,11 +362,13 @@ function flameGroup() {
 }
 function bar() {
   const g = new THREE.Group();
-  const bg = new THREE.Mesh(G.plane, new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.7, depthTest: false }));
-  bg.scale.set(0.7, 0.12, 1); bg.renderOrder = 11;
+  const rim = new THREE.Mesh(G.plane, new THREE.MeshBasicMaterial({ color: 0xffffff, depthTest: false }));
+  rim.scale.set(1.0, 0.24, 1); rim.renderOrder = 20;
+  const bg = new THREE.Mesh(G.plane, new THREE.MeshBasicMaterial({ color: 0x2a2a2a, depthTest: false }));
+  bg.scale.set(0.92, 0.16, 1); bg.position.z = 0.001; bg.renderOrder = 21;
   const fg = new THREE.Mesh(G.plane, new THREE.MeshBasicMaterial({ color: 0x5ad16a, depthTest: false }));
-  fg.scale.set(0.66, 0.08, 1); fg.position.z = 0.001; fg.renderOrder = 12;
-  g.add(bg, fg); g.userData.fg = fg;
+  fg.scale.set(0.92, 0.16, 1); fg.position.z = 0.002; fg.renderOrder = 22;
+  g.add(rim, bg, fg); g.userData.fg = fg;
   return g;
 }
 
@@ -451,7 +464,8 @@ export class KitchenView {
     const cx = (sim.w - 1) / 2, cz = (sim.h - 1) / 2;
     const tilt = 0.95; // ~54°
     const fov = this.cam.fov * Math.PI / 180;
-    const exN = this.hallSide === 'north' ? 2.4 : 0.9, exE = this.hallSide === 'east' ? 3 : 0;
+    const small = h < 520; // на телефоні — зала лише краєчком, кухня більша
+    const exN = this.hallSide === 'north' && !small ? 2.4 : 0.9, exE = this.hallSide === 'east' && !small ? 3 : 0;
     const needH = (sim.h + exN + 0.4) * Math.cos(Math.PI / 2 - tilt) * 1.05 + 1.6;
     const needW = sim.w + 1.0 + exE;
     const visH = 1 - hudTop - hudBottom;
@@ -468,6 +482,7 @@ export class KitchenView {
     const { sim, scene } = this;
     this.time += dt;
     const camQ = this.cam.quaternion;
+    const chopT = new Set(sim.players.filter(p => p.act === 'chop').map(p => sim.facing(p)).filter(Boolean));
     sim.tiles.forEach((t, idx) => {
       if (t.type === 'floor' || t.type === 'void') return;
       // предмет на клітинці
@@ -496,7 +511,8 @@ export class KitchenView {
         let o = null;
         if (big || bItems) o = bubble(bItems, big);
         else if (bk.startsWith('pl') || bk.startsWith('sk')) o = this.stackMesh(t);
-        if (o) { o.position.set(t.x, o.isSprite ? (t.type === 'oven' ? 1.75 : TOP_Y + 0.85) : TOP_Y, t.y); scene.add(o); }
+        const hi = ck && (t.type === 'stove' || t.type === 'oven' || t.type === 'tap') || t.type === 'tap';
+        if (o) { o.position.set(t.x, o.isSprite ? (t.type === 'oven' ? 2.1 : TOP_Y + (hi ? 1.2 : 0.85)) : TOP_Y, t.y); scene.add(o); }
         b = { k: bk, o }; this.bubbles.set(idx, b);
       }
       // смужка прогресу
@@ -514,9 +530,9 @@ export class KitchenView {
       if (prog >= 0) {
         if (!br) { br = bar(); scene.add(br); this.bars.set(idx, br); }
         br.visible = true;
-        br.position.set(t.x, (t.type === 'oven' ? 1.5 : TOP_Y + 0.5), t.y + 0.1);
+        br.position.set(t.x, (t.type === 'oven' ? 1.6 : TOP_Y + 0.62), t.y + 0.15);
         br.quaternion.copy(camQ);
-        const fg = br.userData.fg; fg.scale.x = 0.66 * Math.max(0.02, Math.min(1, prog)); fg.position.x = -0.33 + fg.scale.x / 2; fg.material.color.setHex(col);
+        const fg = br.userData.fg; fg.scale.x = 0.92 * Math.max(0.02, Math.min(1, prog)); fg.position.x = -0.46 + fg.scale.x / 2; fg.material.color.setHex(col);
       } else if (br) br.visible = false;
       // попередження: зараз згорить
       const warn = cooking && cookerState(ck) === 'done' && sim.lv.fire && ck.ov > COOKER[ck.k].burn * 0.45;
@@ -533,6 +549,21 @@ export class KitchenView {
         f.visible = true; const sc = 0.5 + t.fire * 0.7; f.scale.setScalar(sc);
         f.children.forEach(c => { c.scale.y = (0.5 - 0.05) * (0.8 + Math.sin(this.time * 18 + c.userData.ph) * 0.25); });
       } else if (f) f.visible = false;
+      // нарізання: продукт підстрибує, летять шматочки
+      if (rec.o && t.type === 'board') {
+        if (!this.knifeFx) { this.knifeFx = canvasSprite(96, 96, (c) => drawIcon(c, '🔪', 48, 48, 84), 0.85); this.knifeFx.renderOrder = 23; this.knifeFx.visible = false; scene.add(this.knifeFx); this.knifeOn = new Set(); }
+        if (chopT.has(t) && it && it.t === 'i') this.knifeOn.add(t);
+        if (chopT.has(t) && it && it.t === 'i') {
+          rec.o.position.y = TOP_Y + 0.01 + Math.abs(Math.sin(this.time * 22)) * 0.05;
+          rec.o.rotation.y = Math.sin(this.time * 11) * 0.15;
+          if (Math.random() < dt * 9) this.bits(t.x, t.y, ING[it.id].col);
+        } else { rec.o.position.y = TOP_Y + 0.01; rec.o.rotation.y = 0; }
+      }
+      // шкварчить і парує
+      if (ck && ck.c.length && (t.type === 'stove' || t.type === 'oven') && cookerState(ck) === 'cooking') {
+        if (Math.random() < dt * 5) this.steam(t.x, t.y, t.type === 'oven' ? 1.5 : TOP_Y + 0.25);
+        if (rec.o && ck.k === 'pan') rec.o.position.y = TOP_Y + 0.01 + Math.abs(Math.sin(this.time * 17)) * 0.015;
+      }
       // анімації станцій
       const st = this.stations.get(t);
       if (t.type === 'stove') { const fl = st.getObjectByName('flame'); if (fl) fl.visible = !!(ck && ck.c.length && cookerState(ck) === 'cooking'); }
@@ -540,6 +571,12 @@ export class KitchenView {
       if (t.type === 'serve') { const a = st.getObjectByName('serveArrow'); if (a) a.position.y = TOP_Y + 0.6 + Math.sin(this.time * 4) * 0.08; }
       if (rec.o && it && it.t === 'k' && it.k === 'pot' && cookerState(it) === 'cooking') { const sp = rec.o.getObjectByName('soup'); if (sp) sp.position.y += Math.sin(this.time * 20) * 0.002; }
     });
+    // великий ніж над дошкою, де ріжуть
+    if (this.knifeFx) {
+      const t = [...this.knifeOn][0]; this.knifeOn.clear();
+      this.knifeFx.visible = !!t;
+      if (t) { const k = Math.sin(this.time * 22); this.knifeFx.position.set(t.x + 0.15, TOP_Y + 0.35 + Math.abs(k) * 0.25, t.y + 0.35); this.knifeFx.material.rotation = -0.6 + k * 0.6; }
+    }
     // перегородки
     for (const G2 of this.gateMeshes) {
       const target = G2.t.blocked ? 0 : -0.8;
@@ -562,7 +599,7 @@ export class KitchenView {
       const sig = p.color + '/' + p.hat + '/' + (p.bot ? 1 : 0) + '/' + p.name;
       if (!c || c.sig !== sig) {
         if (c) scene.remove(c.root);
-        c = makeCook(p.color, p.hat, !!p.bot || p.isBot, p.name); c.sig = sig; c.root.scale.setScalar(1.22); scene.add(c.root);
+        c = makeCook(p.color, p.hat, !!p.bot || p.isBot, p.name); c.sig = sig; c.root.scale.setScalar(1.32); scene.add(c.root);
         c.root.position.set(p.x, 0, p.y); this.cooks.set(p.id, c);
       }
       // плавність для віддалених
@@ -588,7 +625,7 @@ export class KitchenView {
     for (const [id, c] of this.cooks) if (!seen.has(id)) { scene.remove(c.root); this.cooks.delete(id); const h = this.hl.get(id); if (h) { scene.remove(h); this.hl.delete(id); } }
     this.dec.update(dt);
     // ефекти
-    for (const f of this.fx) { f.t += dt; f.o.position.y += dt * f.vy; if (f.vx) f.o.position.x += dt * f.vx; if (f.o.material) f.o.material.opacity = Math.max(0, 1 - f.t / f.life); if (f.spin) f.o.rotation.y += dt * 6; }
+    for (const f of this.fx) { f.t += dt; f.o.position.y += dt * f.vy; if (f.vx) f.o.position.x += dt * f.vx; if (f.grow) f.o.scale.multiplyScalar(1 + dt * 0.8); if (f.spin) f.vy -= dt * 6; if (f.o.material) f.o.material.opacity = Math.max(0, 1 - f.t / f.life); if (f.spin) f.o.rotation.y += dt * 6; }
     for (const f of this.fx.filter(f => f.t >= f.life)) scene.remove(f.o);
     this.fx = this.fx.filter(f => f.t < f.life);
   }
@@ -613,6 +650,18 @@ export class KitchenView {
       m.scale.setScalar(0.08 + Math.random() * 0.08); m.position.set(x + (Math.random() - 0.5) * 0.5, TOP_Y + 0.2, y + (Math.random() - 0.5) * 0.5);
       this.scene.add(m); this.fx.push({ o: m, t: 0, life: 0.8 + Math.random() * 0.5, vy: 0.6 + Math.random() });
     }
+  }
+  bits(x, y, col) {
+    for (let i = 0; i < 2; i++) {
+      const m = new THREE.Mesh(G.box, new THREE.MeshBasicMaterial({ color: col, transparent: true }));
+      m.scale.setScalar(0.05 + Math.random() * 0.04); m.position.set(x + (Math.random() - 0.5) * 0.3, TOP_Y + 0.1, y + (Math.random() - 0.5) * 0.3);
+      this.scene.add(m); this.fx.push({ o: m, t: 0, life: 0.45, vy: 1.4 + Math.random(), vx: (Math.random() - 0.5) * 1.5, spin: true });
+    }
+  }
+  steam(x, y, h) {
+    const m = new THREE.Mesh(G.sphLo, new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false }));
+    m.scale.setScalar(0.07 + Math.random() * 0.06); m.position.set(x + (Math.random() - 0.5) * 0.3, h, y + (Math.random() - 0.5) * 0.3);
+    this.scene.add(m); this.fx.push({ o: m, t: 0, life: 1.1, vy: 0.7, grow: true });
   }
   onEvent(e) {
     switch (e.e) {

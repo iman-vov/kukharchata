@@ -12,7 +12,7 @@ import { ingHTML, recipeHTML } from './icons.js';
 const $ = s => document.querySelector(s);
 const HAT_ICONS = ['👨‍🍳', '🎀', '🧢', '👑', '🐻', '🌸'];
 const HAT_NAMES = ['ковпак', 'бандана', 'кепка', 'корона', 'вушка', 'квітка'];
-const VERSION = '1.1';
+const VERSION = '1.2';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -411,12 +411,17 @@ function hudFrame() {
   const hint = $('#hint');
   const L = app.local[0], p = L && sim.players.find(q => q.id === L.pid);
   const showHint = S.set.hints && p && sim.started && !sim.over && (app.lvl.li <= 1 || (S.fails[LEVELS[app.lvl.li].id] || 0) > 0);
-  if (showHint) { const h = hintFor(p); hint.textContent = h; hint.classList.toggle('hide', !h); } else hint.classList.add('hide');
+  // підказка коротко зʼявляється, коли змінюється, і зникає, щоб не затуляти кухню
+  if (showHint) {
+    const h = hintFor(p);
+    if (h !== app.hintTxt) { app.hintTxt = h; app.hintT = performance.now(); hint.textContent = h; }
+    hint.classList.toggle('hide', !h || performance.now() - app.hintT > 4500);
+  } else hint.classList.add('hide');
 }
 function hintFor(p) {
   const sim = app.sim, H = p.held;
   const touch = !input.pads().length;
-  const G = touch ? '✋' : 'Ⓐ', U = touch ? '🔪 (тримай)' : 'Ⓧ (тримай)';
+  const G = touch ? '✋' : 'Ⓐ', U = touch ? '🔪' : 'Ⓧ';
   if (!H) {
     const t = sim.facing(p);
     if (t && t.type === 'board' && t.item && t.item.t === 'i' && t.item.s === 'r') return `Тримай ${U}, щоб нарізати`;

@@ -960,7 +960,12 @@ export function starThresholds(lv, humans) {
   let ref;
   if (c && c[n - 1]) ref = c[n - 1];
   else ref = (lv.dur / lv.iv) * 32 * TEAM[n] * 0.6;
-  // добрі пороги: діти теж мають отримувати зірки
+  // боти рахують швидше за людей на сенсорі; перші рівні — ще лагідніші
+  const li = LEVELS.indexOf(lv);
+  const ease = li < 3 ? 0.72 : li < 8 ? 0.82 : li < 16 ? 0.9 : 0.95;
+  const solo = n === 1 ? 0.85 : 1;
+  ref *= ease * solo;
   const r = v => Math.max(10, Math.round(v / 10) * 10);
-  return [r(ref * 0.32), r(ref * 0.58), r(ref * 0.82)];
+  const lo = [40, 80, 110]; // мінімум: 1, 2 і 3 страви
+  return [Math.max(lo[0], r(ref * 0.25)), Math.max(lo[1], r(ref * 0.48)), Math.max(lo[2], r(ref * 0.7))];
 }
