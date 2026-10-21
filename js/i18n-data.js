@@ -1,6 +1,11 @@
 // Кухарчата — переклади: німецька й англійська. Ключ — український текст.
 // [українською, Deutsch, English]
 export const UI = [
+  ['🧸 Дитячий режим', '🧸 Kindermodus', '🧸 Kids mode'], ['Дитячий режим', 'Kindermodus', 'Kids mode'],
+  ['Для найменших: роботи спритніші й самі подають страви, гості чекають довше, зірки легші', 'Für die Kleinsten: Roboter sind flinker und servieren selbst, Gäste warten länger, Sterne gibt es leichter', 'For the little ones: robots are quicker and serve dishes themselves, guests wait longer, stars are easier'],
+  ['Дитячий режим: роботи спритні й самі подають страви', 'Kindermodus: Roboter sind flink und servieren selbst', 'Kids mode: robots are quick and serve dishes themselves'],
+  ['. Роботи готують, а подаєш гостям ти', '. Roboter kochen mit, servieren musst du', '. Robots cook, but you serve the guests'],
+  ['Робот приготував страву — віднеси її до віконця ▲', 'Der Roboter hat ein Gericht fertig – bring es zur Ausgabe ▲', 'A robot made a dish – take it to the pass ▲'],
   // капелюшки
   ['Ковпак із квіткою', 'Kochmütze mit Blume', 'Chef hat with flower'],
   ['Ковпак', 'Kochmütze', 'Chef hat'], ['Бандана', 'Bandana', 'Bandana'], ['Кепка з пропелером', 'Propellerkappe', 'Propeller cap'], ['Кепка', 'Kappe', 'Cap'], ['Корона', 'Krone', 'Crown'],

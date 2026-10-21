@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.9';
+const VERSION = '1.10';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -222,13 +222,13 @@ function openCard(li) {
   const humans = guest ? (app.guestHumans || 1) : countHumans();
   const nBots = guest ? 0 : botsOf(lv, humans);
   const eff = Math.min(6, humans + Math.floor(nBots / 2));
-  const th = starThresholds(lv, eff);
+  const th = S.set.kid && !guest ? starThresholds(lv, eff, true) : starThresholds(lv, Math.min(6, eff + (nBots % 2) * 0.5));
   const best = (guest ? mapState.stars : S.stars)[lv.id] || 0;
   const fails = S.fails[lv.id] || 0;
   const cooks = localCooks();
   const drinksOn = drinkOn(lv);
   const drinkBox = !guest ? `<div class="assist" style="background:#fff4e0"><span style="font-size:30px">🥤</span><div style="flex:1">Напої<br><span class="sub" style="font-size:13px">Додатково: наливати в кухлі на автоматах${drinksFor(lv).some(r => RECIPES[r].c.some(k => !k.endsWith(':l'))) ? ', додавати лід чи карамель' : ''}</span></div><button class="toggle ${drinksOn ? 'on' : ''}" id="cDrinks"></button></div>` : '';
-  const assistBox = (!guest && (humans === 1 || fails > 0 || nBots > 0)) ? `<div class="assist"><span style="font-size:30px">🤖</span><div style="flex:1">Роботи-помічники<br><span class="sub" style="font-size:13px">${humans === 1 ? 'Граєш сам? Візьми роботів на кухню' : 'Допоможуть пройти рівень, якщо не виходить'}</span></div>
+  const assistBox = (!guest && (humans === 1 || fails > 0 || nBots > 0)) ? `<div class="assist"><span style="font-size:30px">🤖</span><div style="flex:1">Роботи-помічники<br><span class="sub" style="font-size:13px">${S.set.kid ? 'Дитячий режим: роботи спритні й самі подають страви' : (humans === 1 ? 'Граєш сам? Візьми роботів на кухню' : 'Допоможуть пройти рівень, якщо не виходить') + '. Роботи готують, а подаєш гостям ти'}</span></div>
     <div class="row" style="gap:6px;flex-wrap:nowrap">${[0, 1, 2].map(n => `<button class="chip ${n === nBots ? 'on' : ''}" data-bots="${n}">${n ? '🤖'.repeat(n) : '0'}</button>`).join('')}</div></div>` : '';
   const sc = levelScaling(lv, eff);
   openModal(`
@@ -264,7 +264,7 @@ function startLevel(li) {
   const players = buildPlayers();
   const nb = botsOf(lv, players.length);
   // роботи трохи підвищують темп замовлень: два роботи = ще один кухар
-  const P = { k: 'start', li, humans: Math.min(6, players.length + Math.floor(nb / 2)), players, assist: nb, drinks: drinkOn(lv), throw: !!S.set.throw, hostName: myName() };
+  const P = { k: 'start', li, humans: Math.min(6, players.length + Math.floor(nb / 2)), players, assist: nb, kid: !!S.set.kid, drinks: drinkOn(lv), throw: !!S.set.throw, hostName: myName() };
   for (let i = 0; i < nb; i++) P.players.push({ id: 'bot' + (i || ''), dev: 'bot', name: i ? 'Робо-2' : 'Робо', color: i, hat: 0, bot: true });
   if (net.role === 'host') net.broadcast(P);
   beginLevel(P);
@@ -281,7 +281,7 @@ function beginLevel(P) {
   const lv = LEVELS[P.li];
   if (app.view) app.view.dispose();
   const host = net.role !== 'guest';
-  const sim = new Sim(P.li, { humans: P.humans, drinks: !!P.drinks, throwOn: !!P.throw });
+  const sim = new Sim(P.li, { humans: P.humans, drinks: !!P.drinks, throwOn: !!P.throw, kid: !!P.kid, assist: P.assist | 0 });
   for (const pl of P.players) {
     const mine = pl.dev === SID;
     const p = sim.addPlayer({ id: pl.id, name: pl.bot ? tr(pl.name) : pl.name, color: pl.color, hat: pl.hat, bot: host && pl.bot, remote: !mine && !(host && pl.bot) });
@@ -432,7 +432,7 @@ function hudFrame() {
   // підказки
   const hint = $('#hint');
   const L = app.local[0], p = L && sim.players.find(q => q.id === L.pid);
-  const showHint = S.set.hints && p && sim.started && !sim.over && (app.lvl.li <= 1 || (S.fails[LEVELS[app.lvl.li].id] || 0) > 0);
+  const showHint = S.set.hints && p && sim.started && !sim.over && (app.lvl.li <= 1 || (S.fails[LEVELS[app.lvl.li].id] || 0) > 0 || (app.lvl.assist > 0 && !app.lvl.kid));
   // підказка коротко зʼявляється, коли змінюється, і зникає, щоб не затуляти кухню
   if (showHint) {
     const h = hintFor(p);
@@ -449,6 +449,7 @@ function hintFor(p) {
     if (t && t.type === 'board' && t.item && t.item.t === 'i' && t.item.s === 'r') return `Тримай ${U}, щоб нарізати`;
     if (t && t.type === 'crate') return `${G} — взяти ${ING[t.ing].name}`;
     if (t && t.type === 'sink' && t.dirty) return `Тримай ${U}, щоб помити тарілку`;
+    if (app.lvl.assist > 0 && !app.lvl.kid && sim.tiles.some(t => t.item && t.item.t !== 'k' && sim.matchOrder(t.item))) return 'Робот приготував страву — віднеси її до віконця ▲';
     return 'Візьми продукти з ящика для замовлення ↖';
   }
   if (H.t === 'i') {
@@ -534,6 +535,7 @@ function openSettings() {
     <div class="assist" style="background:#fff"><div style="flex:1">🎮 Перший геймпад керує мною<br><span class="sub" style="font-size:13px">Вимкнено: кожен геймпад — окремий кухарчик</span></div><button class="toggle ${st.padMode === 'me' ? 'on' : ''}" id="sPad"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🍽 Зала з гостями й офіціант<br><span class="sub" style="font-size:13px">Вимкни, якщо пристрій гальмує</span></div><button class="toggle ${st.hall ? 'on' : ''}" id="sHall"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🎯 Кидати продукти<br><span class="sub" style="font-size:13px">Як в Overcooked: кнопка 🎯, геймпад Ⓨ, клавіша Q. Можна ловити на льоту!</span></div><button class="toggle ${st.throw ? 'on' : ''}" id="sThrow"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">🧸 Дитячий режим<br><span class="sub" style="font-size:13px">Для найменших: роботи спритніші й самі подають страви, гості чекають довше, зірки легші</span></div><button class="toggle ${st.kid ? 'on' : ''}" id="sKid"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">💡 Підказки на перших рівнях</div><button class="toggle ${st.hints ? 'on' : ''}" id="sHints"></button></div>
     <p class="kbd">Підключені геймпади: ${input.pads().map(p => esc(p.id.slice(0, 40))).join(', ') || 'немає (натисни кнопку на геймпаді, щоб браузер його побачив)'}</p>
     <h3>Прогрес</h3>
@@ -548,6 +550,7 @@ function openSettings() {
   tog('#sHints', () => st.hints = !st.hints);
   tog('#sHall', () => st.hall = !st.hall);
   tog('#sThrow', () => st.throw = !st.throw);
+  tog('#sKid', () => st.kid = !st.kid);
   document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang));
   $('#sReset').onclick = () => { if (confirm(tr('Скинути всі зірки й пройдені міста?'))) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
   $('#sOk').onclick = () => { sfx('click'); closeModal(); };

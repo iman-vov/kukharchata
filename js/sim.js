@@ -107,7 +107,10 @@ export class Sim {
     this.wind = this.lv.wind ? { ...this.lv.wind, t: this.lv.wind.period * 0.6, on: 0, dir: 1 } : null;
     this.windV = [0, 0];
     this.throwOn = !!opts.throwOn; this.proj = []; this.floor = [];
-    this.botFull = opts.botSkill === 'full'; // для калібрування — швидкі боти, у грі — повільніші помічники
+    this.kid = !!opts.kid; this.assist = opts.assist | 0; // дитячий режим: роботи спритніші й самі подають страви, гості терплячіші
+    this.botFull = opts.botSkill === 'full' || this.kid; // для калібрування — швидкі боти, у грі — повільніші помічники
+    // звичайні роботи-помічники готують, але гостям страву подає лише живий кухарчик
+    this.botServe = opts.botServe !== undefined ? !!opts.botServe : (opts.botSkill === 'full' || this.kid);
     this.collide2 = opts.collide !== false;
     // групи для плит: які набори можуть бути в одній каструлі/пательні/печі
     this.groups = { pot: [], pan: [], oven: [] };
@@ -361,6 +364,7 @@ export class Sim {
       }
       case 'serve': {
         if (!isCont(H)) return false;
+        if (p.bot && !this.botServe && !p.asHuman) return false;
         const o = this.matchOrder(H);
         if (!o) { this.emit({ e: 'wrong', x: t.x, y: t.y }); return false; }
         this.serve(o, H, t, p.id); p.held = null; return true;
@@ -534,7 +538,7 @@ export class Sim {
     if (this.lastRec.length >= 2 && this.lastRec.every(x => x === r)) { const all = this.recs; r = all[(all.indexOf(r) + 1) % all.length]; }
     this.lastRec.push(r); if (this.lastRec.length > 2) this.lastRec.shift();
     // складніші страви чекають довше
-    const T = this.sc.ordT + 6 * (RECIPES[r].c.length - 2);
+    const T = (this.sc.ordT + 6 * (RECIPES[r].c.length - 2)) * (this.kid ? 1.5 : 1);
     this.orders.push({ id: this.ordSeq++, r, t: T, T });
     this.emit({ e: 'order', r });
   }
@@ -574,7 +578,8 @@ export class Sim {
     const th = this.thresholds();
     return this.score >= th[2] ? 3 : this.score >= th[1] ? 2 : this.score >= th[0] ? 1 : 0;
   }
-  thresholds() { return starThresholds(this.lv, this.humans); }
+  // кожен робот рахується як пів кухаря (у дитячому режимі — не рахується)
+  thresholds() { const eff = this.kid ? this.humans : this.humans + (this.assist % 2) * 0.5; return starThresholds(this.lv, eff, this.kid); }
 
   /* ================== БОТ-ПОМІЧНИК ================== */
   botTick(p, dt) {
@@ -764,8 +769,8 @@ export class Sim {
         const e = !holder && this.nearest(p, ex, true);
         if (e) return this.G(e, 'grab', { check: () => e.item && e.item.t === 'x' });
       }
-      // 2. готова тарілка — віднести
-      let t = this.nearest(p, this.surfaces(t => t.item && this.matchOrder(t.item)), true);
+      // 2. готова тарілка — віднести (лише якщо роботам можна подавати)
+      let t = (this.botServe || p.asHuman) ? this.nearest(p, this.surfaces(t => t.item && this.matchOrder(t.item)), true) : null;
       if (t) return this.G(t, 'grab', { check: () => t.item && this.matchOrder(t.item) });
       // 3. зварене — під тарілку
       const doneCk = this.cookerTiles().filter(t => { const ck = this.ckOf(t); return ck && (this.cookerReady(ck) || ((t.type === 'stove' || t.type === 'oven') && this.cookerSoon(ck))); })
@@ -884,7 +889,7 @@ export class Sim {
       const pt = this.tiles.find(t => t.type === 'plates'); return pt ? this.G(pt, 'grab') : null;
     }
     if (H.t === 'c') {
-      if (this.matchOrder(H)) { const s = this.nearest(p, this.tiles.filter(t => t.type === 'serve')); if (s) return this.G(s, 'grab'); }
+      if (this.matchOrder(H)) { const s = this.nearest(p, this.tiles.filter(t => t.type === 'serve')); if (s) return (this.botServe || p.asHuman) ? this.G(s, 'grab') : this.readyNear(p, H, s); }
       const o = A.assign.get(H);
       let rem = o ? A.remain.get(o) : null;
       if (!rem) { const u = A.uncupped[0]; rem = u ? RECIPES[u.r].c : null; }
@@ -898,7 +903,7 @@ export class Sim {
       return this.placeNear(p, H, this.tiles.find(t => t.type === 'serve') || p);
     }
     if (H.t === 'p') {
-      if (this.matchOrder(H)) { const s = this.nearest(p, this.tiles.filter(t => t.type === 'serve')); if (s) return this.G(s, 'grab'); }
+      if (this.matchOrder(H)) { const s = this.nearest(p, this.tiles.filter(t => t.type === 'serve')); if (s) return (this.botServe || p.asHuman) ? this.G(s, 'grab') : this.readyNear(p, H, s); }
       const o = A.assign.get(H);
       const rem = o ? A.remain.get(o) : null;
       if (H.c.length && !o) { // зайва тарілка — звільнити, якщо комусь потрібна
@@ -957,6 +962,12 @@ export class Sim {
       return this.placeNear(p, H, p);
     }
     return null;
+  }
+  // готову страву робот ставить на стійку біля віконця — подає людина
+  readyNear(p, H, s) {
+    const fc = this.freeCounters().filter(t => !this.claimed(p, t) && Math.abs(t.x - s.x) + Math.abs(t.y - s.y) <= 3 && this.dist(p, t) < Infinity);
+    if (fc.length) { fc.sort((a, b) => (Math.abs(a.x - s.x) + Math.abs(a.y - s.y)) - (Math.abs(b.x - s.x) + Math.abs(b.y - s.y)) || this.dist(p, a) - this.dist(p, b)); const t = fc[0]; return this.G(t, 'grab', { check: () => !t.item }); }
+    return this.placeNear(p, H, s);
   }
   placeNear(p, H, anchor) {
     const fc = this.freeCounters().filter(t => !this.claimed(p, t));
@@ -1026,7 +1037,11 @@ export class Sim {
 
 /* Пороги зірок: беруться з калібрування ботами (calib.js), інакше — оцінка */
 import { CALIB } from './calib.js';
-export function starThresholds(lv, humans) {
+export function starThresholds(lv, humans, kid = false) {
+  if (humans % 1 && humans < 6) { // дробова кількість кухарів — проміжні пороги
+    const a = starThresholds(lv, Math.floor(humans), kid), b = starThresholds(lv, Math.ceil(humans), kid), f = humans % 1;
+    return a.map((v, i) => Math.round((v + (b[i] - v) * f) / 10) * 10);
+  }
   const n = Math.max(1, Math.min(6, humans));
   const c = CALIB[lv.id];
   let ref;
@@ -1036,8 +1051,8 @@ export function starThresholds(lv, humans) {
   const li = LEVELS.indexOf(lv);
   const ease = li < 3 ? 0.72 : li < 8 ? 0.82 : li < 16 ? 0.9 : 0.95;
   const solo = n === 1 ? 0.85 : 1;
-  ref *= ease * solo;
+  ref *= ease * solo * (kid ? 0.6 : 1);
   const r = v => Math.max(10, Math.round(v / 10) * 10);
-  const lo = [40, 80, 110]; // мінімум: 1, 2 і 3 страви
+  const lo = kid ? [20, 50, 80] : [40, 80, 110]; // мінімум: 1, 2 і 3 страви
   return [Math.max(lo[0], r(ref * 0.25)), Math.max(lo[1], r(ref * 0.48)), Math.max(lo[2], r(ref * 0.7))];
 }
