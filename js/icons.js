@@ -97,6 +97,7 @@ export function drawIcon(ctx, icon, x, y, s) {
 /* ---------- HTML ---------- */
 const urls = new Map();
 const url = (k, c) => { if (!urls.has(k)) urls.set(k, c.toDataURL()); return urls.get(k); };
+export function snapURL(key, build, tilt) { return url('x' + key, snap('x' + key, build, tilt)); }
 export function ingURL(id) { return url('i' + id, ingCanvas(id)); }
 export function dishURL(rid) { return url('d' + rid, dishCanvas(rid)); }
 export function ingHTML(id, s, cls = 'ic') {

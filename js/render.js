@@ -4,6 +4,8 @@ import { ING, RECIPES, COOKER, COOK_COLORS } from './data.js';
 import { cookerState, cookerNeed } from './sim.js';
 import { drawIng, drawDish, drawKnife } from './icons.js';
 import { Decor } from './decor.js';
+import { tr } from './i18n.js';
+import { addHat } from './hats.js';
 import { makeIngMesh, makeItemMesh, itemKey, plateMesh, mat as fmat } from './food.js';
 export { makeItemMesh, itemKey };
 
@@ -50,6 +52,17 @@ function canvasSprite(w, h, draw, scale = 1) {
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true }));
   s.scale.set(scale * w / h, scale, 1); s.renderOrder = 10;
   return s;
+}
+// табличка над ящиком / автоматом: малюнок + назва
+function signSprite(id, bg = 'rgba(255,255,255,.93)') {
+  return canvasSprite(200, 150, (c, w, h) => {
+    c.fillStyle = bg; c.strokeStyle = 'rgba(58,42,31,.35)'; c.lineWidth = 4;
+    c.beginPath(); if (c.roundRect) c.roundRect(4, 4, w - 8, h - 8, 26); else c.rect(4, 4, w - 8, h - 8); c.fill(); c.stroke();
+    drawIng(c, id, 'r', w / 2, 58, 118, false);
+    const name = tr(ING[id].name); let fs = 32; c.font = `800 ${fs}px system-ui,sans-serif`;
+    while (c.measureText(name).width > w - 20 && fs > 16) { fs -= 2; c.font = `800 ${fs}px system-ui,sans-serif`; }
+    c.fillStyle = '#3a2a1f'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(name, w / 2, 124);
+  }, 0.62);
 }
 function bubble(items, big) { // items: [{id,s}] або recipe-емодзі
   const n = big ? 1 : Math.max(1, items.length);
@@ -118,14 +131,7 @@ export function makeCook(colorIdx, hat = 0, isBot = false, name = '') {
     head.add(mesh(G.sph, mat(0x8a3b2b), 0.04, 0.02, 0.02, 0, -0.08, 0.27));
     // капелюшки
     const white = mat(0xffffff);
-    switch (hat % 6) {
-      case 0: head.add(mesh(G.cyl, white, 0.2, 0.16, 0.2, 0, 0.27)); for (let i = 0; i < 4; i++) head.add(mesh(G.sph, white, 0.12, 0.11, 0.12, Math.cos(i * 1.57) * 0.1, 0.39, Math.sin(i * 1.57) * 0.1)); head.add(mesh(G.sph, white, 0.13, 0.12, 0.13, 0, 0.44)); break;
-      case 1: { const b = mesh(G.tor, mat(col), 0.28, 0.28, 0.28, 0, 0.12); b.rotation.x = Math.PI / 2; head.add(b); head.add(mesh(G.sph, mat(col), 0.06, 0.06, 0.06, -0.2, 0.12, -0.24)); break; }
-      case 2: head.add(mesh(G.sph, mat(col), 0.29, 0.18, 0.29, 0, 0.12)); head.add(mesh(G.cyl, mat(col), 0.22, 0.03, 0.18, 0, 0.12, 0.24)); break;
-      case 3: { head.add(mesh(G.cyl, mat(0xffc93c, { metalness: 0.6, roughness: 0.3 }), 0.17, 0.12, 0.17, 0, 0.3)); for (let i = 0; i < 5; i++) head.add(mesh(G.cone, mat(0xffc93c, { metalness: 0.6, roughness: 0.3 }), 0.04, 0.09, 0.04, Math.cos(i * 1.26) * 0.15, 0.4, Math.sin(i * 1.26) * 0.15)); break; }
-      case 4: head.add(mesh(G.sph, mat(col), 0.09, 0.09, 0.06, -0.19, 0.24)); head.add(mesh(G.sph, mat(col), 0.09, 0.09, 0.06, 0.19, 0.24)); head.add(mesh(G.sph, mat(0xffb6c1), 0.05, 0.05, 0.03, -0.19, 0.24, 0.03)); head.add(mesh(G.sph, mat(0xffb6c1), 0.05, 0.05, 0.03, 0.19, 0.24, 0.03)); break;
-      case 5: head.add(mesh(G.cyl, white, 0.18, 0.12, 0.18, 0, 0.27)); for (let i = 0; i < 5; i++) head.add(mesh(G.sph, mat(0xff6fa5), 0.05, 0.03, 0.05, 0.2 + Math.cos(i * 1.26) * 0.05, 0.2, 0.12 + Math.sin(i * 1.26) * 0.05)); head.add(mesh(G.sph, mat(0xffe14d), 0.035, 0.035, 0.035, 0.2, 0.22, 0.12)); break;
-    }
+    addHat(head, hat, col);
   }
   const handM = mat(isBot ? 0x6b7783 : skin);
   const hL = mesh(G.sph, handM, 0.075, 0.075, 0.075, -0.27, 0.32, 0.05), hR = mesh(G.sph, handM, 0.075, 0.075, 0.075, 0.27, 0.32, 0.05);
@@ -144,7 +150,15 @@ export function makeCook(colorIdx, hat = 0, isBot = false, name = '') {
   // тінь-коло, щоб краще видно
   const sh = new THREE.Mesh(new THREE.CircleGeometry(0.3, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false }));
   sh.rotation.x = -Math.PI / 2; sh.position.y = 0.01; root.add(sh);
-  return { root, g, head, hL, hR, fL, fR, carry, knife, label, t: Math.random() * 10, heldKey: '', heldObj: null, squash: 0, jump: 0, blink: 2 + Math.random() * 3, spin: 0 };
+  return { prop: head.getObjectByName('prop'), root, g, head, hL, hR, fL, fR, carry, knife, label, t: Math.random() * 10, heldKey: '', heldObj: null, squash: 0, jump: 0, blink: 2 + Math.random() * 3, spin: 0 };
+}
+// голова з капелюшком — для значків вибору
+export function makeHeadPreview(hat, colorIdx) {
+  const col = COOK_COLORS[colorIdx % COOK_COLORS.length].c, g = new THREE.Group();
+  g.add(mesh(G.sph, mat(SKIN[colorIdx % SKIN.length], { roughness: 0.55 }), 0.3, 0.27, 0.28));
+  for (const s of [-1, 1]) { g.add(mesh(G.sph, mat(0x1d1d24), 0.045, 0.06, 0.03, s * 0.1, 0.02, 0.26)); g.add(mesh(G.sph, mat(0xff9aa8), 0.05, 0.03, 0.02, s * 0.17, -0.06, 0.22)); }
+  addHat(g, hat, col);
+  return g;
 }
 export function animateCook(c, p, dt) {
   c.t += dt * (p.moving ? 12 : 3);
@@ -161,6 +175,7 @@ export function animateCook(c, p, dt) {
   c.fL.position.z = 0.02 + Math.sin(c.t) * 0.1 * mv; c.fR.position.z = 0.02 - Math.sin(c.t) * 0.1 * mv;
   c.fL.position.y = 0.05 + Math.max(0, Math.sin(c.t)) * 0.04 * mv; c.fR.position.y = 0.05 + Math.max(0, -Math.sin(c.t)) * 0.04 * mv;
   c.head.rotation.z = Math.sin(c.t * 0.5) * 0.04;
+  if (c.prop) c.prop.rotation.y += dt * (mv ? 18 : 5);
   // кліпання очима
   c.blink -= dt;
   const eyes = c.head.userData.eyes;
@@ -236,8 +251,8 @@ function stationMesh(t, th) {
       g.add(mesh(G.box, mat(col, { roughness: 0.3 }), 0.66, 0.22, 0.02, 0, TOP_Y + 0.55, -0.02));
       g.add(mesh(G.box, mat(0x555a60, { metalness: 0.6 }), 0.08, 0.14, 0.08, 0, TOP_Y + 0.38, 0.0));
       g.add(mesh(G.box, mat(0x3a3f45), 0.5, 0.03, 0.4, 0, TOP_Y + 0.015, 0.1));
-      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIng(c, t.liq, 'r', 48, 48, 84, false); }, 0.34);
-      lab.position.set(0, TOP_Y + 1.0, -0.1); lab.material.depthTest = true; g.add(lab);
+      const lab = signSprite(t.liq);
+      lab.position.set(0, TOP_Y + 1.05, -0.1); lab.material.depthTest = true; g.add(lab);
       break;
     }
     case 'serve': {
@@ -252,8 +267,8 @@ function stationMesh(t, th) {
       for (const z of [-0.3, 0, 0.3]) g.add(mesh(G.box, mat(0x8a5530), 1.0, 0.06, 0.08, 0, 0.6, z));
       g.add(mesh(G.box, mat(0xc98d5a), 0.98, 0.05, 0.98, 0, TOP_Y - 0.03));
       const ic = makeIngMesh(t.ing, 'r'); ic.position.y = TOP_Y; ic.scale.setScalar(1.1); g.add(ic);
-      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIng(c, t.ing, 'r', 48, 48, 84, false); }, 0.34);
-      lab.position.set(0, TOP_Y + 0.55, 0); lab.material.depthTest = true; g.add(lab);
+      const lab = signSprite(t.ing);
+      lab.position.set(0, TOP_Y + 0.72, 0); lab.material.depthTest = true; g.add(lab);
       break;
     }
     case 'conv': {
@@ -395,6 +410,30 @@ export class KitchenView {
     const ccx = cx + exE / 2, ccz = cz - exN / 2 + 0.35;
     this.cam.position.set(ccx, Math.sin(tilt) * d, ccz + Math.cos(tilt) * d);
     this.cam.lookAt(ccx, 0.3, ccz - shift * 0.9);
+    const look = new THREE.Vector3(ccx, 0.3, ccz - shift * 0.9);
+    this.base = { look, off: this.cam.position.clone().sub(look) };
+    if (!this.look) { this.look = look.clone(); this.zc = this.zoom || 1; }
+    this.updateCam(0);
+  }
+  // зум: 1 — уся кухня; більше — камера ближче й стежить за моїм кухарчиком
+  setZoom(z) { this.zoom = Math.max(1, Math.min(2.8, z)); return this.zoom; }
+  updateCam(dt, fx, fz) {
+    if (!this.base) return;
+    const zt = this.zoom || 1;
+    this.zc = this.zc || 1; this.zc += (zt - this.zc) * (dt ? Math.min(1, dt * 8) : 1);
+    const k = Math.min(1, (this.zc - 1) * 1.4);
+    const tgt = this.base.look.clone();
+    if (k > 0.001 && fx != null) {
+      // не виїжджати далеко за межі кухні
+      const hw = (this.sim.w - 1) / 2 * (1 - 1 / this.zc), hh = (this.sim.h - 1) / 2 * (1 - 1 / this.zc);
+      const cx = (this.sim.w - 1) / 2, cz = (this.sim.h - 1) / 2;
+      const px = Math.max(cx - hw, Math.min(cx + hw, fx)), pz = Math.max(cz - hh, Math.min(cz + hh, fz));
+      tgt.x += (px - tgt.x) * k; tgt.z += (pz + (this.base.look.z - cz) * 0.4 - tgt.z) * k;
+    }
+    if (!this.look) this.look = tgt.clone();
+    this.look.lerp(tgt, dt ? Math.min(1, dt * 5) : 1);
+    this.cam.position.copy(this.look).addScaledVector(this.base.off, 1 / this.zc);
+    this.cam.lookAt(this.look);
   }
 
   sync(dt, myIds) {

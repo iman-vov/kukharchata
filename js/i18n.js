@@ -2,6 +2,7 @@
 // Переклад іде фразами: усе, що з'являється на сторінці, перекладається автоматично.
 import { UI, ING_T, REC_T, COUNTRY_T, STORY } from './i18n-data.js';
 import { ING, RECIPES, LEVELS, COUNTRIES } from './data.js';
+import { replaceEmoji } from './uiicons.js';
 
 export const LANGS = [['uk', '🇺🇦', 'Українська'], ['de', '🇩🇪', 'Deutsch'], ['en', '🇬🇧', 'English']];
 export let LANG = 'uk';
@@ -30,13 +31,13 @@ export function tr(s) {
   return s;
 }
 function trNode(n) {
-  if (n.nodeType === 3) { const v = n.nodeValue; if (CYR.test(v)) { const t = tr(v); if (t !== v) n.nodeValue = t; } return; }
+  if (n.nodeType === 3) { const v = n.nodeValue; if (LANG !== 'uk' && CYR.test(v)) { const t = tr(v); if (t !== v) n.nodeValue = t; } replaceEmoji(n); return; }
   if (n.nodeType !== 1 || n.tagName === 'SCRIPT' || n.tagName === 'STYLE' || n.tagName === 'INPUT' && n.type !== 'button') {
     if (n.nodeType === 1 && n.tagName === 'INPUT') for (const a of ['placeholder', 'title']) { const v = n.getAttribute(a); if (v && CYR.test(v)) n.setAttribute(a, tr(v)); }
     return;
   }
   for (const a of ['placeholder', 'title', 'aria-label']) { const v = n.getAttribute(a); if (v && CYR.test(v)) n.setAttribute(a, tr(v)); }
-  for (const c of n.childNodes) trNode(c);
+  for (const c of [...n.childNodes]) trNode(c);
 }
 let obs = null;
 export function initLang(saved) {
@@ -47,7 +48,6 @@ export function initLang(saved) {
   document.title = tr('Кухарчата');
   if (!obs) {
     obs = new MutationObserver(ms => {
-      if (LANG === 'uk') return;
       for (const m of ms) { if (m.type === 'characterData') trNode(m.target); else m.addedNodes.forEach(trNode); }
     });
     obs.observe(document.body, { subtree: true, childList: true, characterData: true });

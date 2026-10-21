@@ -49,6 +49,14 @@ button{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .sw.on{outline:3px solid var(--ink)}
 .hatb{font-size:22px;width:44px;height:40px;border-radius:12px;background:#fff;box-shadow:0 2px 0 var(--line)}
 .hatb.on{background:var(--pri2)}
+img.em{height:1.15em;width:auto;vertical-align:-0.22em;display:inline-block;pointer-events:none}
+.hatb img.flag{width:30px;height:auto;display:block;margin:auto}
+#meHats{flex-wrap:nowrap;overflow-x:auto;justify-content:flex-start;max-width:min(92vw,520px);padding:4px 6px 8px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;position:relative}
+.hatb.hatp{flex:0 0 auto;width:56px;height:56px;padding:2px;scroll-snap-align:center}
+.hatb.hatp img{width:52px;height:52px;display:block}
+#zoomBox{display:flex;flex-direction:column;gap:6px}
+#zoomBox button{pointer-events:auto;width:40px;height:40px;border-radius:12px;background:rgba(255,255,255,.85);box-shadow:0 2px 0 var(--line);font-size:24px;font-weight:900;color:#3a2a1f;line-height:1}
+
 /* верхня панель */
 .topbar{position:absolute;top:calc(10px + var(--safeT));left:calc(10px + var(--safeL));right:calc(10px + var(--safeR));display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
 .topbar>*{pointer-events:auto}
@@ -147,7 +155,7 @@ video.scan{width:100%;max-height:46vh;border-radius:16px;background:#000;object-
   #titleSpacer{min-height:22vh!important}
   #me{flex-direction:row;flex-wrap:wrap;justify-content:center;padding:8px 10px;gap:6px}
   #me input{width:150px;font-size:16px;padding:6px 10px}
-  .sw{width:28px;height:28px}.hatb{width:36px;height:32px;font-size:18px}
+  .sw{width:28px;height:28px}.hatb{width:36px;height:32px;font-size:18px}.hatb.hatp{width:46px;height:46px}.hatb.hatp img{width:42px;height:42px}
   .btn.big{font-size:20px;padding:12px 22px}
   .card{padding:14px;border-radius:22px}.card h2{font-size:21px}
   #titleInfo{display:none}
@@ -197,7 +205,7 @@ table.res td:last-child{text-align:right}
 <!-- HUD гри -->
 <div id="hud" class="hide">
   <div id="orders"></div>
-  <div id="hudR"><div id="timer">3:00</div><button class="iconbtn" id="bPause">⏸</button><span class="pill hide" id="ping"></span></div>
+  <div id="hudR"><div id="timer">3:00</div><button class="iconbtn" id="bPause">⏸</button><div id="zoomBox"><button id="bZin" title="Наблизити">+</button><button id="bZout" title="Віддалити">−</button></div><span class="pill hide" id="ping"></span></div>
   <div id="score">0</div>
   <div id="hint" class="hide"></div>
 </div>

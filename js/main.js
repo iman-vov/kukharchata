@@ -7,13 +7,14 @@ import { MapView } from './map.js';
 import { Input } from './input.js';
 import { audioInit, sfx, music, musicRate, stopMusic, vol, setVolumes } from './audio.js';
 import { Net, qrCanvas, scanQR, cameraOn, cameraOff } from './net.js';
-import { ingHTML, recipeHTML, dishHTML } from './icons.js';
+import { ingHTML, recipeHTML, dishHTML, snapURL } from './icons.js';
+import { HATS } from './hats.js';
+import { makeHeadPreview } from './render.js';
+import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const HAT_ICONS = ['👨‍🍳', '🎀', '🧢', '👑', '🐻', '🌸'];
-const HAT_NAMES = ['ковпак', 'бандана', 'кепка', 'корона', 'вушка', 'квітка'];
-const VERSION = '1.8';
+const VERSION = '1.9';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -60,7 +61,7 @@ function buildTitleCooks() {
   const n = 5;
   for (let i = 0; i < n; i++) {
     const me = i === 2;
-    const c = makeCook(me ? S.color : (S.color + i + 1) % 6, me ? S.hat : (i * 2 + 1) % 6, false, '');
+    const c = makeCook(me ? S.color : (S.color + i + 1) % 6, me ? S.hat : (i * 7 + 3) % 20, false, '');
     c.root.position.set((i - 2) * 1.05, 0, me ? 0.6 : -Math.abs(i - 2) * 0.3);
     c.root.scale.setScalar(me ? 1.35 : 1);
     title.scene.add(c.root); title.cooks.push(c);
@@ -116,7 +117,7 @@ function recipesHTML(lv, drinks) {
 function buildLangRow() {
   let row = $('#langRow');
   if (!row) { row = document.createElement('div'); row.id = 'langRow'; row.className = 'row'; row.style.cssText = 'position:absolute;top:calc(10px + var(--safeT));right:calc(10px + var(--safeR));gap:6px'; $('#title').appendChild(row); }
-  row.innerHTML = LANGS.map(([c, f]) => `<button class="hatb ${c === LANG ? 'on' : ''}" data-l="${c}" style="width:44px">${f}</button>`).join('');
+  row.innerHTML = LANGS.map(([c, f, n]) => `<button class="hatb ${c === LANG ? 'on' : ''}" data-l="${c}" title="${n}" style="width:44px"><img class="flag" src="${iconSrc(f)}" alt="${n}"></button>`).join('');
   row.onclick = e => { const b = e.target.closest('[data-l]'); if (b) setLang(b.dataset.l); };
 }
 function buildMe() {
@@ -124,7 +125,9 @@ function buildMe() {
   $('#meName').value = S.name;
   $('#meName').oninput = () => { S.name = $('#meName').value.slice(0, 14); save(); };
   $('#meColors').innerHTML = COOK_COLORS.map((c, i) => `<button class="sw ${i === S.color ? 'on' : ''}" style="background:#${c.c.toString(16).padStart(6, '0')}" data-c="${i}" aria-label="${c.name}"></button>`).join('');
-  $('#meHats').innerHTML = HAT_ICONS.map((h, i) => `<button class="hatb ${i === S.hat ? 'on' : ''}" data-h="${i}" title="${HAT_NAMES[i]}">${h}</button>`).join('');
+  if (S.hat >= HATS.length) S.hat = 0;
+  $('#meHats').innerHTML = HATS.map((h, i) => `<button class="hatb hatp ${i === S.hat ? 'on' : ''}" data-h="${i}" title="${h}"><img src="${snapURL('hat' + i + '_' + S.color, () => makeHeadPreview(i, S.color), 0.3)}" alt="${h}"></button>`).join('');
+  const on = $('#meHats .on'); if (on) { const bx = $('#meHats'); bx.scrollLeft = on.offsetLeft - bx.clientWidth / 2 + on.offsetWidth / 2; }
   $('#meColors').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; S.color = +b.dataset.c; save(); buildMe(); buildTitleCooks(); sfx('click'); sendLocals(); };
   $('#meHats').onclick = e => { const b = e.target.closest('[data-h]'); if (!b) return; S.hat = +b.dataset.h; save(); buildMe(); buildTitleCooks(); sfx('click'); sendLocals(); };
   const total = Object.values(S.stars).reduce((a, b) => a + b, 0);
@@ -187,7 +190,7 @@ function localCooks() {
   if (S.set.shared) list.push({ lid: 't1', srcs: ['touch1'], label: '👆 Другий на екрані' });
   pads.forEach((p, k) => { if (meMerged && k === 0) return; list.push({ lid: 'p' + p.index, srcs: ['pad' + p.index], label: '🎮 Геймпад ' + (p.index + 1) }); });
   if (!list.length) list.push({ lid: 't0', srcs: ['touch0', 'kb'], label: '📱 Я' });
-  return list.slice(0, 6).map((c, k) => ({ ...c, name: k ? myName() + ' ' + (k + 1) : myName(), color: (S.color + k * 2) % 6, hat: k ? (S.hat + k) % 6 : S.hat }));
+  return list.slice(0, 6).map((c, k) => ({ ...c, name: k ? myName() + ' ' + (k + 1) : myName(), color: (S.color + k * 2) % 6, hat: k ? (S.hat + k * 3) % 20 : S.hat }));
 }
 function sendLocals() { if (net.role === 'guest') net.send({ k: 'locals', name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) }); }
 addEventListener('gamepadconnected', e => { toast('🎮 Геймпад підключено: ' + (e.gamepad.id || '').slice(0, 30)); sendLocals(); if (app.modal && app.modal.card !== undefined) openCard(app.modal.card); });
@@ -291,6 +294,7 @@ function beginLevel(P) {
   app.sim = sim; app.lvl = P; app.paused = false; app.over = false; app.prevSnap = new Map(); app.snapT = 0; app.keyT = 0; app.posT = 0;
   app.evOut = []; app.lastSec = 999; app.hurry = false;
   app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall });
+  app.view.setZoom(app.zoom || 1);
   app.scene = 'level';
   show('#title', false); show('#mapUI', false); show('#hud', true);
   document.body.classList.add('playing');
@@ -373,6 +377,8 @@ function levelFrame(dt) {
   // звуки дій своїх кухарів
   for (const L of app.local) { const p = sim.players.find(q => q.id === L.pid); if (p && p.act === 'chop') sfx('chop'); if (p && p.act === 'wash') sfx('wash'); if (p && p.act === 'spray') sfx('spray'); }
   view.sync(dt, app.myIds);
+  { const mine = app.sim.players.filter(p => app.myIds.has(p.id)); const n = mine.length;
+    view.updateCam(dt, n ? mine.reduce((a, p) => a + p.x, 0) / n : null, n ? mine.reduce((a, p) => a + p.y, 0) / n : null); }
   view.render();
   hudFrame();
 }
@@ -811,6 +817,11 @@ function resize() {
   if (app.view) app.view.fit(w, h, w < 700 ? 0.2 : 0.15, 0.03);
 }
 addEventListener('resize', resize);
+function zoomBy(f) { if (app.scene !== 'level' || !app.view) return; app.zoom = app.view.setZoom((app.zoom || 1) * f); sfx('click'); }
+$('#bZin').onclick = () => zoomBy(1.3);
+$('#bZout').onclick = () => zoomBy(1 / 1.3);
+addEventListener('wheel', e => { if (app.scene === 'level' && app.view) { app.zoom = app.view.setZoom((app.zoom || 1) * Math.exp(-e.deltaY * 0.0015)); } }, { passive: true });
+addEventListener('keydown', e => { if (e.key === '+' || e.key === '=') zoomBy(1.3); else if (e.key === '-' || e.key === '_') zoomBy(1 / 1.3); });
 addEventListener('orientationchange', () => setTimeout(resize, 300));
 let last = performance.now();
 function frame(now) {

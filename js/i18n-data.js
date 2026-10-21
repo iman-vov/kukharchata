@@ -1,6 +1,14 @@
 // Кухарчата — переклади: німецька й англійська. Ключ — український текст.
 // [українською, Deutsch, English]
 export const UI = [
+  // капелюшки
+  ['Ковпак із квіткою', 'Kochmütze mit Blume', 'Chef hat with flower'],
+  ['Ковпак', 'Kochmütze', 'Chef hat'], ['Бандана', 'Bandana', 'Bandana'], ['Кепка з пропелером', 'Propellerkappe', 'Propeller cap'], ['Кепка', 'Kappe', 'Cap'], ['Корона', 'Krone', 'Crown'],
+  ['Ведмежі вушка', 'Bärenohren', 'Bear ears'], ['Віночок', 'Blumenkranz', 'Flower wreath'], ['Берет', 'Baskenmütze', 'Beret'], ['Сомбреро', 'Sombrero', 'Sombrero'],
+  ['Ковбойський капелюх', 'Cowboyhut', 'Cowboy hat'], ['Шолом вікінга', 'Wikingerhelm', 'Viking helmet'], ['Вушка зайчика', 'Hasenohren', 'Bunny ears'], ['Капелюх чарівника', 'Zauberhut', 'Wizard hat'],
+  ['Тірольський капелюх', 'Tirolerhut', 'Tyrolean hat'], ['Циліндр', 'Zylinder', 'Top hat'], ['Піратський капелюх', 'Piratenhut', 'Pirate hat'], ['Шапка з помпоном', 'Bommelmütze', 'Bobble hat'],
+  ['Навушники', 'Kopfhörer', 'Headphones'], ['Пов’язка хачімакі', 'Hachimaki-Stirnband', 'Hachimaki headband'],
+  ['Наблизити', 'Heranzoomen', 'Zoom in'], ['Віддалити', 'Herauszoomen', 'Zoom out'],
   // титул і загальне
   ['Кулінарна подорож світом 🌍', 'Eine kulinarische Weltreise 🌍', 'A culinary trip around the world 🌍'],
   ['Імʼя кухарчика', 'Name des Kochs', 'Cook’s name'],
