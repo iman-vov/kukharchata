@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#ff8a3d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Кухарчата">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<title>Кухарчата</title>
+<style>
+:root{
+  --bg:#ffecd2; --ink:#3a2a1f; --soft:#7a6252; --card:#fffaf2; --line:#f0d9bf;
+  --pri:#ff7a2f; --pri2:#ffb347; --ok:#3cb371; --bad:#e5484d; --blue:#3d7be0; --gold:#ffc93c;
+  --r:22px; --font:ui-rounded,"SF Pro Rounded","Nunito","Varela Round",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --safeT:env(safe-area-inset-top,0px); --safeB:env(safe-area-inset-bottom,0px); --safeL:env(safe-area-inset-left,0px); --safeR:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--font);touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font-family:inherit;color:inherit;border:0;cursor:pointer}
+.hide{display:none!important}
+/* кнопки */
+.btn{background:var(--card);border-radius:18px;padding:12px 18px;font-size:18px;font-weight:800;box-shadow:0 4px 0 var(--line),0 6px 16px rgba(80,40,0,.12);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+.btn.pri{background:linear-gradient(180deg,var(--pri2),var(--pri));color:#fff;box-shadow:0 4px 0 #c9541a,0 6px 16px rgba(200,80,0,.3);text-shadow:0 1px 0 rgba(0,0,0,.2)}
+.btn.blue{background:linear-gradient(180deg,#6aa6ff,var(--blue));color:#fff;box-shadow:0 4px 0 #2856a6}
+.btn.green{background:linear-gradient(180deg,#6ad69a,var(--ok));color:#fff;box-shadow:0 4px 0 #23804f}
+.btn.small{font-size:15px;padding:8px 12px;border-radius:14px}
+.btn.big{font-size:24px;padding:16px 30px;border-radius:22px}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.pill{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.9);border-radius:999px;padding:6px 12px;font-weight:800;font-size:15px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+/* екрани */
+.screen{position:fixed;inset:0;z-index:5;pointer-events:none}
+.screen>*{pointer-events:auto}
+#title{display:flex;flex-direction:column;align-items:center;justify-content:space-between;gap:10px;background:radial-gradient(circle at 50% 0%,rgba(255,246,230,.85),rgba(255,217,168,0) 55%);pointer-events:auto;padding:calc(20px + var(--safeT)) 20px calc(20px + var(--safeB))}
+.logo{font-size:clamp(44px,11vw,92px);font-weight:900;letter-spacing:-1px;color:#fff;text-shadow:0 5px 0 #e0611d,0 10px 24px rgba(160,60,0,.35);line-height:1;margin:0;text-align:center}
+.logo small{display:block;font-size:.26em;color:#a14a14;text-shadow:none;letter-spacing:0;margin-top:10px;font-weight:800}
+#titleCook{width:200px;height:180px}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+.col{display:flex;flex-direction:column;gap:10px}
+#me{display:flex;flex-direction:column;gap:8px;align-items:center;background:rgba(255,255,255,.6);padding:12px 16px;border-radius:var(--r)}
+#me input{font:inherit;font-size:18px;font-weight:800;border:2px solid var(--line);border-radius:14px;padding:8px 12px;width:200px;text-align:center;background:#fff;color:var(--ink)}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.sw.on{outline:3px solid var(--ink)}
+.hatb{font-size:22px;width:44px;height:40px;border-radius:12px;background:#fff;box-shadow:0 2px 0 var(--line)}
+.hatb.on{background:var(--pri2)}
+/* верхня панель */
+.topbar{position:absolute;top:calc(10px + var(--safeT));left:calc(10px + var(--safeL));right:calc(10px + var(--safeR));display:flex;gap:8px;align-items:center;justify-content:space-between;pointer-events:none}
+.topbar>*{pointer-events:auto}
+.iconbtn{width:46px;height:46px;border-radius:15px;background:rgba(255,255,255,.92);font-size:22px;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+#mapHint{position:absolute;left:50%;bottom:calc(16px + var(--safeB));transform:translateX(-50%);text-align:center}
+/* модальні вікна */
+.modal{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(60,30,10,.35);padding:calc(12px + var(--safeT)) 12px calc(12px + var(--safeB));backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+.card{background:var(--card);border-radius:28px;box-shadow:0 18px 50px rgba(60,20,0,.3);width:min(620px,100%);max-height:100%;overflow:auto;padding:20px;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.card h2{margin:0 0 6px;font-size:26px}
+.card h3{margin:14px 0 6px;font-size:17px;color:var(--soft)}
+.card p{margin:6px 0;line-height:1.4}
+.sub{color:var(--soft);font-weight:700}
+.dlg{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
+.dlg .face{font-size:34px;line-height:1;flex:none}
+.dlg .bub{background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 2px 0 var(--line);font-weight:600}
+.dlg .bub b{display:block;font-size:13px;color:var(--soft)}
+.rec{display:flex;align-items:center;gap:8px;background:#fff;border-radius:16px;padding:8px 10px;margin:6px 0;box-shadow:0 2px 0 var(--line)}
+.rec .dish{font-size:32px}
+.rec .nm{font-weight:900;min-width:110px}
+.rec .how{font-size:13px;color:var(--soft);font-weight:700}
+b.ic{position:relative;display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;font-size:24px;font-weight:400}
+b.ic img{width:28px;height:28px}
+b.ic i{position:absolute;right:-5px;bottom:-4px;font-size:12px;font-style:normal;background:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.stars{font-size:30px;letter-spacing:2px;color:var(--gold);text-shadow:0 2px 0 #c9901a}
+.thr{display:flex;gap:12px;font-weight:800;color:var(--soft);flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff;font-weight:800;box-shadow:0 2px 0 var(--line);font-size:15px}
+.chip.on{background:#ffe0b8;box-shadow:0 2px 0 #f0b070}
+.btnrow{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
+/* HUD гри */
+#hud{position:fixed;inset:0;z-index:6;pointer-events:none}
+#orders{position:absolute;top:calc(8px + var(--safeT));left:calc(8px + var(--safeL));right:150px;display:flex;gap:8px;overflow:hidden}
+.ord{background:#fff;border-radius:14px;padding:6px 8px 8px;min-width:96px;box-shadow:0 3px 0 rgba(0,0,0,.12);animation:pop .3s;position:relative}
+.ord .top{display:flex;align-items:center;gap:4px}
+.ord .dish{font-size:30px;line-height:1}
+.ord .parts{display:flex;gap:2px;flex-wrap:wrap}
+.ord .parts b.ic{width:24px;height:24px;font-size:19px}
+.ord .parts b.ic img{width:22px;height:22px}
+.ord .tbar{height:7px;border-radius:5px;background:#eee;margin-top:5px;overflow:hidden}
+.ord .tbar i{display:block;height:100%;background:var(--ok);border-radius:5px}
+.ord.warn{animation:shake .5s infinite}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-2deg)}75%{transform:rotate(2deg)}}
+#hudR{position:absolute;top:calc(8px + var(--safeT));right:calc(8px + var(--safeR));display:flex;flex-direction:column;align-items:flex-end;gap:6px;pointer-events:auto}
+#timer{font-size:26px;font-weight:900;background:#fff;border-radius:14px;padding:4px 12px;box-shadow:0 3px 0 rgba(0,0,0,.12);min-width:86px;text-align:center}
+#timer.low{color:var(--bad);animation:shake .4s infinite}
+#score{position:absolute;left:calc(10px + var(--safeL));bottom:calc(10px + var(--safeB));font-size:24px;font-weight:900;background:var(--gold);border-radius:16px;padding:6px 14px;box-shadow:0 3px 0 #c9901a}
+#hint{position:absolute;left:50%;transform:translateX(-50%);top:calc(92px + var(--safeT));background:rgba(255,255,255,.93);border-radius:14px;padding:6px 12px;font-weight:800;font-size:15px;max-width:min(520px,60vw);text-align:center;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+#count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(30vw,190px);font-weight:900;color:#fff;text-shadow:0 8px 0 #e0611d,0 14px 30px rgba(0,0,0,.3);z-index:15;pointer-events:none}
+#count.go{font-size:min(16vw,110px)}
+/* сенсорне керування */
+#touch{position:fixed;inset:0;z-index:7;pointer-events:none}
+.tzone{position:absolute;bottom:0;top:30%;display:flex;pointer-events:none}
+.tzone.zf{left:0;right:0}.tzone.zl{left:0;width:50%}.tzone.zr{right:0;width:50%;border-left:2px dashed rgba(255,255,255,.4)}
+.joy{flex:1;position:relative;pointer-events:auto;touch-action:none}
+.base{position:absolute;left:110px;top:calc(100% - 120px);width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.55);opacity:.55;transition:opacity .15s}
+.base.on{opacity:1}
+.knob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 3px 10px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+.zf .base{left:calc(120px + var(--safeL))}
+.btns{position:relative;width:230px;pointer-events:none;margin-right:var(--safeR)}
+.zl .btns,.zr .btns{width:170px}
+.tb{position:absolute;pointer-events:auto;touch-action:none;border-radius:50%;background:rgba(255,255,255,.88);box-shadow:0 4px 0 rgba(0,0,0,.18);font-size:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.tb small{font-size:11px;font-weight:900;margin-top:2px}
+.tb.down{transform:scale(.92);background:#fff3c4}
+.tb.grab{width:96px;height:96px;right:24px;bottom:calc(40px + var(--safeB));background:rgba(255,236,170,.95)}
+.tb.use{width:78px;height:78px;right:128px;bottom:calc(28px + var(--safeB))}
+.tb.dash{width:58px;height:58px;right:44px;bottom:calc(146px + var(--safeB));font-size:24px}
+.zl .tb.grab,.zr .tb.grab{width:80px;height:80px;right:14px}
+.zl .tb.use,.zr .tb.use{width:66px;height:66px;right:100px}
+.zl .tb.dash,.zr .tb.dash{right:26px;bottom:calc(130px + var(--safeB))}
+/* тост */
+#toast{position:fixed;left:50%;top:calc(70px + var(--safeT));transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#toast div{background:rgba(40,25,15,.88);color:#fff;font-weight:800;padding:8px 16px;border-radius:14px;animation:pop .25s}
+/* кооп */
+.code{font-size:44px;font-weight:900;letter-spacing:8px;text-align:center;background:#fff;border-radius:18px;padding:8px;margin:8px 0;box-shadow:0 3px 0 var(--line)}
+.tabs{display:flex;gap:6px;margin:8px 0 12px}
+.tabs button{flex:1;padding:10px;border-radius:14px;background:#f3e4d0;font-weight:800;font-size:15px}
+.tabs button.on{background:var(--pri);color:#fff}
+.field{display:flex;flex-direction:column;gap:4px;margin:8px 0}
+.field input{font:inherit;font-size:16px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:#fff;color:var(--ink);-webkit-user-select:text;user-select:text}
+.plist{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.plist div{display:flex;align-items:center;gap:8px;background:#fff;border-radius:12px;padding:6px 10px;font-weight:800}
+.dot{width:16px;height:16px;border-radius:50%}
+.qrbox{display:flex;justify-content:center;margin:10px 0}
+.qrbox canvas{width:min(78vw,320px);height:auto;border-radius:12px;image-rendering:pixelated}
+video.scan{width:100%;max-height:46vh;border-radius:16px;background:#000;object-fit:cover}
+.status{font-weight:800}.status.ok{color:var(--ok)}.status.bad{color:var(--bad)}
+#netPill{cursor:pointer}
+.rot{position:fixed;inset:0;z-index:50;background:var(--bg);display:none;align-items:center;justify-content:center;flex-direction:column;font-size:22px;font-weight:800;text-align:center;padding:30px}
+@media (orientation:portrait) and (max-width:600px){ body.playing .rot{display:flex} }
+.kbd{font-size:13px;color:var(--soft)}
+@media (max-height:560px){
+  #title{gap:6px;padding-top:calc(8px + var(--safeT));padding-bottom:calc(8px + var(--safeB));overflow:auto}
+  .logo{font-size:44px}.logo small{font-size:15px;margin-top:4px}
+  #titleSpacer{min-height:22vh!important}
+  #me{flex-direction:row;flex-wrap:wrap;justify-content:center;padding:8px 10px;gap:6px}
+  #me input{width:150px;font-size:16px;padding:6px 10px}
+  .sw{width:28px;height:28px}.hatb{width:36px;height:32px;font-size:18px}
+  .btn.big{font-size:20px;padding:12px 22px}
+  .card{padding:14px;border-radius:22px}.card h2{font-size:21px}
+  #titleInfo{display:none}
+}
+table.res{width:100%;font-weight:800;border-collapse:collapse}
+table.res td{padding:4px 2px}
+table.res td:last-child{text-align:right}
+.bigstars{font-size:64px;text-align:center;letter-spacing:6px}
+.bigstars span{display:inline-block;color:#ddd;transition:all .3s}
+.bigstars span.on{color:var(--gold);text-shadow:0 4px 0 #c9901a;animation:pop .45s}
+.assist{background:#eef6ff;border-radius:16px;padding:10px 12px;margin-top:10px;display:flex;align-items:center;gap:10px;font-weight:700}
+.toggle{width:54px;height:32px;border-radius:999px;background:#ccc;position:relative;flex:none}
+.toggle::after{content:'';position:absolute;left:4px;top:4px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.toggle.on{background:var(--ok)}.toggle.on::after{left:26px}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+
+<!-- титульний екран -->
+<div id="title" class="screen">
+  <h1 class="logo">Кухарчата<small>Кулінарна подорож світом 🌍</small></h1>
+  <div id="titleSpacer" style="flex:1;min-height:20vh"></div>
+  <div id="me">
+    <input id="meName" maxlength="14" placeholder="Імʼя кухарчика">
+    <div class="row" id="meColors"></div>
+    <div class="row" id="meHats"></div>
+  </div>
+  <div class="row">
+    <button class="btn pri big" id="bPlay">▶ Грати</button>
+    <button class="btn blue" id="bCoop">👫 Гра разом</button>
+    <button class="btn" id="bSet">⚙️</button>
+  </div>
+  <div class="kbd" id="titleInfo"></div>
+</div>
+
+<!-- карта -->
+<div id="mapUI" class="screen hide">
+  <div class="topbar">
+    <button class="iconbtn" id="mBack">🏠</button>
+    <div class="row"><span class="pill" id="mStars">⭐ 0</span><span class="pill" id="netPill">👫 сам</span></div>
+    <button class="iconbtn" id="mSet">⚙️</button>
+  </div>
+  <div id="mapHint" class="pill">Торкнись міста на карті 🚚</div>
+</div>
+
+<!-- HUD гри -->
+<div id="hud" class="hide">
+  <div id="orders"></div>
+  <div id="hudR"><div id="timer">3:00</div><button class="iconbtn" id="bPause">⏸</button><span class="pill hide" id="ping"></span></div>
+  <div id="score">0</div>
+  <div id="hint" class="hide"></div>
+</div>
+<div id="touch" class="hide"></div>
+<div id="count" class="hide"></div>
+<div id="toast"></div>
+<div class="rot">📱↻<br>Поверни пристрій горизонтально — так кухню видно краще</div>
+
+<!-- модальні вікна (вміст будується в main.js) -->
+<div id="modal" class="modal hide"><div class="card" id="mcard"></div></div>
+
+<script type="importmap">
+{ "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
+<script type="module" src="js/main.js"></script>
+<script>
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>
