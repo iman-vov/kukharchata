@@ -8,6 +8,25 @@ function loadScript(src) {
   });
 }
 
+/* ---------- безкоштовний ретранслятор Open Relay (Metered): тимчасовий логін за спільним секретом ---------- */
+async function openRelay() {
+  try {
+    const user = (Math.floor(Date.now() / 1000) + 3 * 86400) + ':kukharchata';
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode('openrelayprojectsecret'), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+    const sig = new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(user)));
+    let b = ''; sig.forEach(x => b += String.fromCharCode(x));
+    const h = 'staticauth.openrelay.metered.ca';
+    return { urls: [`turn:${h}:80`, `turn:${h}:80?transport=tcp`, `turn:${h}:443`, `turns:${h}:443?transport=tcp`], username: user, credential: btoa(b) };
+  } catch (_) { return null; }
+}
+// які кандидати зібрали (для підказки, чому не вийшло)
+export async function candInfo(pc) {
+  const n = { host: 0, srflx: 0, relay: 0 }; let st = '';
+  try { st = pc.iceConnectionState; (await pc.getStats()).forEach(r => { if (r.type === 'local-candidate' && n[r.candidateType] !== undefined) n[r.candidateType]++; }); } catch (_) { }
+  return `ICE ${st || '?'} · host ${n.host} · stun ${n.srflx} · relay ${n.relay}`;
+}
+
 /* ---------- обгортка з'єднання ---------- */
 class Conn {
   constructor(kind, raw) {
@@ -96,6 +115,7 @@ export class Net {
     const list = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
       // безкоштовні ретранслятори PeerJS (вбудовані в PeerJS; раніше ми їх випадково вимикали)
       { urls: ['turn:eu-0.turn.peerjs.com:3478', 'turn:us-0.turn.peerjs.com:3478'], username: 'peerjs', credential: 'peerjsp' }];
+    const orl = await openRelay(); if (orl) list.push(orl);
     if (cfg && cfg.meteredUrl) {
       try { const r = await fetch(cfg.meteredUrl); const j = await r.json(); if (Array.isArray(j)) list.push(...j); } catch (_) { }
     }
@@ -125,9 +145,10 @@ export class Net {
     return new Promise((res, rej) => {
       const peer = new Peer({ config: { iceServers } }); this.peer = peer;
       let done = false;
-      const to = setTimeout(() => { if (!done) { done = true; rej({ type: 'timeout' }); } }, 30000);
+      let c = null;
+      const to = setTimeout(async () => { if (!done) { done = true; const info = c && c.peerConnection ? await candInfo(c.peerConnection) : 'no pc'; rej({ type: 'timeout', info }); } }, 30000);
       peer.on('open', () => {
-        const c = peer.connect(PREFIX + code, { reliable: true });
+        c = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
         const conn = new Conn('peer', c);
         conn.onOpen = () => { if (done) return; done = true; clearTimeout(to); this.role = 'guest'; this.code = code; this.setHostConn(conn); res(conn); };
       });

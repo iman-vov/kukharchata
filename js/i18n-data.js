@@ -147,7 +147,7 @@ export const UI = [
   ['або TURN-адреси (через кому)', 'oder TURN-Adressen (durch Komma getrennt)', 'or TURN addresses (comma-separated)'],
   ['Логін', 'Login', 'Login'],
   ['Пароль', 'Passwort', 'Password'],
-  ['🧪 Перевірити TURN', '🧪 TURN testen', '🧪 Test TURN'],
+  ['🧪 Перевірити зв\'язок', '🧪 Verbindung testen', '🧪 Test connection'], ['свій TURN', 'eigener TURN', 'own TURN'],
   ['Без інтернету', 'Ohne Internet', 'Without internet'],
   [': усі пристрої в одній Wi‑Fi мережі (можна роутер без інтернету або точку доступу з телефона). Дані йдуть напряму між пристроями.', ': alle Geräte im selben WLAN (auch ein Router ohne Internet oder ein Handy-Hotspot geht). Die Daten gehen direkt zwischen den Geräten.', ': all devices on the same Wi‑Fi (a router without internet or a phone hotspot works too). Data goes directly between devices.'],
   ['➕ Я хост: додати гравця', '➕ Ich bin Gastgeber: Spieler hinzufügen', '➕ I’m the host: add a player'],

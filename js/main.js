@@ -13,7 +13,7 @@ import { initLang, tr, LANGS, LANG } from './i18n.js';
 const $ = s => document.querySelector(s);
 const HAT_ICONS = ['👨‍🍳', '🎀', '🧢', '👑', '🐻', '🌸'];
 const HAT_NAMES = ['ковпак', 'бандана', 'кепка', 'корона', 'вушка', 'квітка'];
-const VERSION = '1.6';
+const VERSION = '1.7';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -587,7 +587,7 @@ function openCoop(tab) {
       <div class="field"><label>Metered: посилання на credentials</label><input id="tMet" placeholder="https://назва.metered.live/api/v1/turn/credentials?apiKey=..." value="${esc(S.set.turn.meteredUrl)}"></div>
       <div class="field"><label>або TURN-адреси (через кому)</label><input id="tUrl" placeholder="turn:relay1.expressturn.com:3478, turns:relay1.expressturn.com:443?transport=tcp" value="${esc(S.set.turn.turnUrl)}"></div>
       <div class="row"><div class="field" style="flex:1"><label>Логін</label><input id="tUser" value="${esc(S.set.turn.turnUser)}"></div><div class="field" style="flex:1"><label>Пароль</label><input id="tPass" value="${esc(S.set.turn.turnPass)}"></div></div>
-      <div class="row" style="justify-content:flex-start"><button class="btn small" id="tTest">🧪 Перевірити TURN</button><span class="status" id="tSt"></span></div>`;
+      <div class="row" style="justify-content:flex-start"><button class="btn small" id="tTest">🧪 Перевірити зв'язок</button><span class="status" id="tSt"></span></div>`;
   } else {
     if (r === 'guest') body = `<p>Ти вже в кімнаті у ${esc(hostName())}.</p>`;
     else body = `
@@ -618,23 +618,28 @@ function openCoop(tab) {
   if ($('#tMet')) {
     const saveT = () => { Object.assign(S.set.turn, { meteredUrl: $('#tMet').value.trim(), turnUrl: $('#tUrl').value.trim(), turnUser: $('#tUser').value.trim(), turnPass: $('#tPass').value.trim() }); save(); };
     ['#tMet', '#tUrl', '#tUser', '#tPass'].forEach(id => $(id).onchange = saveT);
-    $('#tTest').onclick = async () => { saveT(); $('#tSt').textContent = 'Перевіряю…'; $('#tSt').className = 'status'; const ok = await testTurn(); $('#tSt').textContent = ok ? 'TURN працює ✓' : 'Не вдалося отримати ретранслятор ✗'; $('#tSt').className = 'status ' + (ok ? 'ok' : 'bad'); };
+    $('#tTest').onclick = async () => { saveT(); $('#tSt').textContent = 'Перевіряю…'; $('#tSt').className = 'status'; const r = await testTurn(); $('#tSt').textContent = r; $('#tSt').className = 'status ' + (/(PeerJS|OpenRelay|свій TURN) ✓/.test(r) ? 'ok' : 'bad'); };
   }
   if ($('#fHost')) $('#fHost').onclick = () => offlineHostFlow();
   if ($('#fJoin')) $('#fJoin').onclick = () => offlineGuestFlow();
 }
+// перевіряємо кожен ретранслятор окремо: STUN (пряме), PeerJS, Open Relay, свій
 async function testTurn() {
-  try {
-    const iceServers = await net.iceServers(turnCfg());
-    if (iceServers.length < 2) return false;
-    const pc = new RTCPeerConnection({ iceServers, iceTransportPolicy: 'relay' });
-    pc.createDataChannel('t');
-    let got = false;
-    pc.onicecandidate = e => { if (e.candidate && / relay /.test(e.candidate.candidate)) got = true; };
-    await pc.setLocalDescription(await pc.createOffer());
-    await new Promise(r => setTimeout(r, 4000));
-    pc.close(); return got;
-  } catch (_) { return false; }
+  const all = await net.iceServers(turnCfg());
+  const probe = async (srv, relay) => {
+    try {
+      const pc = new RTCPeerConnection({ iceServers: [srv], iceTransportPolicy: relay ? 'relay' : 'all' });
+      pc.createDataChannel('t');
+      let got = false;
+      pc.onicecandidate = e => { if (e.candidate && (relay ? / relay /.test(e.candidate.candidate) : / srflx /.test(e.candidate.candidate))) got = true; };
+      await pc.setLocalDescription(await pc.createOffer());
+      await new Promise(r => setTimeout(r, 5000));
+      pc.close(); return got;
+    } catch (_) { return false; }
+  };
+  const names = ['STUN', 'PeerJS', 'OpenRelay', 'свій TURN', 'свій TURN 2'];
+  const res = await Promise.all(all.map((srv, i) => probe(srv, i > 0)));
+  return res.map((ok, i) => `${names[i] || 'TURN'} ${ok ? '✓' : '✗'}`).join(' · ');
 }
 function setSt(msg, bad) { const e = $('#oSt'); if (e) { e.textContent = msg; e.className = 'status ' + (bad ? 'bad' : 'ok'); } }
 async function hostRoom(retry = false) {
@@ -655,7 +660,7 @@ async function joinRoom(code) {
   setSt('Підключаюсь…');
   try { await net.joinOnline(code, turnCfg()); afterGuestJoin(); }
   catch (e) {
-    setSt(e && e.type === 'peer-unavailable' ? 'Кімнату не знайдено. Перевір код і чи відкрита гра в хоста.' : e && e.type === 'timeout' ? 'Не вдалося зʼєднатися. Спробуйте додати TURN-сервер (нижче).' : 'Не вдалося підключитися.', true);
+    setSt(e && e.type === 'peer-unavailable' ? 'Кімнату не знайдено. Перевір код і чи відкрита гра в хоста.' : e && e.type === 'timeout' ? 'Не вдалося зʼєднатися. Спробуйте додати TURN-сервер (нижче).' + (e.info ? ' [' + e.info + ']' : '') : 'Не вдалося підключитися.', true);
   }
 }
 function afterGuestJoin() {
