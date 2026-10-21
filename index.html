@@ -130,6 +130,30 @@ b.ic i{position:absolute;right:-5px;bottom:-4px;width:16px;height:16px;display:f
 .zl .tb.dash,.zr .tb.dash{right:26px;bottom:calc(130px + var(--safeB))}
 /* тост */
 #toast{position:fixed;left:50%;top:calc(70px + var(--safeT));transform:translateX(-50%);z-index:40;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+#bSlot{margin-top:6px;font-size:14px}
+.chatb{position:relative}
+.chatb .badge{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#e5484d;color:#fff;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.chatb .badge.hide,.chatb.hide{display:none}
+#chat{position:fixed;right:calc(8px + var(--safeR));top:calc(8px + var(--safeT));bottom:calc(8px + var(--safeB));width:min(360px,calc(100vw - 16px));z-index:30;background:#fffaf2;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;padding:10px;gap:8px}
+#chat.hide{display:none}
+.chhead{display:flex;align-items:center;justify-content:space-between;font-size:18px}
+.chhead .iconbtn{width:38px;height:38px;font-size:18px}
+#chList{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:2px}
+.cmsg{background:#fff;border-radius:14px;padding:6px 10px;box-shadow:0 1px 0 var(--line);max-width:88%;align-self:flex-start;word-wrap:break-word;overflow-wrap:anywhere}
+.cmsg.me{align-self:flex-end;background:#ffe9c7}
+.cmsg b{display:block;font-size:12px}
+.cmsg.sys{align-self:center;background:transparent;box-shadow:none;color:#8a6a50;font-size:13px}
+#chQuick{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+#chQuick button{flex:0 0 auto;background:#fff;border-radius:12px;padding:6px 10px;font-weight:700;font-size:14px;box-shadow:0 1px 0 var(--line)}
+#chForm{gap:6px;flex-wrap:nowrap}
+#chIn{flex:1;min-width:0;font-size:16px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:#fff}
+#chatPop{position:fixed;left:50%;top:calc(120px + var(--safeT));transform:translateX(-50%);z-index:41;display:flex;flex-direction:column;gap:6px;align-items:center;max-width:min(520px,90vw)}
+#chatPop div{background:#fff;border-radius:16px;padding:8px 14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);animation:pop .25s;cursor:pointer;border-left:6px solid var(--pri)}
+#chatPop div b{margin-right:6px}
+.slotrow{display:flex;align-items:center;gap:8px;background:#fff;border-radius:14px;padding:8px 10px;margin:6px 0;box-shadow:0 1px 0 var(--line)}
+.slotrow.on{background:#ffe9c7;box-shadow:0 0 0 3px var(--pri)}
+.slotrow input{flex:1;min-width:0;font-size:16px;font-weight:800;border:none;background:transparent;padding:4px}
+.slotrow .sub{white-space:nowrap}
 #toast div{background:rgba(40,25,15,.88);color:#fff;font-weight:800;padding:8px 16px;border-radius:14px;animation:pop .25s}
 /* кооп */
 .code{font-size:44px;font-weight:900;letter-spacing:8px;text-align:center;background:#fff;border-radius:18px;padding:8px;margin:8px 0;box-shadow:0 3px 0 var(--line)}
@@ -183,6 +207,7 @@ table.res td:last-child{text-align:right}
     <input id="meName" maxlength="14" placeholder="Імʼя кухарчика">
     <div class="row" id="meColors"></div>
     <div class="row" id="meHats"></div>
+    <button class="btn small" id="bSlot"></button>
   </div>
   <div class="row">
     <button class="btn pri big" id="bPlay">▶ Грати</button>
@@ -197,7 +222,7 @@ table.res td:last-child{text-align:right}
   <div class="topbar">
     <button class="iconbtn" id="mBack">🏠</button>
     <div class="row"><span class="pill" id="mStars">⭐ 0</span><span class="pill" id="netPill">👫 сам</span></div>
-    <button class="iconbtn" id="mSet">⚙️</button>
+    <div class="row" style="gap:8px"><button class="iconbtn chatb hide" id="mChat">💬<span class="badge hide"></span></button><button class="iconbtn" id="mSet">⚙️</button></div>
   </div>
   <div id="mapHint" class="pill">Торкнись міста на карті 🚚</div>
 </div>
@@ -205,13 +230,20 @@ table.res td:last-child{text-align:right}
 <!-- HUD гри -->
 <div id="hud" class="hide">
   <div id="orders"></div>
-  <div id="hudR"><div id="timer">3:00</div><button class="iconbtn" id="bPause">⏸</button><div id="zoomBox"><button id="bZin" title="Наблизити">+</button><button id="bZout" title="Віддалити">−</button></div><span class="pill hide" id="ping"></span></div>
+  <div id="hudR"><div id="timer">3:00</div><button class="iconbtn" id="bPause">⏸</button><button class="iconbtn chatb hide" id="hChat">💬<span class="badge hide"></span></button><div id="zoomBox"><button id="bZin" title="Наблизити">+</button><button id="bZout" title="Віддалити">−</button></div><span class="pill hide" id="ping"></span></div>
   <div id="score">0</div>
   <div id="hint" class="hide"></div>
 </div>
 <div id="touch" class="hide"></div>
 <div id="count" class="hide"></div>
 <div id="toast"></div>
+<div id="chatPop"></div>
+<div id="chat" class="hide">
+  <div class="chhead"><b>💬 Чат</b><button class="iconbtn" id="chClose">✕</button></div>
+  <div id="chList"></div>
+  <div id="chQuick"></div>
+  <form id="chForm" class="row"><input id="chIn" maxlength="200" autocomplete="off" placeholder="Напиши повідомлення…"><button class="btn pri small" id="chSend">➤</button></form>
+</div>
 <div class="rot">📱↻<br>Поверни пристрій горизонтально — так кухню видно краще</div>
 
 <!-- модальні вікна (вміст будується в main.js) -->

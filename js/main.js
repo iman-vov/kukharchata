@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.11';
+const VERSION = '1.12';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -30,6 +30,19 @@ const S = (() => {
   catch (_) { return d; }
 })();
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (_) { } }
+/* ---------- слоти збереження: окремий прогрес і своя кімната для кожної компанії ---------- */
+const PROG = ['stars', 'best', 'fails', 'assist', 'drinks', 'at', 'room', 'lastJoin'];
+const MAX_SLOTS = 6;
+if (!Array.isArray(S.slots) || !S.slots.length) { S.slots = [{ name: 'Моя гра' }]; S.slot = 0; }
+S.slot = Math.max(0, Math.min(S.slots.length - 1, S.slot | 0));
+function stashSlot() { const o = S.slots[S.slot]; for (const k of PROG) o[k] = S[k]; }
+function loadSlot(i) {
+  stashSlot(); S.slot = i; const o = S.slots[i], d = defaults();
+  for (const k of PROG) S[k] = o[k] !== undefined ? JSON.parse(JSON.stringify(o[k])) : d[k];
+  save();
+}
+const slotStars = o => Object.values((o === S.slots[S.slot] ? S.stars : o.stars) || {}).reduce((a, b) => a + b, 0);
+const slotName = () => S.slots[S.slot].name || ('Слот ' + (S.slot + 1));
 vol.music = S.set.music; vol.sfx = S.set.sfx;
 const unlockedOf = stars => { for (let i = 0; i < LEVELS.length; i++) if (!stars[LEVELS[i].id]) return i; return LEVELS.length - 1; };
 // скільки роботів: вибір для рівня, а соло — останній вибір гравця
@@ -130,6 +143,8 @@ function buildMe() {
   const on = $('#meHats .on'); if (on) { const bx = $('#meHats'); bx.scrollLeft = on.offsetLeft - bx.clientWidth / 2 + on.offsetWidth / 2; }
   $('#meColors').onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; S.color = +b.dataset.c; save(); buildMe(); buildTitleCooks(); sfx('click'); sendLocals(); };
   $('#meHats').onclick = e => { const b = e.target.closest('[data-h]'); if (!b) return; S.hat = +b.dataset.h; save(); buildMe(); buildTitleCooks(); sfx('click'); sendLocals(); };
+  $('#bSlot').textContent = `💾 ${slotName()} · ⭐ ${slotStars(S.slots[S.slot])} ▾`;
+  $('#bSlot').onclick = () => { audioInit(); sfx('click'); openSlots(); };
   const total = Object.values(S.stars).reduce((a, b) => a + b, 0);
   $('#titleInfo').textContent = `⭐ ${total} з ${LEVELS.length * 3} · версія ${VERSION}`;
 }
@@ -568,6 +583,7 @@ function updateNetPill() {
   if (net.role === 'solo') p.textContent = '👫 сам';
   else if (net.role === 'host') p.textContent = `👫 ${net.conns.length + 1} · ${net.code || 'офлайн'}`;
   else p.textContent = `👫 у ${hostName()}`;
+  updateChatBtns();
 }
 function turnCfg() { const t = S.set.turn; return (t.meteredUrl || t.turnUrl) ? t : null; }
 function inviteLink() {
@@ -576,6 +592,82 @@ function inviteLink() {
   const t = turnCfg(); if (t) u.searchParams.set('t', btoa(unescape(encodeURIComponent(JSON.stringify(t)))));
   return u.toString();
 }
+/* ---------- вибір слота збереження ---------- */
+function openSlots(back) {
+  stashSlot();
+  const busy = net.role !== 'solo';
+  const rows = S.slots.map((o, i) => `<div class="slotrow ${i === S.slot ? 'on' : ''}">
+      <input data-sn="${i}" maxlength="18" value="${esc(o.name || '')}" placeholder="Слот ${i + 1}">
+      <span class="sub">⭐ ${slotStars(o)}${o.room ? ' · 🏠 ' + o.room : ''}</span>
+      ${i === S.slot ? '<span class="sub">✓ зараз</span>' : `<button class="btn small blue" data-sp="${i}">Грати</button>`}
+      ${S.slots.length > 1 ? `<button class="btn small" data-sd="${i}" title="Видалити">🗑</button>` : ''}
+    </div>`).join('');
+  openModal(`<h2>💾 Збереження</h2>
+    <p class="kbd">Кожен слот — свій прогрес на карті й своя постійна кімната з окремим кодом. Наприклад: «Сам», «З племінницями», «З дружиною». Назву можна змінити, просто торкнувшись її.</p>
+    ${busy ? '<p class="status bad">Щоб змінити слот, спершу вийди з кімнати («Гра разом»).</p>' : ''}
+    ${rows}
+    <div class="btnrow">${S.slots.length < MAX_SLOTS && !busy ? '<button class="btn" id="slNew">➕ Новий слот</button>' : ''}<button class="btn pri" id="slOk">Готово</button></div>`, back);
+  document.querySelectorAll('[data-sn]').forEach(inp => inp.onchange = () => { S.slots[+inp.dataset.sn].name = inp.value.trim().slice(0, 18); save(); buildMe(); });
+  document.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => {
+    if (busy) { sfx('nope'); return; }
+    loadSlot(+b.dataset.sp); sfx('join'); toast(tr('Слот: ') + slotName()); buildMe(); openSlots(back);
+  });
+  document.querySelectorAll('[data-sd]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.sd; if (busy && i === S.slot) { sfx('nope'); return; }
+    if (!confirm(tr('Видалити слот «') + (S.slots[i].name || i + 1) + tr('» разом із його прогресом?'))) return;
+    if (i === S.slot) loadSlot(i === 0 ? 1 : 0);
+    S.slots.splice(i, 1); if (i < S.slot) S.slot--; save(); buildMe(); openSlots(back);
+  });
+  if ($('#slNew')) $('#slNew').onclick = () => { S.slots.push({ name: tr('Слот ') + (S.slots.length + 1) }); loadSlot(S.slots.length - 1); sfx('join'); buildMe(); openSlots(back); };
+  $('#slOk').onclick = () => { sfx('click'); closeModal(); if (app.scene === 'map') goMap(); };
+}
+
+/* ---------- чат ---------- */
+const QUICK = ['Привіт! 👋', 'Граємо? 😋', 'Ще раз!', 'Неси тарілки! 🍽', 'Я ріжу 🔪', 'Помий посуд 🧽', 'Пожежа! 🔥', 'Супер! 🎉', 'Дякую! ❤', 'Па-па! 👋'];
+const chat = { list: [], open: false, unread: 0 };
+function chatAdd(m, mine) {
+  chat.list.push({ ...m, mine }); if (chat.list.length > 80) chat.list.shift();
+  if (chat.open) renderChat();
+  else if (!mine) {
+    chat.unread++; updateChatBtns(); sfx('msg');
+    const d = document.createElement('div');
+    d.innerHTML = `<b style="color:#${COOK_COLORS[(m.c | 0) % 6].c.toString(16).padStart(6, '0')}">${esc(m.n)}:</b>${esc(m.t)}`;
+    d.onclick = () => openChat();
+    $('#chatPop').appendChild(d); while ($('#chatPop').children.length > 3) $('#chatPop').firstChild.remove();
+    setTimeout(() => d.remove(), 6000);
+  }
+}
+function chatSys(t) { chat.list.push({ sys: true, t }); if (chat.open) renderChat(); }
+function sendChat(text) {
+  text = String(text || '').trim().slice(0, 200); if (!text || net.role === 'solo') return;
+  const m = { k: 'chat', n: myName(), c: S.color, t: text };
+  if (net.role === 'host') net.broadcast(m); else net.send(m);
+  chatAdd(m, true); sfx('click');
+}
+function renderChat() {
+  const L = $('#chList');
+  L.innerHTML = chat.list.map(m => m.sys ? `<div class="cmsg sys">${esc(m.t)}</div>` : `<div class="cmsg ${m.mine ? 'me' : ''}"><b style="color:#${COOK_COLORS[(m.c | 0) % 6].c.toString(16).padStart(6, '0')}">${esc(m.n)}</b>${esc(m.t)}</div>`).join('') || `<div class="cmsg sys">${tr('Тут поки тихо. Напиши щось!')}</div>`;
+  L.scrollTop = L.scrollHeight;
+}
+function openChat() {
+  chat.open = true; chat.unread = 0; updateChatBtns(); $('#chatPop').innerHTML = '';
+  $('#chat').classList.remove('hide'); renderChat();
+  $('#chQuick').innerHTML = QUICK.map((q, i) => `<button data-q="${i}">${q}</button>`).join('');
+}
+function closeChat() { chat.open = false; $('#chat').classList.add('hide'); $('#chIn').blur(); }
+function updateChatBtns() {
+  const on = net.role !== 'solo';
+  for (const b of document.querySelectorAll('.chatb')) {
+    b.classList.toggle('hide', !on);
+    const g = b.querySelector('.badge'); g.textContent = chat.unread > 9 ? '9+' : chat.unread; g.classList.toggle('hide', !chat.unread);
+  }
+  if (!on && chat.open) closeChat();
+}
+$('#mChat').onclick = $('#hChat').onclick = () => { sfx('click'); chat.open ? closeChat() : openChat(); };
+$('#chClose').onclick = () => { sfx('click'); closeChat(); };
+$('#chQuick').onclick = e => { const b = e.target.closest('[data-q]'); if (b) sendChat(tr(QUICK[+b.dataset.q])); };
+$('#chForm').onsubmit = e => { e.preventDefault(); sendChat($('#chIn').value); $('#chIn').value = ''; };
+
 let coopTab = 'online', coopCleanup = null;
 function openCoop(tab) {
   if (tab) coopTab = tab;
@@ -586,6 +678,7 @@ function openCoop(tab) {
   if (coopTab === 'online') {
     if (r === 'solo') body = `
       <p>Один створює кімнату й надсилає посилання або код. Можна грати з будь-якої країни — потрібен лише інтернет.</p>
+      <div class="slotrow"><span style="flex:1">💾 <b>${esc(slotName())}</b> · ⭐ ${slotStars(S.slots[S.slot])}</span><button class="btn small" id="oSlot">Змінити слот</button></div>
       <div class="btnrow" style="justify-content:flex-start"><button class="btn pri" id="oHost">🏠 Створити кімнату${S.room ? ' ' + S.room : ''}</button></div>
       <div class="field"><label>Або введи код кімнати:</label><input id="oCode" inputmode="numeric" maxlength="4" placeholder="1234" value="${esc(S.lastJoin || '')}"></div>
       <div class="btnrow" style="justify-content:flex-start"><button class="btn blue" id="oJoin">🚪 Приєднатися</button></div>
@@ -623,6 +716,7 @@ function openCoop(tab) {
   $('#oOk').onclick = () => { sfx('click'); closeModal(); if (net.role !== 'solo' && app.scene === 'title') goMap(); };
   if ($('#oLeave')) $('#oLeave').onclick = () => { leaveRoom(); openCoop(); };
   if ($('#oHost')) $('#oHost').onclick = () => hostRoom();
+  if ($('#oSlot')) $('#oSlot').onclick = () => { sfx('click'); openSlots(); };
   if ($('#oJoin')) $('#oJoin').onclick = () => joinRoom($('#oCode').value);
   if ($('#oShare')) $('#oShare').onclick = async () => {
     const link = location.href.split('?')[0].split('#')[0], text = tr(`Давай готувати разом у «Кухарчатах»! 🍳 Код кімнати:`) + ` ${net.code}\n` + tr('Відкрий гру з іконки → «Гра разом» → введи код → «Приєднатися».') + `\n` + tr('Якщо гри ще немає:') + ` ${link}`;
@@ -759,7 +853,7 @@ function hostMsg(conn, d) {
       let e = roster.find(x => x.dev === d.dev);
       if (e) e.conn = conn; else { e = { dev: d.dev, conn, name: d.name, locals: d.locals || [] }; roster.push(e); }
       e.name = d.name; e.locals = d.locals || [];
-      toast(`${d.name} приєднався! 👫`); sfx('join');
+      toast(`${d.name} приєднався! 👫`); sfx('join'); chatSys(d.name + tr(' приєднався'));
       syncMapState();
       conn.send({ k: 'welcome', hostName: myName(), map: mapState, roster: rosterSummary() });
       broadcastRoster();
@@ -783,6 +877,7 @@ function hostMsg(conn, d) {
     case 'pos': { const p = app.sim && app.sim.players.find(q => q.id === d.pid); if (p && p.remote) { p.tx = d.x; p.ty = d.y; if (Math.hypot(p.x - d.x, p.y - d.y) > 2) { p.x = d.x; p.y = d.y; } p.fx = d.fx; p.fy = d.fy; p.moving = !!d.mv; } break; }
     case 'act': { const p = app.sim && app.sim.players.find(q => q.id === d.pid); if (p && app.sim.started && !app.sim.over) { if (d.a === 'grab') app.sim.grab(p); if (d.a === 'throw') app.sim.throwItem(p); } break; }
     case 'use': { const p = app.sim && app.sim.players.find(q => q.id === d.pid); if (p) p.using = !!d.on; break; }
+    case 'chat': { const m = { k: 'chat', n: String(d.n || '').slice(0, 20), c: d.c | 0, t: String(d.t || '').slice(0, 200) }; if (!m.t) break; net.broadcast(m, conn); chatAdd(m, false); break; }
   }
 }
 function guestMsg(d) {
@@ -807,7 +902,8 @@ function guestMsg(d) {
       if (d.stars) { const id = LEVELS[d.li].id; S.stars[id] = Math.max(S.stars[id] || 0, d.stars); save(); }
       if (app.scene === 'level') { app.over = true; showResult(d); }
       break;
-    case 'bye': toast(`${hostName()} закрив кімнату`); net.leave(); app.guestRoster = null; updateNetPill(); if (app.scene === 'level') endLevelCleanup(); closeModal(); goMap(); break;
+    case 'chat': chatAdd({ n: String(d.n || '').slice(0, 20), c: d.c | 0, t: String(d.t || '').slice(0, 200) }, false); break;
+    case 'bye': chatSys(tr('Кімнату закрито')); toast(`${hostName()} закрив кімнату`); net.leave(); app.guestRoster = null; updateNetPill(); if (app.scene === 'level') endLevelCleanup(); closeModal(); goMap(); break;
   }
 }
 
@@ -824,7 +920,7 @@ function zoomBy(f) { if (app.scene !== 'level' || !app.view) return; app.zoom = 
 $('#bZin').onclick = () => zoomBy(1.3);
 $('#bZout').onclick = () => zoomBy(1 / 1.3);
 addEventListener('wheel', e => { if (app.scene === 'level' && app.view) { app.zoom = app.view.setZoom((app.zoom || 1) * Math.exp(-e.deltaY * 0.0015)); } }, { passive: true });
-addEventListener('keydown', e => { if (e.key === '+' || e.key === '=') zoomBy(1.3); else if (e.key === '-' || e.key === '_') zoomBy(1 / 1.3); });
+addEventListener('keydown', e => { if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return; if (e.key === '+' || e.key === '=') zoomBy(1.3); else if (e.key === '-' || e.key === '_') zoomBy(1 / 1.3); });
 addEventListener('orientationchange', () => setTimeout(resize, 300));
 let last = performance.now();
 function frame(now) {

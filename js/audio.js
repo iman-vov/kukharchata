@@ -55,6 +55,7 @@ export function sfx(name) {
     case 'go': tone(523, t, 0.15, 'triangle', 0.25); tone(659, t + 0.12, 0.15, 'triangle', 0.25); tone(784, t + 0.24, 0.3, 'triangle', 0.25); break;
     case 'star': tone(1318, t, 0.25, 'triangle', 0.22); tone(1976, t + 0.05, 0.35, 'sine', 0.15); break;
     case 'end': [523, 659, 784, 1046].forEach((f, i) => tone(f, t + i * 0.12, 0.3, 'triangle', 0.22)); break;
+    case 'msg': tone(988, t, 0.1, 'sine', 0.18); tone(1319, t + 0.09, 0.16, 'sine', 0.16); break;
     case 'click': tone(700, t, 0.05, 'triangle', 0.15); break;
     case 'join': tone(660, t, 0.12, 'sine', 0.2); tone(990, t + 0.1, 0.2, 'sine', 0.2); break;
     case 'nope': tone(220, t, 0.1, 'square', 0.08); break;
