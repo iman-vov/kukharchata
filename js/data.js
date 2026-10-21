@@ -8,7 +8,7 @@ import { genKitchen } from './gen.js';
 // chop — чи ріжеться; pot/pan/oven — з якого стану його можна класти в каструлю / пательню / піч.
 export const ING = {
   tomato:    { name: 'Помідор',   icon: '🍅', col: 0xe8412c, shape: 'ball',   chop: true, pot: 'c', oven: 'c' },
-  lettuce:   { name: 'Салат',     icon: '🥬', col: 0x6cc24a, shape: 'leaf',   chop: true },
+  lettuce:   { name: 'Листя салату',     icon: '🥬', col: 0x6cc24a, shape: 'leaf',   chop: true },
   cucumber:  { name: 'Огірок',    icon: '🥒', col: 0x3f9b3a, shape: 'stick',  chop: true },
   onion:     { name: 'Цибуля',    icon: '🧅', col: 0xe9c79a, shape: 'ball',   chop: true, pot: 'c' },
   beet:      { name: 'Буряк',     icon: '@beet', col: 0x8e1b4f, shape: 'ball', chop: true, pot: 'c' },

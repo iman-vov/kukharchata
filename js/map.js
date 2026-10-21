@@ -2,6 +2,7 @@
 import * as THREE from 'three';
 import { LEVELS, MAP, COUNTRIES } from './data.js';
 import { textSprite } from './render.js';
+import { tr } from './i18n.js';
 
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, ...o });
 function m(geo, mt, x = 0, y = 0, z = 0) { const o = new THREE.Mesh(geo, mt); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; }
@@ -135,7 +136,7 @@ export class MapView {
       const pole = m(new THREE.CylinderGeometry(0.05, 0.05, 2.4), mat(0x777777), I.r * 0.55, 1.8, -I.r * 0.45); g.add(pole);
       const fl = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 0.8), new THREE.MeshStandardMaterial({ map: flag(COUNTRIES[cc].flag, COUNTRIES[cc].hflag), side: THREE.DoubleSide }));
       fl.position.set(I.r * 0.55 + 0.62, 2.6, -I.r * 0.45); fl.name = 'flag'; g.add(fl);
-      const lab = textSprite(COUNTRIES[cc].name, '#ffffff', 0.9, 'rgba(30,60,90,.75)'); lab.position.set(0, 2.2, -I.r - 0.6); g.add(lab);
+      const lab = textSprite(tr(COUNTRIES[cc].name), '#ffffff', 0.9, 'rgba(30,60,90,.75)'); lab.position.set(0, 2.2, -I.r - 0.6); g.add(lab);
       // дерева
       for (let i = 0; i < 6; i++) { const a = i * 1.1 + I.x + 0.5, rr = I.r * 0.9; g.add(m(new THREE.ConeGeometry(0.35, 0.9, 7), mat(0x3f8f4a), Math.cos(a) * rr, 1.05, Math.sin(a) * rr)); }
       s.add(g);
@@ -148,7 +149,7 @@ export class MapView {
       const p = new THREE.Group(); p.position.copy(this.pts[i]);
       const base = m(new THREE.CylinderGeometry(0.55, 0.6, 0.14, 18), mat(0xffffff), 0, 0.07); p.add(base);
       const top = m(new THREE.CylinderGeometry(0.42, 0.42, 0.16, 18), mat(l.finale ? 0xffc93c : 0xe5484d), 0, 0.16); top.name = 'top'; p.add(top);
-      const lab = textSprite(l.finale ? '🎉 Бенкет' : l.city, '#ffffff', 0.55, 'rgba(0,0,0,.6)'); lab.position.y = 1.0; p.add(lab);
+      const lab = textSprite(tr(l.finale ? '🎉 Бенкет' : l.city), '#ffffff', 0.55, 'rgba(0,0,0,.6)'); lab.position.y = 1.0; p.add(lab);
       const st = textSprite('☆☆☆', '#ffd23f', 0.45, 'rgba(0,0,0,.5)'); st.position.y = 1.55; st.name = 'stars'; p.add(st);
       p.userData = { i, top, lab, starsSprite: st };
       this.scene.add(p); this.pins.push(p);

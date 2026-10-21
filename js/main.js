@@ -8,11 +8,12 @@ import { Input } from './input.js';
 import { audioInit, sfx, music, musicRate, stopMusic, vol, setVolumes } from './audio.js';
 import { Net, qrCanvas, scanQR, cameraOn, cameraOff } from './net.js';
 import { ingHTML, recipeHTML } from './icons.js';
+import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 const HAT_ICONS = ['👨‍🍳', '🎀', '🧢', '👑', '🐻', '🌸'];
 const HAT_NAMES = ['ковпак', 'бандана', 'кепка', 'корона', 'вушка', 'квітка'];
-const VERSION = '1.2';
+const VERSION = '1.3';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -32,7 +33,7 @@ vol.music = S.set.music; vol.sfx = S.set.sfx;
 const unlockedOf = stars => { for (let i = 0; i < LEVELS.length; i++) if (!stars[LEVELS[i].id]) return i; return LEVELS.length - 1; };
 const drinkOn = lv => S.drinks[lv.id] ?? S.set.drinks;
 const SID = S.dev + rid().slice(0, 3); // ідентифікатор пристрою на цю сесію
-const myName = () => (S.name || '').trim() || 'Кухарчик';
+const myName = () => (S.name || '').trim() || tr('Кухарчик');
 
 /* ================= рендер ================= */
 const canvas = $('#gl');
@@ -95,13 +96,13 @@ function dialogHTML(lines) {
 }
 const STEP_TXT = { c: 'наріж', b: 'звари', f: 'підсмаж', k: 'запечи' };
 function howTo(rid) {
-  if (RECIPES[rid].drink) return RECIPES[rid].c.map(k => { const [id, s] = k.split(':'); return (s === 'l' ? 'налий ' : 'додай ') + ING[id].name.toLowerCase(); }).join(' · ');
+  if (RECIPES[rid].drink) return RECIPES[rid].c.map(k => { const [id, s] = k.split(':'); return (s === 'l' ? 'налий ' : 'додай ') + ING[id].name; }).join(' · ');
   const parts = RECIPES[rid].c.map(k => { const [id, s] = k.split(':'); return [id, s]; });
   const seen = new Set(), steps = [];
   for (const [id, s] of parts) {
     if (seen.has(id + s)) continue; seen.add(id + s);
     const p = pathOf(id, s).slice(1).map(x => STEP_TXT[x]);
-    steps.push(ING[id].name.toLowerCase() + (p.length ? ': ' + p.join(' → ') : ''));
+    steps.push(ING[id].name + (p.length ? ': ' + p.join(' → ') : ''));
   }
   return steps.join(' · ');
 }
@@ -110,7 +111,14 @@ function recipesHTML(lv, drinks) {
 }
 
 /* ================= титульний екран ================= */
+function buildLangRow() {
+  let row = $('#langRow');
+  if (!row) { row = document.createElement('div'); row.id = 'langRow'; row.className = 'row'; row.style.cssText = 'position:absolute;top:calc(10px + var(--safeT));right:calc(10px + var(--safeR));gap:6px'; $('#title').appendChild(row); }
+  row.innerHTML = LANGS.map(([c, f]) => `<button class="hatb ${c === LANG ? 'on' : ''}" data-l="${c}" style="width:44px">${f}</button>`).join('');
+  row.onclick = e => { const b = e.target.closest('[data-l]'); if (b) setLang(b.dataset.l); };
+}
 function buildMe() {
+  buildLangRow();
   $('#meName').value = S.name;
   $('#meName').oninput = () => { S.name = $('#meName').value.slice(0, 14); save(); };
   $('#meColors').innerHTML = COOK_COLORS.map((c, i) => `<button class="sw ${i === S.color ? 'on' : ''}" style="background:#${c.c.toString(16).padStart(6, '0')}" data-c="${i}" aria-label="${c.name}"></button>`).join('');
@@ -125,7 +133,7 @@ function goTitle() {
   document.body.classList.remove('playing');
   buildMe(); buildTitleCooks(); music('map', 104);
 }
-$('#bPlay').onclick = () => { audioInit(); sfx('click'); if (!S.name.trim()) { S.name = 'Кухарчик'; save(); } goMap(); };
+$('#bPlay').onclick = () => { audioInit(); sfx('click'); if (!S.name.trim()) { S.name = tr('Кухарчик'); save(); } goMap(); };
 $('#bCoop').onclick = () => { audioInit(); sfx('click'); openCoop(); };
 $('#bSet').onclick = () => { audioInit(); sfx('click'); openSettings(); };
 
@@ -405,7 +413,7 @@ function hudFrame() {
   // пінг
   if (net.role !== 'solo') {
     const c = net.role === 'guest' ? net.hostConn : null;
-    $('#ping').textContent = net.role === 'host' ? `👫 ${net.conns.length + 1} пристр.` : c ? `📶 ${Math.round(c.rtt)} мс${c.relay ? ' · через TURN' : ''}` : '📶 …';
+    $('#ping').textContent = net.role === 'host' ? `👫 ${net.conns.length + 1} пристр.` : c ? `📶 ${Math.round(c.rtt)} ms${c.relay ? ' · через TURN' : ''}` : '📶 …';
   }
   // підказки
   const hint = $('#hint');
@@ -425,7 +433,7 @@ function hintFor(p) {
   if (!H) {
     const t = sim.facing(p);
     if (t && t.type === 'board' && t.item && t.item.t === 'i' && t.item.s === 'r') return `Тримай ${U}, щоб нарізати`;
-    if (t && t.type === 'crate') return `${G} — взяти ${ING[t.ing].name.toLowerCase()}`;
+    if (t && t.type === 'crate') return `${G} — взяти ${ING[t.ing].name}`;
     if (t && t.type === 'sink' && t.dirty) return `Тримай ${U}, щоб помити тарілку`;
     return 'Візьми продукти з ящика для замовлення ↖';
   }
@@ -505,6 +513,7 @@ function openSettings() {
   openModal(`<h2>⚙️ Налаштування</h2>
     <div class="field"><label>🎵 Музика</label><input type="range" min="0" max="1" step="0.05" value="${st.music}" id="sMus"></div>
     <div class="field"><label>🔊 Звуки</label><input type="range" min="0" max="1" step="0.05" value="${st.sfx}" id="sSfx"></div>
+    <h3>🌐 Мова</h3><div class="row" style="justify-content:flex-start">${LANGS.map(([c, f, n]) => `<button class="chip ${c === LANG ? 'on' : ''}" data-lang="${c}">${f} ${n}</button>`).join('')}</div>
     <h3>Керування</h3>
     <div class="assist" style="background:#fff"><div style="flex:1">📱 Сенсорне керування / клавіатура</div><button class="toggle ${st.touch ? 'on' : ''}" id="sTouch"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">👆👆 Двоє гравців на одному екрані<br><span class="sub" style="font-size:13px">Ліва й права половини екрана — окремі кухарі</span></div><button class="toggle ${st.shared ? 'on' : ''}" id="sShared"></button></div>
@@ -523,10 +532,17 @@ function openSettings() {
   tog('#sPad', () => st.padMode = st.padMode === 'me' ? 'own' : 'me');
   tog('#sHints', () => st.hints = !st.hints);
   tog('#sHall', () => st.hall = !st.hall);
-  $('#sReset').onclick = () => { if (confirm('Скинути всі зірки й пройдені міста?')) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
+  document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang));
+  $('#sReset').onclick = () => { if (confirm(tr('Скинути всі зірки й пройдені міста?'))) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
   $('#sOk').onclick = () => { sfx('click'); closeModal(); };
 }
 
+function setLang(c) {
+  if (c === LANG) return;
+  S.set.lang = c; save();
+  if (app.scene === 'level') { toast('✓'); return; } // застосується після рівня
+  location.reload();
+}
 /* ================= гра разом ================= */
 function updateNetPill() {
   const p = $('#netPill');
@@ -590,8 +606,8 @@ function openCoop(tab) {
   if ($('#oHost')) $('#oHost').onclick = () => hostRoom();
   if ($('#oJoin')) $('#oJoin').onclick = () => joinRoom($('#oCode').value);
   if ($('#oShare')) $('#oShare').onclick = async () => {
-    const link = inviteLink(), text = `Давай готувати разом у «Кухарчатах»! 🍳 Код кімнати: ${net.code}\n${link}`;
-    try { if (navigator.share) await navigator.share({ title: 'Кухарчата', text, url: link }); else { await navigator.clipboard.writeText(text); toast('Посилання скопійовано'); } } catch (_) { }
+    const link = inviteLink(), text = tr(`Давай готувати разом у «Кухарчатах»! 🍳 Код кімнати:`) + ` ${net.code}\n${link}`;
+    try { if (navigator.share) await navigator.share({ title: tr('Кухарчата'), text, url: link }); else { await navigator.clipboard.writeText(text); toast('Посилання скопійовано'); } } catch (_) { }
   };
   if ($('#tMet')) {
     const saveT = () => { Object.assign(S.set.turn, { meteredUrl: $('#tMet').value.trim(), turnUrl: $('#tUrl').value.trim(), turnUser: $('#tUser').value.trim(), turnPass: $('#tPass').value.trim() }); save(); };
@@ -816,6 +832,7 @@ $('#modal').addEventListener('pointerdown', e => { if (e.target.id === 'modal' &
 /* ---------- старт ---------- */
 document.addEventListener('visibilitychange', () => { if (document.hidden && app.scene === 'level' && net.role === 'solo' && !app.modal) openPause(); if (!document.hidden && app.scene === 'level') keepAwake(true); });
 document.addEventListener('pointerdown', () => audioInit(), { once: true });
+initLang(S.set.lang);
 goTitle();
 resize();
 requestAnimationFrame(frame);
