@@ -3,12 +3,14 @@ import * as THREE from 'three';
 import { ING, RECIPES, COOKER, COOK_COLORS } from './data.js';
 import { cookerState, cookerNeed } from './sim.js';
 import { drawIcon, drawIng } from './icons.js';
+import { Decor } from './decor.js';
 
 export const THEMES = {
   ua: { sky: 0xcfe8ff, ground: 0x86c45f, floorA: 0xf6efdc, floorB: 0xdbe7f6, body: 0xc89a6a, top: 0xf7f2e6, accent: 0x2f6fd6, accent2: 0xffd23f, decor: 'sunflower' },
   it: { sky: 0xffeacb, ground: 0xd8c08c, floorA: 0xe8b38a, floorB: 0xf4d6b8, body: 0x6f9e66, top: 0xf8f5ef, accent: 0xd63a3a, accent2: 0x2f9e44, decor: 'lemon' },
   jp: { sky: 0xffe3ec, ground: 0x9bcf7d, floorA: 0xdccb9e, floorB: 0xe9ddb8, body: 0x7a3b2e, top: 0xeee7d6, accent: 0xd63a3a, accent2: 0xffffff, decor: 'sakura' },
   mx: { sky: 0xffdcae, ground: 0xe9cb8c, floorA: 0xf2c38b, floorB: 0x93d5cb, body: 0x2a9d8f, top: 0xf6e7c8, accent: 0xe76f51, accent2: 0xf4a261, decor: 'cactus' },
+  de: { sky: 0xd6ebff, ground: 0x7fbf5f, floorA: 0xd9b48a, floorB: 0xc79f72, body: 0x6b4426, top: 0xf3ead8, accent: 0x2f78c8, accent2: 0xffffff, decor: 'bavaria' },
   us: { sky: 0xcad8ea, ground: 0x8fa0ad, floorA: 0xf4f4f4, floorB: 0x2e2e33, body: 0xc0392b, top: 0xdde1e6, accent: 0x3355aa, accent2: 0xffffff, decor: 'city' },
 };
 
@@ -109,6 +111,7 @@ export function makeIngMesh(id, s) {
     case 'disc': g.add(mesh(G.cyl, m, 0.22, 0.05, 0.22, 0, 0.03)); break;
     case 'sack': g.add(mesh(G.sph, mat(0xe9dcc0), 0.15, 0.17, 0.15, 0, 0.17)); g.add(mesh(G.cyl, m, 0.1, 0.03, 0.1, 0, 0.33)); g.add(mesh(G.tor, mat(0x8a5a2b), 0.06, 0.06, 0.06, 0, 0.3)); g.children[2].rotation.x = Math.PI / 2; break;
     case 'sheet': g.add(mesh(G.box, m, 0.3, 0.02, 0.3, 0, 0.01)); g.add(mesh(G.box, m, 0.28, 0.02, 0.28, 0.01, 0.03)); break;
+    case 'cube': for (let i = 0; i < 3; i++) g.add(mesh(G.box, mat(0xdff6ff, { transparent: true, opacity: 0.8, roughness: 0.1 }), 0.1, 0.1, 0.1, (i - 1) * 0.09, 0.06 + (i % 2) * 0.05, (i % 2) * 0.05)); break;
     case 'jar': g.add(mesh(G.cyl, m, 0.11, 0.2, 0.11, 0, 0.1)); g.add(mesh(G.cyl, mat(0x4a90d9), 0.12, 0.05, 0.12, 0, 0.22)); break;
     default: g.add(mesh(G.sph, m, 0.15, 0.15, 0.15, 0, 0.15));
   }
@@ -155,6 +158,22 @@ export function makeItemMesh(it) {
     });
     return g;
   }
+  if (it.t === 'c') { // кухоль
+    const g = new THREE.Group();
+    g.add(mesh(G.cyl, mat(0xffffff, { roughness: 0.25, transparent: true, opacity: 0.88 }), 0.13, 0.26, 0.13, 0, 0.13));
+    const h = mesh(G.tor, mat(0xffffff, { roughness: 0.25 }), 0.08, 0.08, 0.08, 0.15, 0.14); h.rotation.y = Math.PI / 2; g.add(h);
+    const liq = it.c.filter(c => c.s === 'l');
+    if (liq.length) {
+      const col = liq.reduce((a, c) => a.add(new THREE.Color(ING[c.id].col)), new THREE.Color(0, 0, 0)).multiplyScalar(1 / liq.length);
+      g.add(mesh(G.cyl, mat(col.getHex(), { roughness: 0.2 }), 0.115, 0.1 * liq.length + 0.02, 0.115, 0, 0.03 + (0.1 * liq.length) / 2));
+    }
+    const top = 0.06 + 0.1 * liq.length;
+    for (const c of it.c) {
+      if (c.id === 'ice') for (let i = 0; i < 3; i++) g.add(mesh(G.box, mat(0xe6f8ff, { transparent: true, opacity: 0.85 }), 0.06, 0.06, 0.06, (i - 1) * 0.05, top, (i % 2) * 0.04));
+      if (c.id === 'caramel') g.add(mesh(G.cyl, mat(0xc98a2a, { roughness: 0.2 }), 0.1, 0.02, 0.1, 0, top + 0.03));
+    }
+    return g;
+  }
   if (it.t === 'd') { const g = new THREE.Group(); for (let i = 0; i < Math.min(it.n, 6); i++) { const p = plateMesh(true); p.position.y = i * 0.05; g.add(p); } return g; }
   if (it.t === 'k') return cookerMesh(it);
   if (it.t === 'x') {
@@ -169,7 +188,7 @@ export function makeItemMesh(it) {
 export function itemKey(it) {
   if (!it) return '';
   if (it.t === 'i') return 'i' + it.id + it.s;
-  if (it.t === 'p') return 'p' + it.c.map(c => c.id + c.s).join(',');
+  if (it.t === 'p' || it.t === 'c') return it.t + it.c.map(c => c.id + c.s).join(',');
   if (it.t === 'k') return 'k' + it.k + it.c.map(c => c.id + c.s).join(',') + cookerState(it);
   if (it.t === 'd') return 'd' + it.n;
   return it.t;
@@ -279,6 +298,18 @@ function stationMesh(t, th) {
     }
     case 'sink': counter(); g.add(mesh(G.box, mat(0x9ec9e6, { roughness: 0.15, metalness: 0.2 }), 0.62, 0.04, 0.58, 0, TOP_Y + 0.005)); g.add(mesh(G.cylLo, mat(0xb8c2cc, { metalness: 0.7, roughness: 0.2 }), 0.03, 0.3, 0.03, 0.3, TOP_Y + 0.15, -0.3)); break;
     case 'plates': counter(); break;
+    case 'mugs': counter(); for (let i = 0; i < 4; i++) { const c = makeItemMesh({ t: 'c', c: [] }); c.position.set((i % 2 - 0.5) * 0.36, TOP_Y + Math.floor(i / 2) * 0.27, (i % 2 ? 0.1 : -0.1)); g.add(c); } break;
+    case 'tap': {
+      counter();
+      const col = ING[t.liq].col;
+      g.add(mesh(G.box, mat(0xd9dee4, { metalness: 0.5, roughness: 0.3 }), 0.7, 0.75, 0.42, 0, TOP_Y + 0.375, -0.24));
+      g.add(mesh(G.box, mat(col, { roughness: 0.3 }), 0.66, 0.22, 0.02, 0, TOP_Y + 0.55, -0.02));
+      g.add(mesh(G.box, mat(0x555a60, { metalness: 0.6 }), 0.08, 0.14, 0.08, 0, TOP_Y + 0.38, 0.0));
+      g.add(mesh(G.box, mat(0x3a3f45), 0.5, 0.03, 0.4, 0, TOP_Y + 0.015, 0.1));
+      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIcon(c, ING[t.liq].icon, 48, 48, 72); }, 0.34);
+      lab.position.set(0, TOP_Y + 1.0, -0.1); lab.material.depthTest = true; g.add(lab);
+      break;
+    }
     case 'serve': {
       counter(th.accent);
       const belt = mesh(G.box, mat(0x2b2b2b), 0.9, 0.03, 0.8, 0, TOP_Y + 0.02); g.add(belt);
@@ -330,8 +361,8 @@ function bar() {
 
 /* ================================================================ */
 export class KitchenView {
-  constructor(renderer, sim, theme) {
-    this.r = renderer; this.sim = sim; this.th = THEMES[theme] || THEMES.ua;
+  constructor(renderer, sim, theme, opts = {}) {
+    this.r = renderer; this.sim = sim; this.th = THEMES[theme] || THEMES.ua; this.themeName = THEMES[theme] ? theme : 'ua'; this.opts = opts;
     const s = this.scene = new THREE.Scene();
     s.background = new THREE.Color(this.th.sky);
     s.fog = new THREE.Fog(this.th.sky, 30, 60);
@@ -380,6 +411,8 @@ export class KitchenView {
       const m = stationMesh(t, th); m.position.set(t.x, 0, t.y); scene.add(m); this.stations.set(t, m);
     }
     this.decor();
+    this.dec = new Decor(scene, sim, this.themeName, { hall: !!this.opts.hall });
+    this.hallSide = this.opts.hall ? this.dec.side : null;
   }
   decor() {
     const { sim, th, scene } = this;
@@ -389,6 +422,8 @@ export class KitchenView {
       const a = rnd() * Math.PI * 2, d = 2.5 + rnd() * 9;
       const x = sim.w / 2 + Math.cos(a) * (sim.w / 2 + d), z = sim.h / 2 + Math.sin(a) * (sim.h / 2 + d);
       if (z > sim.h + 1.5 && Math.abs(x - sim.w / 2) < sim.w * 0.7) continue; // не затуляти передній край
+      if (z < 0.5 && z > -9 && x > -2 && x < sim.w + 1) continue; // там стіна і зала
+      if (x > sim.w - 1 && x < sim.w + 8 && z > -1 && z < sim.h + 1 && this.opts.hall) continue;
       spots.push([x, z, 0.7 + rnd() * 0.6]);
     }
     for (const [x, z, s] of spots) {
@@ -398,6 +433,13 @@ export class KitchenView {
         case 'lemon': g.add(mesh(G.cylLo, mat(0x7a5236), 0.08, 0.9, 0.08, 0, 0.45)); g.add(mesh(G.sph, mat(0x4f9a3f), 0.6, 0.5, 0.6, 0, 1.2)); for (let i = 0; i < 4; i++) g.add(mesh(G.sphLo, mat(0xffe14d), 0.09, 0.09, 0.09, Math.cos(i * 1.6) * 0.5, 1.1 + (i % 2) * 0.2, Math.sin(i * 1.6) * 0.5)); break;
         case 'sakura': g.add(mesh(G.cylLo, mat(0x5a3a2a), 0.09, 1.0, 0.09, 0, 0.5)); g.add(mesh(G.sph, mat(0xffb7cf), 0.75, 0.55, 0.75, 0, 1.35)); g.add(mesh(G.sph, mat(0xffd1e0), 0.5, 0.4, 0.5, 0.3, 1.55, 0.2)); break;
         case 'cactus': g.add(mesh(new THREE.CapsuleGeometry(0.18, 0.9, 4, 10), mat(0x3f9b55), 1, 1, 1, 0, 0.6)); g.add(mesh(new THREE.CapsuleGeometry(0.1, 0.35, 4, 8), mat(0x3f9b55), 1, 1, 1, 0.28, 0.75)); g.add(mesh(G.sphLo, mat(0xff6f91), 0.07, 0.07, 0.07, 0, 1.2)); break;
+        case 'bavaria': {
+          if (rnd() < 0.15) { // майське дерево
+            g.add(mesh(G.cylLo, mat(0xffffff), 0.07, 4, 0.07, 0, 2)); for (let i = 0; i < 8; i++) g.add(mesh(G.cylLo, mat(0x2f78c8), 0.075, 0.18, 0.075, 0, 0.3 + i * 0.45));
+            g.add(mesh(G.tor, mat(0x2e7d32), 0.35, 0.35, 0.35, 0, 3.6)).rotation.x = Math.PI / 2;
+          } else { g.add(mesh(G.cylLo, mat(0x6b4a2e), 0.1, 1.1, 0.1, 0, 0.55)); g.add(mesh(G.sph, mat(0x3f8a3a), 0.7, 0.6, 0.7, 0, 1.45)); g.add(mesh(G.sph, mat(0x4f9a46), 0.45, 0.4, 0.45, 0.35, 1.75, 0.1)); }
+          break;
+        }
         case 'city': { const h = 1 + rnd() * 3.5; g.add(mesh(G.box, mat([0x8899aa, 0x6f7f90, 0xa3b1bf, 0xc7a27a][Math.floor(rnd() * 4)]), 1.1, h, 1.1, 0, h / 2)); for (let i = 0; i < h * 2; i++) g.add(mesh(G.box, mat(0xfff3b0, { emissive: 0xffe08a, emissiveIntensity: 0.3 }), 0.9, 0.08, 1.12, 0, 0.4 + i * 0.45)); break; }
       }
       scene.add(g);
@@ -409,15 +451,17 @@ export class KitchenView {
     const cx = (sim.w - 1) / 2, cz = (sim.h - 1) / 2;
     const tilt = 0.95; // ~54°
     const fov = this.cam.fov * Math.PI / 180;
-    const needH = (sim.h + 1.2) * Math.cos(Math.PI / 2 - tilt) * 1.05 + 1.2;
-    const needW = sim.w + 1.0;
+    const exN = this.hallSide === 'north' ? 2.4 : 0.9, exE = this.hallSide === 'east' ? 3 : 0;
+    const needH = (sim.h + exN + 0.4) * Math.cos(Math.PI / 2 - tilt) * 1.05 + 1.6;
+    const needW = sim.w + 1.0 + exE;
     const visH = 1 - hudTop - hudBottom;
     const dH = needH / (2 * Math.tan(fov / 2) * visH);
     const dW = needW / (2 * Math.tan(fov / 2) * this.cam.aspect);
     const d = Math.max(dH, dW);
     const shift = (hudTop - hudBottom) * 2 * Math.tan(fov / 2) * d * 0.5;
-    this.cam.position.set(cx, Math.sin(tilt) * d, cz + Math.cos(tilt) * d);
-    this.cam.lookAt(cx, 0.3, cz - shift * 0.9);
+    const ccx = cx + exE / 2, ccz = cz - exN / 2 + 0.35;
+    this.cam.position.set(ccx, Math.sin(tilt) * d, ccz + Math.cos(tilt) * d);
+    this.cam.lookAt(ccx, 0.3, ccz - shift * 0.9);
   }
 
   sync(dt, myIds) {
@@ -441,7 +485,7 @@ export class KitchenView {
       const ck = t.type === 'oven' ? t.ck : (it && it.t === 'k' ? it : null);
       let bk = '';
       let bItems = null, big = null;
-      if (it && it.t === 'p' && it.c.length) {
+      if (it && (it.t === 'p' || it.t === 'c') && it.c.length) {
         const full = this.fullRecipe(it); if (full) { big = RECIPES[full].icon; bk = 'B' + full; } else { bItems = it.c; bk = 'p' + k; }
       } else if (ck && ck.c.length) { bItems = ck.c; bk = 'k' + ck.c.map(c => c.id + c.s).join(','); }
       else if (t.type === 'plates' && (t.clean || t.dirty)) bk = 'pl' + t.clean + '/' + t.dirty;
@@ -459,6 +503,7 @@ export class KitchenView {
       let prog = -1, col = 0x5ad16a;
       if (t.type === 'board' && it && it.t === 'i' && it.p > 0) prog = it.p;
       if (t.type === 'sink' && t.wp > 0) { prog = t.wp; col = 0x5ab4ff; }
+      if (t.type === 'tap' && t.fp > 0) { prog = t.fp; col = 0x5ab4ff; }
       const cooking = ck && (t.type === 'oven' || t.type === 'stove') && ck.c.length;
       if (cooking) {
         const st = cookerState(ck);
@@ -541,6 +586,7 @@ export class KitchenView {
       } else if (h) h.visible = false;
     }
     for (const [id, c] of this.cooks) if (!seen.has(id)) { scene.remove(c.root); this.cooks.delete(id); const h = this.hl.get(id); if (h) { scene.remove(h); this.hl.delete(id); } }
+    this.dec.update(dt);
     // ефекти
     for (const f of this.fx) { f.t += dt; f.o.position.y += dt * f.vy; if (f.vx) f.o.position.x += dt * f.vx; if (f.o.material) f.o.material.opacity = Math.max(0, 1 - f.t / f.life); if (f.spin) f.o.rotation.y += dt * 6; }
     for (const f of this.fx.filter(f => f.t >= f.life)) scene.remove(f.o);
@@ -548,7 +594,7 @@ export class KitchenView {
   }
   fullRecipe(pl) {
     const ks = pl.c.map(i => i.id + ':' + i.s).sort().join('|');
-    for (const r of this.sim.lv.recipes) if ([...RECIPES[r].c].sort().join('|') === ks) return r;
+    for (const r of this.sim.recs) if (!!RECIPES[r].drink === (pl.t === 'c') && [...RECIPES[r].c].sort().join('|') === ks) return r;
     return null;
   }
   stackMesh(t) {
@@ -570,7 +616,8 @@ export class KitchenView {
   }
   onEvent(e) {
     switch (e.e) {
-      case 'serve': this.floatText(e.x, e.y, '+' + e.pts, '#ffd23f'); this.puff(e.x, e.y, 0xffe066); break;
+      case 'serve': this.floatText(e.x, e.y, '+' + e.pts, '#ffd23f'); this.puff(e.x, e.y, 0xffe066); this.dec.onServe(e); break;
+      case 'filled': this.puff(e.x, e.y, 0x9ed8ff); break;
       case 'chopped': this.puff(e.x, e.y, 0xffffff); break;
       case 'burnt': this.puff(e.x, e.y, 0x333333); break;
       case 'out': this.puff(e.x, e.y, 0xdddddd); break;

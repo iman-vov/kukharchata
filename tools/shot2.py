@@ -11,7 +11,7 @@ async def main():
         await pg.goto('http://localhost:8765/index.html'); await pg.wait_for_timeout(1500)
         await pg.click('#bPlay'); await pg.wait_for_timeout(800)
         for li in LV:
-            await pg.evaluate(f"(()=>{{const k=window.__k; const id=['kyiv','lviv','odesa','napoli','roma','venezia','tokyo','osaka','kyoto','mexico','cancun','newyork','chicago','sanfran','feast'][{li}]; k.S.assist[id]=true; k.startLevel({li});}})()")
+            await pg.evaluate(f"(()=>{{const k=window.__k; const id=window.__LV[{li}]; k.S.assist[id]=true; k.S.drinks[id]=true; k.startLevel({li});}})()")
             await pg.wait_for_timeout(3000)
             # прискорити: крокувати симуляцію вручну
             await pg.evaluate("(()=>{const s=window.__k.app.sim; for(let i=0;i<30*50;i++){s.step(1/30,true);} s.events.length=0;})()")

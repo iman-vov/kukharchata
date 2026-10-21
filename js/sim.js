@@ -1,9 +1,9 @@
 // Кухарчата — симуляція кухні (без графіки). Працює і в браузері, і в Node для тестів.
-import { ING, COOKER, COOK_OF_STATE, RECIPES, LEVELS } from './data.js';
+import { ING, COOKER, COOK_OF_STATE, RECIPES, LEVELS, drinksFor } from './data.js';
 
 export const PLAYER_R = 0.3;
 const SPEED = 4.3, DASH_V = 12, DASH_T = 0.13, DASH_CD = 0.65;
-const CHOP_T = 1.5, WASH_T = 1.8, RETURN_T = 5, CONV_T = 0.9, SPREAD_T = 8;
+const CHOP_T = 1.5, WASH_T = 1.8, RETURN_T = 5, CONV_T = 0.9, SPREAD_T = 8, FILL_T = 2.2;
 const CONV = { '>': [1, 0], '<': [-1, 0], '^': [0, -1], 'v': [0, 1] };
 
 // Скільки «роботи» дає n кухарів (кухня тісніша, тому не лінійно)
@@ -12,6 +12,8 @@ export const TEAM = [0, 1, 1.6, 2.1, 2.55, 2.9, 3.2];
 /* ---------- предмети ---------- */
 export const mkIng = (id, s = 'r') => ({ t: 'i', id, s, p: 0 });
 export const mkPlate = () => ({ t: 'p', c: [] });
+export const mkCup = () => ({ t: 'c', c: [] });
+export const isCont = it => !!it && (it.t === 'p' || it.t === 'c');
 export const mkCooker = k => ({ t: 'k', k, c: [], ct: 0, ov: 0 });
 export const key = (id, s) => id + ':' + s;
 
@@ -93,7 +95,12 @@ export class Sim {
     this.spreadT = SPREAD_T;
     this.started = false; this.over = false;
     this.lastRec = [];
+    // напої (за бажанням гравців)
+    this.drinks = opts.drinks ? drinksFor(this.lv) : [];
+    this.recs = [...this.lv.recipes, ...this.drinks];
     this.recipeSet = this.lv.recipes.map(r => RECIPES[r].c);
+    this.drinkSet = this.drinks.map(r => RECIPES[r].c);
+    if (this.drinks.length) this.placeDrinkStations();
     // рухливі частини кухні: перегородки, що то висуваються, то ховаються
     this.gates = (this.lv.gates || []).map(g => ({ ...g, tiles: g.at.map(([x, y]) => this.tile(x, y)) }));
     for (const g of this.gates) for (const t of g.tiles) t.gate = true;
@@ -103,7 +110,26 @@ export class Sim {
     this.groups = { pot: [], pan: [], oven: [] };
     for (const r of this.lv.recipes) for (const ck of ['pot', 'pan', 'oven']) {
       const out = COOKER[ck].out, gr = RECIPES[r].c.filter(c => c.endsWith(':' + out));
-      if (gr.length) this.groups[ck].push(gr);
+      if (!gr.length) continue;
+      if (ck === 'pan') for (const g of gr) this.groups.pan.push([g]); // на пательні — по одному
+      else this.groups[ck].push(gr);
+    }
+  }
+  // стійки для напоїв ставимо на вільні стійки поруч із видачею
+  placeDrinkStations() {
+    const liq = new Set(), tops = new Set();
+    for (const r of this.drinks) for (const k of RECIPES[r].c) { const [id, s] = k.split(':'); if (s === 'l') liq.add(id); else tops.add(id); }
+    const need = [{ type: 'mugs' }, ...[...liq].map(l => ({ type: 'tap', liq: l })), ...[...tops].map(i => ({ type: 'crate', ing: i }))];
+    const serves = this.tiles.filter(t => t.type === 'serve');
+    const cand = this.tiles.filter(t => t.type === 'counter' && !t.item && t.ch === '#'
+      && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => this.walk(t.x + dx, t.y + dy)));
+    const d = t => Math.min(...serves.map(s => Math.abs(s.x - t.x) + Math.abs(s.y - t.y)));
+    cand.sort((a, b) => d(a) - d(b) || a.y - b.y || a.x - b.x);
+    // лишаємо кілька стійок вільними для складання
+    let i = 0;
+    for (const n of need) {
+      const t = cand[i]; if (!t) break; i += cand.length > need.length * 2 + 4 ? 1 : 1;
+      t.type = n.type; if (n.liq) { t.liq = n.liq; t.fp = 0; } if (n.ing) t.ing = n.ing; t.drink = true;
     }
   }
   tile(x, y) { return (x < 0 || y < 0 || x >= this.w || y >= this.h) ? null : this.tiles[y * this.w + x]; }
@@ -189,11 +215,11 @@ export class Sim {
   }
 
   /* ---------- правила поєднання ---------- */
-  plateAccepts(pl, adds) {
-    if (pl.t !== 'p') return false;
+  plateAccepts(pl, adds) { // тарілка або кухоль
+    if (!isCont(pl)) return false;
     const all = pl.c.map(i => key(i.id, i.s)).concat(adds.map(i => key(i.id, i.s)));
     if (all.length > 5) return false;
-    return this.recipeSet.some(r => isSub(all, r));
+    return (pl.t === 'p' ? this.recipeSet : this.drinkSet).some(r => isSub(all, r));
   }
   cookerAccepts(ck, it) {
     if (ck.t !== 'k' || it.t !== 'i') return false;
@@ -215,20 +241,20 @@ export class Sim {
     return this.groups[ck.k].some(g => sameMs(ks, g)) && cookerNeed(ck) - ck.ct < within;
   }
   cookerToPlate(ck, pl) {
-    if (!this.cookerReady(ck) || !this.plateAccepts(pl, ck.c)) return false;
+    if (pl.t !== 'p' || !this.cookerReady(ck) || !this.plateAccepts(pl, ck.c)) return false;
     pl.c.push(...ck.c.map(i => ({ id: i.id, s: i.s }))); ck.c = []; ck.ct = 0; ck.ov = 0; return true;
   }
   matchOrder(pl) {
-    if (!pl || pl.t !== 'p' || !pl.c.length) return null;
+    if (!isCont(pl) || !pl.c.length) return null;
     const keys = pl.c.map(i => key(i.id, i.s));
     let best = null;
-    for (const o of this.orders) if (sameMs(keys, RECIPES[o.r].c) && (!best || o.t < best.t)) best = o;
+    for (const o of this.orders) if (!!RECIPES[o.r].drink === (pl.t === 'c') && sameMs(keys, RECIPES[o.r].c) && (!best || o.t < best.t)) best = o;
     return best;
   }
   combine(H, I) { // H у руках, I на клітинці → {held, item} або null
-    if (H.t === 'i' && I.t === 'p' && this.plateAccepts(I, [H])) { I.c.push({ id: H.id, s: H.s }); return { held: null, item: I }; }
+    if (H.t === 'i' && isCont(I) && this.plateAccepts(I, [H])) { I.c.push({ id: H.id, s: H.s }); return { held: null, item: I }; }
     if (H.t === 'i' && I.t === 'k' && this.cookerAccepts(I, H)) { I.c.push({ id: H.id, s: H.s }); return { held: null, item: I }; }
-    if (H.t === 'p' && I.t === 'i' && this.plateAccepts(H, [I])) { H.c.push({ id: I.id, s: I.s }); return { held: H, item: null }; }
+    if (isCont(H) && I.t === 'i' && this.plateAccepts(H, [I])) { H.c.push({ id: I.id, s: I.s }); return { held: H, item: null }; }
     if (H.t === 'k' && I.t === 'i' && this.cookerAccepts(H, I)) { H.c.push({ id: I.id, s: I.s }); return { held: H, item: null }; }
     if (H.t === 'p' && I.t === 'k' && this.cookerToPlate(I, H)) return { held: H, item: I };
     if (H.t === 'k' && I.t === 'p' && this.cookerToPlate(H, I)) return { held: H, item: I };
@@ -238,6 +264,7 @@ export class Sim {
     if (t.type === 'counter' || t.type === 'conv') return true;
     if (t.type === 'board') return H.t === 'i';
     if (t.type === 'stove') return H.t === 'k' && H.k !== 'oven';
+    if (t.type === 'tap') return H.t === 'c';
     return false;
   }
 
@@ -256,18 +283,18 @@ export class Sim {
       case 'crate': {
         if (!H) { p.held = mkIng(t.ing); return true; }
         const it = mkIng(t.ing);
-        if (H.t === 'p' && this.plateAccepts(H, [it])) { H.c.push({ id: it.id, s: 'r' }); return true; }
+        if (isCont(H) && this.plateAccepts(H, [it])) { H.c.push({ id: it.id, s: 'r' }); return true; }
         if (H.t === 'k' && this.cookerAccepts(H, it)) { H.c.push({ id: it.id, s: 'r' }); return true; }
         return false;
       }
       case 'trash': {
         if (!H) return false;
         if (H.t === 'i') { p.held = null; this.emit({ e: 'trash', x: t.x, y: t.y }); return true; }
-        if ((H.t === 'p' || H.t === 'k') && H.c.length) { H.c = []; if (H.t === 'k') H.ct = 0; this.emit({ e: 'trash', x: t.x, y: t.y }); return true; }
+        if ((isCont(H) || H.t === 'k') && H.c.length) { H.c = []; if (H.t === 'k') H.ct = 0; this.emit({ e: 'trash', x: t.x, y: t.y }); return true; }
         return false;
       }
       case 'serve': {
-        if (!H || H.t !== 'p') return false;
+        if (!isCont(H)) return false;
         const o = this.matchOrder(H);
         if (!o) { this.emit({ e: 'wrong', x: t.x, y: t.y }); return false; }
         this.serve(o, H, t); p.held = null; return true;
@@ -285,6 +312,11 @@ export class Sim {
         }
         if (H.t === 'p' && !H.c.length) { t.clean++; p.held = null; return true; }
         if (H.t === 'd') { t.dirty += H.n; p.held = null; return true; }
+        return false;
+      }
+      case 'mugs': {
+        if (!H) { p.held = mkCup(); return true; }
+        if (H.t === 'c' && !H.c.length) { p.held = null; return true; }
         return false;
       }
       case 'oven': {
@@ -314,7 +346,7 @@ export class Sim {
     const pts = base + tip + bonus;
     this.score += pts; this.delivered++;
     this.orders = this.orders.filter(q => q !== o);
-    this.returns.push({ t: RETURN_T, dirty: this.lv.wash });
+    if (pl.t === 'p') this.returns.push({ t: RETURN_T, dirty: this.lv.wash });
     this.emit({ e: 'serve', x: t.x, y: t.y, pts, r: o.r });
     if (this.orders.length < 1) this.nextOrder = Math.min(this.nextOrder, 1.2);
   }
@@ -371,6 +403,7 @@ export class Sim {
       const ck = t.type === 'oven' ? t.ck : (t.type === 'stove' && t.item && t.item.t === 'k' ? t.item : null);
       if (ck && ck.c.length && t.fire <= 0) this.cook(ck, t, dt);
       if (t.type === 'conv') this.convey(t, dt);
+      if (t.type === 'tap') this.pour(t, dt);
     }
     // вогонь шириться
     if (this.lv.fire) {
@@ -429,8 +462,9 @@ export class Sim {
   addOrder() {
     const rs = this.lv.recipes;
     let r = rs[Math.floor(this.rand() * rs.length)];
+    if (this.drinks.length && this.rand() < 0.38) r = this.drinks[Math.floor(this.rand() * this.drinks.length)];
     // не більше двох однакових підряд
-    if (this.lastRec.length >= 2 && this.lastRec.every(x => x === r) && rs.length > 1) r = rs[(rs.indexOf(r) + 1) % rs.length];
+    if (this.lastRec.length >= 2 && this.lastRec.every(x => x === r)) { const all = this.recs; r = all[(all.indexOf(r) + 1) % all.length]; }
     this.lastRec.push(r); if (this.lastRec.length > 2) this.lastRec.shift();
     // складніші страви чекають довше
     const T = this.sc.ordT + 6 * (RECIPES[r].c.length - 2);
@@ -453,6 +487,12 @@ export class Sim {
       for (const i of ck.c) i.s = 'x';
       t.fire = 1; this.emit({ e: 'fire', x: t.x, y: t.y }); this.emit({ e: 'burnt', x: t.x, y: t.y });
     }
+  }
+  pour(t, dt) {
+    const c = t.item;
+    if (!c || c.t !== 'c' || !this.plateAccepts(c, [{ id: t.liq, s: 'l' }])) { t.fp = 0; return; }
+    t.fp += dt / FILL_T;
+    if (t.fp >= 1) { t.fp = 0; c.c.push({ id: t.liq, s: 'l' }); this.emit({ e: 'filled', x: t.x, y: t.y }); }
   }
   convey(t, dt) {
     if (!t.item) { t.ct = 0; return; }
@@ -561,15 +601,16 @@ export class Sim {
   analyze() {
     const orders = [...this.orders].sort((a, b) => a.t - b.t);
     const plates = [];
-    for (const t of this.tiles) if (t.item && t.item.t === 'p') plates.push({ pl: t.item, where: t });
-    for (const p of this.players) if (p.held && p.held.t === 'p') plates.push({ pl: p.held, where: p });
+    for (const t of this.tiles) if (isCont(t.item)) plates.push({ pl: t.item, where: t });
+    for (const p of this.players) if (isCont(p.held)) plates.push({ pl: p.held, where: p });
     const assign = new Map(), plateOf = new Map(), remain = new Map();
     const used = new Set();
     for (const o of orders) {
       const rc = RECIPES[o.r].c;
       let best = null, bn = -1;
+      const wantCup = !!RECIPES[o.r].drink;
       for (const P of plates) {
-        if (used.has(P.pl) || !P.pl.c.length) continue;
+        if (used.has(P.pl) || !P.pl.c.length || (P.pl.t === 'c') !== wantCup) continue;
         const ks = P.pl.c.map(i => key(i.id, i.s));
         if (isSub(ks, rc) && ks.length > bn) { best = P; bn = ks.length; }
       }
@@ -598,13 +639,15 @@ export class Sim {
     const deficit = [], wants = [];
     for (const o of orders) for (const k of remain.get(o)) {
       wants.push(k);
+      if (RECIPES[o.r].drink) continue; // напої робимо кухлем, а не з ящиків
       const [id, fs] = k.split(':');
       let j = loose.findIndex(i => i.id === id && i.s === fs);
       if (j < 0) j = loose.findIndex(i => i.id === id && onPath(id, fs, i.s));
       if (j >= 0) loose.splice(j, 1); else deficit.push(k);
     }
-    const unplated = orders.filter(o => !plateOf.has(o));
-    return { orders, assign, plateOf, remain, spare, deficit, wants, unplated };
+    const unplated = orders.filter(o => !plateOf.has(o) && !RECIPES[o.r].drink);
+    const uncupped = orders.filter(o => !plateOf.has(o) && RECIPES[o.r].drink);
+    return { orders, assign, plateOf, remain, spare, deficit, wants, unplated, uncupped };
   }
   purposeOf(it, A) {
     let best = null;
@@ -619,7 +662,7 @@ export class Sim {
   }
   needsNewPlate(A, keys) { return A.unplated.some(o => isSub(keys, RECIPES[o.r].c)); }
   tileOfItem(it) { return this.tiles.find(t => t.item === it); }
-  surfaces(pred) { return this.tiles.filter(t => (t.type === 'counter' || t.type === 'board' || t.type === 'conv' || t.type === 'stove') && pred(t)); }
+  surfaces(pred) { return this.tiles.filter(t => (t.type === 'counter' || t.type === 'board' || t.type === 'conv' || t.type === 'stove' || t.type === 'tap') && pred(t)); }
   freeCounters() { return this.tiles.filter(t => t.type === 'counter' && !t.item && t.fire <= 0); }
   cookerTiles(kind) {
     return this.tiles.filter(t => (t.type === 'oven' && (!kind || t.ck.k === kind)) || (t.item && t.item.t === 'k' && (!kind || t.item.k === kind)));
@@ -669,6 +712,26 @@ export class Sim {
         if (ct.type === 'stove' && this.lv.fire && (ck.ov || 0) > COOKER[ck.k].burn * 0.45) {
           const fc = this.freeCounters().length;
           if (fc) return this.G(ct, 'grab', { check: () => ct.item === ck, takeOff: true });
+        }
+      }
+      // 3б. напої: забрати налитий кухоль, почати новий
+      if (this.drinks.length) {
+        const ready = this.tiles.filter(t => t.type === 'tap' && t.item && t.item.t === 'c' && !t.fp && !this.plateAccepts(t.item, [{ id: t.liq, s: 'l' }]) && t.item.c.length);
+        const rt = this.nearest(p, ready, true);
+        if (rt) return this.G(rt, 'grab', { check: () => rt.item && rt.item.t === 'c' });
+        // кухоль на стійці, якому ще чогось бракує
+        const waiting = this.tiles.filter(t => t.type !== 'tap' && t.item && t.item.t === 'c' && A.assign.has(t.item) && !this.claimed(p, t));
+        for (const t of waiting.sort((a, b) => this.dist(p, a) - this.dist(p, b))) {
+          const rem = A.remain.get(A.assign.get(t.item));
+          const can = rem.some(k => { const [id, st] = k.split(':'); return st === 'l' ? this.tiles.some(tp => tp.type === 'tap' && tp.liq === id && !tp.item) : true; });
+          if (can) return this.G(t, 'grab', { check: () => t.item && t.item.t === 'c' });
+        }
+        const cupsHeld = this.players.filter(q => q.held && q.held.t === 'c' && !q.held.c.length).length
+          + this.players.filter(q => q !== p && q.bot && q.bot.goal && q.bot.goal.cup).length;
+        if (A.uncupped.length > cupsHeld) {
+          const src = this.tiles.filter(t => t.type === 'mugs' || (t.item && t.item.t === 'c' && !t.item.c.length && t.type !== 'tap'));
+          const m = this.nearest(p, src, true);
+          if (m) return this.G(m, 'grab', { cup: true });
         }
       }
       // 4. згоріле — викинути
@@ -750,6 +813,20 @@ export class Sim {
     if (H.t === 'd') {
       if (sink) return this.G(sink, 'grab');
       const pt = this.tiles.find(t => t.type === 'plates'); return pt ? this.G(pt, 'grab') : null;
+    }
+    if (H.t === 'c') {
+      if (this.matchOrder(H)) { const s = this.nearest(p, this.tiles.filter(t => t.type === 'serve')); if (s) return this.G(s, 'grab'); }
+      const o = A.assign.get(H);
+      let rem = o ? A.remain.get(o) : null;
+      if (!rem) { const u = A.uncupped[0]; rem = u ? RECIPES[u.r].c : null; }
+      if (!rem) { if (H.c.length) { const tr = this.trashTile(p); if (tr) return this.G(tr, 'grab'); } const m = this.nearest(p, this.tiles.filter(t => t.type === 'mugs')); return m ? this.G(m, 'grab') : null; }
+      for (const k of rem) {
+        const [id, st] = k.split(':');
+        if (!this.plateAccepts(H, [{ id, s: st }])) continue;
+        if (st === 'l') { const tp = this.nearest(p, this.tiles.filter(t => t.type === 'tap' && t.liq === id && !t.item), true); if (tp) return this.G(tp, 'grab', { check: () => !tp.item }); }
+        else { const cr = this.nearest(p, this.tiles.filter(t => t.type === 'crate' && t.ing === id)); if (cr) return this.G(cr, 'grab'); }
+      }
+      return this.placeNear(p, H, this.tiles.find(t => t.type === 'serve') || p);
     }
     if (H.t === 'p') {
       if (this.matchOrder(H)) { const s = this.nearest(p, this.tiles.filter(t => t.type === 'serve')); if (s) return this.G(s, 'grab'); }
@@ -833,6 +910,7 @@ export class Sim {
     if (t.type === 'sink') { o.d = t.dirty; o.c = t.clean; o.w = Math.round(t.wp * 100) / 100; }
     if (t.type === 'plates') { o.d = t.dirty; o.c = t.clean; }
     if (t.gate) { o.g = t.blocked ? 1 : 0; o.gw = t.warn ? 1 : 0; }
+    if (t.type === 'tap' && t.fp > 0) o.fp = Math.round(t.fp * 100) / 100;
     return o;
   }
   snapshot(prev) { // prev: Map індекс→рядок; повертає {tiles: [[i, obj]...]}
@@ -859,6 +937,7 @@ export class Sim {
       if (t.type === 'sink') { t.dirty = o.d; t.clean = o.c; t.wp = o.w; }
       if (t.type === 'plates') { t.dirty = o.d; t.clean = o.c; }
       if (t.gate) { t.blocked = !!o.g; t.warn = !!o.gw; }
+      if (t.type === 'tap') t.fp = o.fp || 0;
     }
     if (s.wv) this.windV = s.wv;
     const seen = new Set();

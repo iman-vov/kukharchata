@@ -19,7 +19,9 @@ async def main():
         await A.evaluate("(async(c)=>{await window._inv.accept(c)})", ans)
         await A.wait_for_timeout(1500)
         print('A conns', await A.evaluate("window.__k.net.conns.length"), 'B role', await B.evaluate("window.__k.net.role"))
-        print('roster', await A.evaluate("JSON.stringify(window.__k.app && window.__k.net.conns.length)"))
+        await A.wait_for_timeout(1500)
+        print('B dev', await B.evaluate("window.__k.S.dev"), 'A dev', await A.evaluate("window.__k.S.dev"))
+        print('A players', await A.evaluate("JSON.stringify(window.__k.app.dbgPlayers ? 1 : 0)"))
         await A.evaluate("window.__k.startLevel(0)"); await A.wait_for_timeout(4000)
         print('B scene', await B.evaluate("window.__k.app.scene"), 'players', await B.evaluate("window.__k.app.sim.players.map(p=>p.id+'@'+p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')"))
         # гість іде вправо і бере

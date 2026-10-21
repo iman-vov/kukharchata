@@ -1,6 +1,6 @@
 // Кухарчата — головний модуль: екрани, ігровий цикл, збереження, гра разом
 import * as THREE from 'three';
-import { LEVELS, RECIPES, ING, COUNTRIES, SPEAKERS, COOK_COLORS, COOKER } from './data.js';
+import { LEVELS, RECIPES, ING, COUNTRIES, SPEAKERS, COOK_COLORS, COOKER, drinksFor } from './data.js';
 import { Sim, starThresholds, pathOf, levelScaling } from './sim.js';
 import { KitchenView, makeCook, animateCook, THEMES } from './render.js';
 import { MapView } from './map.js';
@@ -12,15 +12,15 @@ import { ingHTML, recipeHTML } from './icons.js';
 const $ = s => document.querySelector(s);
 const HAT_ICONS = ['👨‍🍳', '🎀', '🧢', '👑', '🐻', '🌸'];
 const HAT_NAMES = ['ковпак', 'бандана', 'кепка', 'корона', 'вушка', 'квітка'];
-const VERSION = '1.0';
+const VERSION = '1.1';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* ================= збереження ================= */
 const SAVE_KEY = 'kukharchata.v1';
 function defaults() {
-  return { name: '', color: Math.floor(Math.random() * 6), hat: 0, stars: {}, best: {}, fails: {}, assist: {}, at: 0, room: '', lastJoin: '', dev: rid(), seen: {},
-    set: { music: 0.5, sfx: 0.8, padMode: 'own', shared: false, touch: true, hints: true, turn: { meteredUrl: '', turnUrl: '', turnUser: '', turnPass: '' } } };
+  return { name: '', color: Math.floor(Math.random() * 6), hat: 0, stars: {}, best: {}, fails: {}, assist: {}, drinks: {}, at: 0, room: '', lastJoin: '', dev: rid(), seen: {},
+    set: { music: 0.5, sfx: 0.8, padMode: 'own', shared: false, touch: true, hints: true, hall: true, drinks: false, turn: { meteredUrl: '', turnUrl: '', turnUser: '', turnPass: '' } } };
 }
 const S = (() => {
   const d = defaults();
@@ -30,6 +30,8 @@ const S = (() => {
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (_) { } }
 vol.music = S.set.music; vol.sfx = S.set.sfx;
 const unlockedOf = stars => { for (let i = 0; i < LEVELS.length; i++) if (!stars[LEVELS[i].id]) return i; return LEVELS.length - 1; };
+const drinkOn = lv => S.drinks[lv.id] ?? S.set.drinks;
+const SID = S.dev + rid().slice(0, 3); // ідентифікатор пристрою на цю сесію
 const myName = () => (S.name || '').trim() || 'Кухарчик';
 
 /* ================= рендер ================= */
@@ -93,6 +95,7 @@ function dialogHTML(lines) {
 }
 const STEP_TXT = { c: 'наріж', b: 'звари', f: 'підсмаж', k: 'запечи' };
 function howTo(rid) {
+  if (RECIPES[rid].drink) return RECIPES[rid].c.map(k => { const [id, s] = k.split(':'); return (s === 'l' ? 'налий ' : 'додай ') + ING[id].name.toLowerCase(); }).join(' · ');
   const parts = RECIPES[rid].c.map(k => { const [id, s] = k.split(':'); return [id, s]; });
   const seen = new Set(), steps = [];
   for (const [id, s] of parts) {
@@ -102,8 +105,8 @@ function howTo(rid) {
   }
   return steps.join(' · ');
 }
-function recipesHTML(lv) {
-  return lv.recipes.map(r => `<div class="rec"><span class="dish">${RECIPES[r].icon}</span><div><div class="nm">${RECIPES[r].name}</div><div class="how">${esc(howTo(r))}</div></div><div class="row" style="margin-left:auto;gap:2px">${recipeHTML(r)}</div></div>`).join('');
+function recipesHTML(lv, drinks) {
+  return [...lv.recipes, ...(drinks ? drinksFor(lv) : [])].map(r => `<div class="rec"><span class="dish">${RECIPES[r].icon}</span><div><div class="nm">${RECIPES[r].name}</div><div class="how">${esc(howTo(r))}</div></div><div class="row" style="margin-left:auto;gap:2px">${recipeHTML(r)}</div></div>`).join('');
 }
 
 /* ================= титульний екран ================= */
@@ -182,7 +185,7 @@ addEventListener('gamepaddisconnected', () => { toast('🎮 Геймпад ві�
 
 /* ---------- склад гравців (хост) ---------- */
 const roster = []; // [{dev, conn, name, locals:[{lid,name,color,hat}]}]
-function myRosterEntry() { return { dev: S.dev, conn: null, name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) }; }
+function myRosterEntry() { return { dev: SID, conn: null, name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) }; }
 function fullRoster() { return [myRosterEntry(), ...roster]; }
 function buildPlayers() {
   const out = [], used = new Set();
@@ -209,6 +212,8 @@ function openCard(li) {
   const fails = S.fails[lv.id] || 0;
   const assistOn = !!S.assist[lv.id];
   const cooks = localCooks();
+  const drinksOn = drinkOn(lv);
+  const drinkBox = !guest ? `<div class="assist" style="background:#fff4e0"><span style="font-size:30px">🥤</span><div style="flex:1">Напої<br><span class="sub" style="font-size:13px">Додатково: наливати в кухлі на автоматах${drinksFor(lv).some(r => RECIPES[r].c.some(k => !k.endsWith(':l'))) ? ', додавати лід чи карамель' : ''}</span></div><button class="toggle ${drinksOn ? 'on' : ''}" id="cDrinks"></button></div>` : '';
   const assistBox = (!guest && (fails > 0 || assistOn)) ? `<div class="assist"><span style="font-size:30px">🤖</span><div style="flex:1">Робот-помічник<br><span class="sub" style="font-size:13px">Допоможе пройти рівень, якщо не виходить</span></div><button class="toggle ${assistOn ? 'on' : ''}" id="cAssist"></button></div>` : '';
   const sc = levelScaling(lv, humans);
   openModal(`
@@ -216,7 +221,7 @@ function openCard(li) {
     <h2>${lv.city}: ${lv.title}</h2>
     <div class="stars">${'★'.repeat(best)}<span style="color:#ddd">${'★'.repeat(3 - best)}</span></div>
     ${dialogHTML(lv.intro)}
-    <h3>Що готуємо</h3>${recipesHTML(lv)}
+    <h3>Що готуємо</h3>${recipesHTML(lv, guest ? app.guestDrinks : drinksOn)}${drinkBox}
     <h3>Кухарів: ${humans}</h3>
     <div class="thr"><span>⭐ ${th[0]}</span><span>⭐⭐ ${th[1]}</span><span>⭐⭐⭐ ${th[2]}</span><span>⏱ ${Math.floor(lv.dur / 60)}:${String(lv.dur % 60).padStart(2, '0')}</span><span>🧾 до ${sc.maxO} замовлень</span></div>
     ${lv.fire ? '<p class="sub">🔥 Тут можуть бути пожежі — вогнегасник 🧯 на стійці.</p>' : ''}${lv.wash ? '<p class="sub">🧽 Тарілки повертаються брудні — мийте їх у мийці.</p>' : ''}
@@ -232,16 +237,17 @@ function openCard(li) {
   app.modal.card = li;
   $('#cBack').onclick = () => { sfx('click'); closeModal(); if (net.role === 'host') net.broadcast({ k: 'closecard' }); };
   $('#cShared').onclick = () => { S.set.shared = !S.set.shared; save(); sendLocals(); openCard(li); };
+  if ($('#cDrinks')) $('#cDrinks').onclick = () => { S.drinks[lv.id] = !drinksOn; S.set.drinks = !drinksOn; save(); sfx('click'); openCard(li); };
   if ($('#cAssist')) $('#cAssist').onclick = () => { S.assist[lv.id] = !S.assist[lv.id]; save(); sfx('click'); openCard(li); };
   if ($('#cGo')) $('#cGo').onclick = () => { audioInit(); startLevel(li); };
-  if (net.role === 'host') net.broadcast({ k: 'card', li, humans });
+  if (net.role === 'host') net.broadcast({ k: 'card', li, humans, drinks: drinksOn });
 }
 
 /* ================= рівень ================= */
 function startLevel(li) {
   const lv = LEVELS[li];
   const players = buildPlayers();
-  const P = { k: 'start', li, humans: players.length, players, assist: !!S.assist[lv.id], hostName: myName() };
+  const P = { k: 'start', li, humans: players.length, players, assist: !!S.assist[lv.id], drinks: drinkOn(lv), hostName: myName() };
   if (P.assist) P.players.push({ id: 'bot', dev: 'bot', name: 'Робо', color: 0, hat: 0, bot: true });
   if (net.role === 'host') net.broadcast(P);
   beginLevel(P);
@@ -258,19 +264,19 @@ function beginLevel(P) {
   const lv = LEVELS[P.li];
   if (app.view) app.view.dispose();
   const host = net.role !== 'guest';
-  const sim = new Sim(P.li, { humans: P.humans });
+  const sim = new Sim(P.li, { humans: P.humans, drinks: !!P.drinks });
   for (const pl of P.players) {
-    const mine = pl.dev === S.dev;
+    const mine = pl.dev === SID;
     const p = sim.addPlayer({ id: pl.id, name: pl.name, color: pl.color, hat: pl.hat, bot: host && pl.bot, remote: !mine && !(host && pl.bot) });
     p.isBot = !!pl.bot; p.dev = pl.dev;
   }
   const cooks = localCooks();
-  const mine = P.players.filter(p => p.dev === S.dev);
+  const mine = P.players.filter(p => p.dev === SID);
   app.local = mine.map(pl => ({ pid: pl.id, srcs: (cooks.find(c => pl.id.endsWith(':' + c.lid)) || cooks[0]).srcs, lastUse: false }));
   app.myIds = new Set(mine.map(p => p.id));
   app.sim = sim; app.lvl = P; app.paused = false; app.over = false; app.prevSnap = new Map(); app.snapT = 0; app.keyT = 0; app.posT = 0;
   app.evOut = []; app.lastSec = 999; app.hurry = false;
-  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme);
+  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall });
   app.scene = 'level';
   show('#title', false); show('#mapUI', false); show('#hud', true);
   document.body.classList.add('playing');
@@ -425,6 +431,7 @@ function hintFor(p) {
   if (H.t === 'p') { if (sim.matchOrder(H)) return 'Страва готова! Неси до віконця видачі ▲'; return 'Збери на тарілку все для страви'; }
   if (H.t === 'x') return `Направ на вогонь і тримай ${U}`;
   if (H.t === 'd') return 'Неси брудні тарілки до мийки';
+  if (H.t === 'c') { if (sim.matchOrder(H)) return 'Напій готовий! Неси до віконця ▲'; return 'Постав кухоль в автомат (✋), а лід чи карамель бери з ящика, тримаючи кухоль'; }
   if (H.t === 'k') return 'Перелий у тарілку або постав назад на плиту';
   return '';
 }
@@ -436,7 +443,7 @@ function openPause() {
   const lv = LEVELS[app.lvl.li];
   openModal(`<h2>⏸ Пауза</h2>
     ${net.role !== 'solo' ? '<p class="sub">У грі разом час не зупиняється.</p>' : ''}
-    <h3>Рецепти</h3>${recipesHTML(lv)}
+    <h3>Рецепти</h3>${recipesHTML(lv, app.lvl.drinks)}
     <p class="kbd">Керування: ✋ взяти/покласти · 🔪 тримати — різати, мити, гасити · 💨 ривок. Геймпад: Ⓐ взяти, Ⓧ дія, Ⓑ ривок. Клавіатура: WASD, пробіл, E, Shift.</p>
     <div class="btnrow">
       ${host ? '<button class="btn" id="pMap">🗺 На карту</button><button class="btn" id="pRe">↻ Заново</button>' : ''}
@@ -497,6 +504,7 @@ function openSettings() {
     <div class="assist" style="background:#fff"><div style="flex:1">📱 Сенсорне керування / клавіатура</div><button class="toggle ${st.touch ? 'on' : ''}" id="sTouch"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">👆👆 Двоє гравців на одному екрані<br><span class="sub" style="font-size:13px">Ліва й права половини екрана — окремі кухарі</span></div><button class="toggle ${st.shared ? 'on' : ''}" id="sShared"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🎮 Перший геймпад керує мною<br><span class="sub" style="font-size:13px">Вимкнено: кожен геймпад — окремий кухарчик</span></div><button class="toggle ${st.padMode === 'me' ? 'on' : ''}" id="sPad"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">🍽 Зала з гостями й офіціант<br><span class="sub" style="font-size:13px">Вимкни, якщо пристрій гальмує</span></div><button class="toggle ${st.hall ? 'on' : ''}" id="sHall"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">💡 Підказки на перших рівнях</div><button class="toggle ${st.hints ? 'on' : ''}" id="sHints"></button></div>
     <p class="kbd">Підключені геймпади: ${input.pads().map(p => esc(p.id.slice(0, 40))).join(', ') || 'немає (натисни кнопку на геймпаді, щоб браузер його побачив)'}</p>
     <h3>Прогрес</h3>
@@ -509,6 +517,7 @@ function openSettings() {
   tog('#sShared', () => st.shared = !st.shared);
   tog('#sPad', () => st.padMode = st.padMode === 'me' ? 'own' : 'me');
   tog('#sHints', () => st.hints = !st.hints);
+  tog('#sHall', () => st.hall = !st.hall);
   $('#sReset').onclick = () => { if (confirm('Скинути всі зірки й пройдені міста?')) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
   $('#sOk').onclick = () => { sfx('click'); closeModal(); };
 }
@@ -624,7 +633,7 @@ async function joinRoom(code) {
 }
 function afterGuestJoin() {
   sfx('join');
-  net.send({ k: 'hello', dev: S.dev, name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) });
+  net.send({ k: 'hello', dev: SID, name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) });
   toast('Ти в кімнаті! 👫');
   closeModal();
   if (app.scene === 'level') { endLevelCleanup(); }
@@ -737,7 +746,7 @@ function guestMsg(d) {
     case 'roster': app.guestRoster = d.list; app.guestHumans = d.list.reduce((a, x) => a + x.n, 0); updateNetPill(); if (app.modal && $('#tbOn')) openCoop(); break;
     case 'map': Object.assign(mapState, { at: d.at, stars: d.stars, unlocked: d.unlocked }); if (app.scene === 'map' && !d.silent) goMap(); break;
     case 'drive': if (app.scene === 'map' && app.map) { closeModal(); mapState.at = d.to; app.map.driveTo(d.to, () => { }); } break;
-    case 'card': app.guestHumans = d.humans; if (app.scene !== 'map') { goMap(); } if (app.map) app.map.place(d.li); openCard(d.li); break;
+    case 'card': app.guestHumans = d.humans; app.guestDrinks = d.drinks; if (app.scene !== 'map') { goMap(); } if (app.map) app.map.place(d.li); openCard(d.li); break;
     case 'closecard': if (app.modal && app.modal.card !== undefined) closeModal(); break;
     case 'start': app.hostName = d.hostName || app.hostName; beginLevel(d); break;
     case 'players': if (app.sim) for (const m of d.list) { let p = app.sim.players.find(q => q.id === m.id); if (!p) { p = app.sim.addPlayer({ id: m.id, remote: true }); } Object.assign(p, { name: m.name, color: m.color, hat: m.hat, dev: m.dev, isBot: m.bot }); } break;
@@ -815,4 +824,4 @@ requestAnimationFrame(frame);
     setTimeout(() => { openCoop('online'); toast('Впиши своє імʼя на головному екрані, а тоді натисни «Приєднатися»', 4500); }, 400);
   }
 }
-window.__k = { app, S, net, startLevel, goMap, afterGuestJoin, afterHostStart }; // для налагодження
+window.__k = { app, S, net, startLevel, goMap, afterGuestJoin, afterHostStart }; window.__LV = LEVELS.map(l => l.id); // для налагодження

@@ -1,7 +1,8 @@
 // Кухарчата — дані гри: інгредієнти, рецепти, кухні, карта світу, історія.
 // Стани інгредієнта: r — сирий, c — нарізаний, b — варений, f — смажений, k — запечений, x — згорілий.
 
-export const STATE_NAME = { r: 'сирий', c: 'нарізаний', b: 'варений', f: 'смажений', k: 'запечений', x: 'згорілий' };
+export const STATE_NAME = { r: 'сирий', c: 'нарізаний', b: 'варений', f: 'смажений', k: 'запечений', x: 'згорілий', l: 'налитий' };
+import { genKitchen } from './gen.js';
 
 // icon: емодзі або власний значок (рисуємо на canvas), col — колір 3D-моделі, shape — форма моделі.
 // chop — чи ріжеться; pot/pan/oven — з якого стану його можна класти в каструлю / пательню / піч.
@@ -13,19 +14,45 @@ export const ING = {
   beet:      { name: 'Буряк',     icon: '@beet', col: 0x8e1b4f, shape: 'ball', chop: true, pot: 'c' },
   cabbage:   { name: 'Капуста',   icon: '@cabbage', col: 0xc4e3a0, shape: 'ball', chop: true, pot: 'c' },
   potato:    { name: 'Картопля',  icon: '🥔', col: 0xc79a5b, shape: 'egg',    chop: true, pot: 'c', pan: 'c' },
-  meat:      { name: 'Мʼясо',     icon: '🥩', col: 0xd65a5a, shape: 'slab',   chop: true, pan: 'c' },
+  meat:      { name: 'Мʼясо',     icon: '🥩', col: 0xd65a5a, shape: 'slab',   chop: true, pan: 'c', pot: 'c' },
   fish:      { name: 'Рибка',     icon: '🐟', col: 0x7fb4d9, shape: 'fish',   chop: true },
-  sausage:   { name: 'Сосиска',   icon: '@sausage', col: 0xc8553d, shape: 'stick', pan: 'r' },
+  sausage:   { name: 'Сосиска',   icon: '@sausage', col: 0xc8553d, shape: 'stick', pan: 'r', pot: 'r' },
   bun:       { name: 'Булочка',   icon: '🍞', col: 0xe0a85a, shape: 'bun' },
   cheese:    { name: 'Сир',       icon: '🧀', col: 0xf5c84a, shape: 'wedge',  chop: true, oven: 'c' },
   mushroom:  { name: 'Гриби',     icon: '🍄', col: 0xc9a27e, shape: 'mush',   chop: true, pot: 'c', oven: 'c' },
-  dough:     { name: 'Тісто',     icon: '@dough', col: 0xf3e6c8, shape: 'disc', pot: 'r', oven: 'r' },
+  dough:     { name: 'Тісто',     icon: '@dough', col: 0xf3e6c8, shape: 'disc', pot: 'r', oven: 'r', pan: 'r' },
   rice:      { name: 'Рис',       icon: '🍚', col: 0xf7f7f2, shape: 'sack',   pot: 'r' },
   pasta:     { name: 'Макарони',  icon: '@pasta', col: 0xf2cf63, shape: 'sack', pot: 'r' },
   noodles:   { name: 'Локшина',   icon: '@noodles', col: 0xf0d58a, shape: 'sack', pot: 'r' },
   nori:      { name: 'Норі',      icon: '@nori', col: 0x1f3d2b, shape: 'sheet' },
-  tortilla:  { name: 'Тортилья',  icon: '🫓', col: 0xe8c98b, shape: 'disc' },
+  tortilla:  { name: 'Тортилья',  icon: '🫓', col: 0xe8c98b, shape: 'disc', chop: true, oven: 'r', pan: 'r' },
   sourcream: { name: 'Сметана',   icon: '@cream', col: 0xfbfbf5, shape: 'jar' },
+  garlic:    { name: 'Часник',    icon: '🧄', col: 0xf1ece0, shape: 'ball',   chop: true },
+  salt:      { name: 'Сіль',      icon: '🧂', col: 0xffffff, shape: 'jar' },
+  honey:     { name: 'Мед',       icon: '🍯', col: 0xf2b134, shape: 'jar' },
+  curry:     { name: 'Соус каррі', icon: '🥫', col: 0xd9822b, shape: 'jar' },
+  egg:       { name: 'Яйце',      icon: '🥚', col: 0xfdf6e3, shape: 'egg',    pot: 'r' },
+  herbs:     { name: 'Зелень',    icon: '🌿', col: 0x3aa346, shape: 'leaf',   chop: true },
+  apple:     { name: 'Яблуко',    icon: '🍎', col: 0xd8323a, shape: 'ball',   chop: true, oven: 'c' },
+  carrot:    { name: 'Морква',    icon: '🥕', col: 0xf28c28, shape: 'stick',  chop: true, pot: 'c' },
+  corn:      { name: 'Кукурудза', icon: '🌽', col: 0xf5cf3a, shape: 'stick',  pot: 'r' },
+  chicken:   { name: 'Курка',     icon: '🍗', col: 0xe7b98a, shape: 'slab',   chop: true, pan: 'c' },
+  choco:     { name: 'Шоколад',   icon: '🍫', col: 0x5a3320, shape: 'sheet' },
+  beans:     { name: 'Квасоля',   icon: '🫘', col: 0x8a3a2a, shape: 'sack',   pot: 'r' },
+  // для напоїв
+  ice:       { name: 'Лід',       icon: '🧊', col: 0xcfefff, shape: 'cube' },
+  caramel:   { name: 'Карамель',  icon: '🍮', col: 0xc98a2a, shape: 'jar' },
+  kompot:    { name: 'Компот',    icon: '🍒', col: 0xb0304a, liquid: true },
+  uzvar:     { name: 'Узвар',     icon: '🍐', col: 0xa8692b, liquid: true },
+  cola:      { name: 'Кола',      icon: '🥤', col: 0x3a1f14, liquid: true },
+  orange:    { name: 'Апельсинова вода', icon: '🍊', col: 0xff9a1a, liquid: true },
+  applej:    { name: 'Яблучний сік', icon: '🍏', col: 0xe8d65a, liquid: true },
+  soda:      { name: 'Газована вода', icon: '🫧', col: 0xdff4ff, liquid: true },
+  coffee:    { name: 'Кава',      icon: '☕', col: 0x5a3a22, liquid: true },
+  milk:      { name: 'Молоко',    icon: '🥛', col: 0xffffff, liquid: true },
+  tea:       { name: 'Зелений чай', icon: '🍵', col: 0x7fb24a, liquid: true },
+  horchata:  { name: 'Орчата',    icon: '🌾', col: 0xf0e6d0, liquid: true },
+  lemonade:  { name: 'Лимонад',   icon: '🍋', col: 0xfff27a, liquid: true },
 };
 
 export const COOKER = {
@@ -55,7 +82,57 @@ export const RECIPES = {
   burger:    { name: 'Бургер',            icon: '🍔', c: ['bun:r', 'meat:f', 'lettuce:c'] },
   cheeseb:   { name: 'Чизбургер',         icon: '🍔', c: ['bun:r', 'meat:f', 'cheese:c', 'tomato:c'] },
   hotdog:    { name: 'Хот-дог',           icon: '🌭', c: ['bun:r', 'sausage:f'] },
+  galushky:  { name: 'Галушки зі сметаною', icon: '🥣', c: ['dough:b', 'sourcream:r'] },
+  pampushky: { name: 'Пампушки з часником', icon: '🥯', c: ['dough:k', 'garlic:c'] },
+  golubtsi:  { name: 'Голубці',           icon: '🥬', c: ['cabbage:b', 'rice:b', 'meat:b'] },
+  brezel:    { name: 'Брецель',           icon: '🥨', c: ['dough:k', 'salt:r'] },
+  sauerkraut:{ name: 'Ковбаски з капустою', icon: '🌭', c: ['cabbage:b', 'sausage:f'] },
+  lebkuchen: { name: 'Медовий пряник',    icon: '🍪', c: ['dough:k', 'honey:r'] },
+  kartsalat: { name: 'Картопляний салат', icon: '🥗', c: ['potato:b', 'onion:c', 'cucumber:c'] },
+  gruene:    { name: 'Зелений соус з яйцем', icon: '🥚', c: ['egg:b', 'potato:b', 'herbs:c'] },
+  frankfurter:{ name: 'Франкфуртська сосиска', icon: '🌭', c: ['bun:r', 'sausage:b'] },
+  currywurst:{ name: 'Каррівурст',        icon: '🌭', c: ['sausage:f', 'curry:r'] },
+  schnitzel: { name: 'Шніцель з картоплею', icon: '🍖', c: ['meat:f', 'potato:f'] },
+  fischbr:   { name: 'Фішбрьотхен',       icon: '🥪', c: ['bun:r', 'fish:c', 'onion:c'] },
+  strudel:   { name: 'Яблучний штрудель', icon: '🥧', c: ['dough:k', 'apple:k'] },
+  minestrone:{ name: 'Мінестроне',        icon: '🍲', c: ['tomato:b', 'carrot:b', 'pasta:b'] },
+  bistecca:  { name: 'Біфштекс із салатом', icon: '🥩', c: ['meat:f', 'lettuce:c'] },
+  risotto:   { name: 'Різотто з грибами', icon: '🍛', c: ['rice:b', 'mushroom:b', 'cheese:c'] },
+  milanese:  { name: 'Котлета по-міланськи', icon: '🍖', c: ['meat:f', 'tomato:c'] },
+  okonomi:   { name: 'Окономіякі',        icon: '🥞', c: ['dough:f', 'cabbage:c', 'meat:f'] },
+  misoramen: { name: 'Місо-рамен',        icon: '🍜', c: ['noodles:b', 'corn:b', 'egg:b'] },
+  mole:      { name: 'Моле з куркою',     icon: '🍗', c: ['chicken:f', 'choco:r', 'rice:b'] },
+  tlayuda:   { name: 'Тлаюда',            icon: '🫓', c: ['tortilla:k', 'cheese:k', 'tomato:k'] },
+  quesadilla:{ name: 'Кесадилья',         icon: '🌮', c: ['tortilla:f', 'cheese:c'] },
+  nachos:    { name: 'Начос',             icon: '🧀', c: ['tortilla:c', 'cheese:c', 'beans:b'] },
+  jambalaya: { name: 'Джамбалая',         icon: '🥘', c: ['rice:b', 'sausage:b', 'tomato:b'] },
+  chili:     { name: 'Чилі кон карне',    icon: '🌶️', c: ['beans:b', 'meat:b', 'tomato:b'] },
+  steakcorn: { name: 'Стейк із кукурудзою', icon: '🥩', c: ['meat:f', 'corn:b'] },
+  // напої (вмикаються перемикачем у картці рівня)
+  kompot:    { drink: true, name: 'Компот з льодом',  icon: '🍹', c: ['kompot:l', 'ice:r'] },
+  uzvar:     { drink: true, name: 'Узвар',            icon: '🫖', c: ['uzvar:l'] },
+  spezi:     { drink: true, name: 'Шпеці',            icon: '🥤', c: ['cola:l', 'orange:l'] },
+  schorle:   { drink: true, name: 'Апфельшорле',      icon: '🧃', c: ['applej:l', 'soda:l'] },
+  espresso:  { drink: true, name: 'Еспресо',          icon: '☕', c: ['coffee:l'] },
+  cappuccino:{ drink: true, name: 'Капучино',         icon: '☕', c: ['coffee:l', 'milk:l'] },
+  matcha:    { drink: true, name: 'Матча з молоком',  icon: '🍵', c: ['tea:l', 'milk:l'] },
+  icetea:    { drink: true, name: 'Холодний чай',     icon: '🧋', c: ['tea:l', 'ice:r'] },
+  horchata:  { drink: true, name: 'Орчата з льодом',  icon: '🥛', c: ['horchata:l', 'ice:r'] },
+  limonada:  { drink: true, name: 'Лимонада',         icon: '🍋', c: ['lemonade:l', 'ice:r'] },
+  colaice:   { drink: true, name: 'Кола з льодом',    icon: '🥤', c: ['cola:l', 'ice:r'] },
+  caramellatte:{ drink: true, name: 'Карамельне лате', icon: '☕', c: ['coffee:l', 'milk:l', 'caramel:r'] },
+  icedlatte: { drink: true, name: 'Айс-лате',         icon: '🧋', c: ['coffee:l', 'milk:l', 'ice:r'] },
 };
+
+export const DRINKS = {
+  ua: ['kompot', 'uzvar'], de: ['spezi', 'schorle'], it: ['espresso', 'cappuccino'], jp: ['icetea', 'matcha'],
+  mx: ['limonada', 'horchata'], us: ['colaice', 'icedlatte', 'caramellatte'], feast: ['kompot', 'cappuccino', 'caramellatte'],
+};
+// напої рівня: на перших двох кухнях країни — один простий, далі всі
+export function drinksFor(lv) {
+  const list = lv.finale ? DRINKS.feast : DRINKS[lv.country] || [];
+  return lv.ck < 2 ? list.slice(0, 1) : list;
+}
 
 /* Кухні. Позначки:
    ' ' порожнеча   . підлога   @ старт кухаря   # стійка
@@ -64,6 +141,7 @@ export const RECIPES = {
    1–9 ящики з продуктами (див. crates)   > < ^ v стрічка-конвеєр               */
 export const COUNTRIES = {
   ua: { name: 'Україна',  flag: ['#2f6fd6', '#ffd23f'], theme: 'ua' },
+  de: { name: 'Німеччина', flag: ['#111111', '#dd0000', '#ffce00'], hflag: true, theme: 'de' },
   it: { name: 'Італія',   flag: ['#2f9e44', '#ffffff', '#d63a3a'], theme: 'it' },
   jp: { name: 'Японія',   flag: ['#ffffff', '#d63a3a'], theme: 'jp' },
   mx: { name: 'Мексика',  flag: ['#1f8a4c', '#ffffff', '#c8343a'], theme: 'mx' },
@@ -89,7 +167,6 @@ export const LEVELS = [
             [R, 'Хі-хі! Це я, Єнот Шкодько! Я стану найкращим кухарем світу, а сторінки тепер мої!'],
             [B, 'Кухарчата, рятуйте! Почнімо з простого: салатик для киян. Ріжте на дошці, кладіть на тарілку й несіть до віконця.']],
     outro: [[B, 'Молодці! Шкодько впустив першу сторінку. Слід веде до Львова!']] },
-
   { id: 'lviv', country: 'ua', city: 'Львів', title: 'Кавʼярня з деруном',
     recipes: ['deruny', 'salad3'], crates: { 1: 'potato', 2: 'sourcream', 3: 'lettuce', 4: 'tomato', 5: 'cucumber' },
     dur: 180, ordT: 80, iv: 22, maxO: 2, fire: false, wash: false, plates: 4,
@@ -106,8 +183,19 @@ export const LEVELS = [
     ],
     intro: [[R, 'Тут пахне кавою, а деруни шкварчать! Спробуйте мене наздогнати!'],
             [B, 'Картоплю наріжте й підсмажте на пательні, а тоді на тарілку зі сметанкою. І не забудьте про салат!']],
-    outro: [[B, 'Ще одна сторінка наша! А Шкодько вже мчить потягом до Одеси.']] },
-
+    outro: [[B, 'Ще одна сторінка наша! А Шкодько вже мчить до Полтави.']] },
+  { id: 'poltava', country: 'ua', city: 'Полтава', title: 'Галушки в садочку',
+    recipes: ['galushky', 'pampushky'], gen: { layout: 'island' },
+    dur: 180, ordT: 85, iv: 22, maxO: 2, fire: false, wash: false, plates: 4,
+    intro: [[R, 'Полтавські галушки самі в рот стрибають! А сторінку я сховав у пампушці!'],
+            [B, 'Тісто варимо в каструлі на галушки, а в печі печемо пампушки — і часничку зверху!']],
+    outro: [[B, 'Смакота! Слід Шкодька веде до Харкова.']] },
+  { id: 'kharkiv', country: 'ua', city: 'Харків', title: 'Голубці на площі',
+    recipes: ['golubtsi', 'varenyky'], gen: { layout: 'columns' },
+    dur: 200, ordT: 95, iv: 25, maxO: 2, fire: true, wash: false, plates: 4,
+    intro: [[R, 'Ха! Тут така велика площа, що ви мене ніколи не знайдете!'],
+            [B, 'Обережно: якщо зварене довго стоїть на плиті — згорить і спалахне. Хапайте вогнегасник 🧯, а горіле — у смітник.']],
+    outro: [[B, 'Пожежу загасили, голубці подали! Шкодько поїхав потягом до Одеси.']] },
   { id: 'odesa', country: 'ua', city: 'Одеса', title: 'Борщ біля моря',
     recipes: ['borshch', 'varenyky'], crates: { 1: 'beet', 2: 'cabbage', 3: 'potato', 4: 'dough' },
     dur: 200, ordT: 95, iv: 26, maxO: 2, fire: true, wash: false, plates: 4,
@@ -123,9 +211,72 @@ export const LEVELS = [
       '##4##T##E######',
     ],
     intro: [[R, 'Біля моря борщ смачніший! Але плити тут гарячі, стережіться пожежі!'],
-            [B, 'Якщо каструля перегріється і спалахне, хапайте вогнегасник 🧯 і гасіть. Згорілу страву викидайте в смітник.']],
-    outro: [[B, 'Сторінка з борщем повернулась! А Шкодько сів на повітряну кулю й полетів до Італії. Заводьте фургончик!']] },
-
+            [B, 'Борщ і вареники разом — справжній одеський обід. Не дайте каструлям перегрітися!']],
+    outro: [[B, 'Україну пройдено! А Шкодько сів на повітряну кулю й полетів до Німеччини. Заводьте фургончик!']] },
+  { id: 'munich', country: 'de', city: 'Мюнхен', title: 'Баварський Штюберль',
+    recipes: ['brezel', 'sauerkraut'], crates: { 1: 'dough', 2: 'cabbage', 3: 'sausage', 4: 'salt' },
+    dur: 200, ordT: 95, iv: 24, maxO: 2, fire: true, wash: false, plates: 4,
+    grid: [
+      '##O#O###S#S#DD#',
+      '#.............#',
+      '1.@....#....@.P',
+      '#......#......#',
+      '2..@...C...@..C',
+      '#......#......#',
+      '3.@....#....@.4',
+      '#.............#',
+      '####F#F#T##E###',
+    ],
+    intro: [[R, 'Servus! Тут печуть брецелі розміром із мою голову!'],
+            [B, 'Тут уперше є піч: тісто туди, і чекайте, поки спечеться. А ковбаски — на пательню, до тушкованої капусти.']],
+    outro: [[B, 'Брецелі вдалися! А Шкодько вже в Нюрнберзі.']] },
+  { id: 'nurnberg', country: 'de', city: 'Нюрнберг', title: 'Пряниковий ярмарок',
+    recipes: ['lebkuchen', 'kartsalat'], gen: { layout: 'lanes' },
+    dur: 210, ordT: 95, iv: 24, maxO: 2, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Пряники з медом! Я вже з’їв три… ой, тобто сторінку не бачив!'],
+            [B, 'Тепер тарілки повертаються брудні — несіть їх до мийки й мийте, тримаючи 🔪.']],
+    outro: [[B, 'Ярмарок нагодовано! Шкодько полетів до Франкфурта.']] },
+  { id: 'frankfurt', country: 'de', city: 'Франкфурт', title: 'Зелений соус',
+    recipes: ['gruene', 'frankfurter'], gen: { layout: 'islands2' },
+    dur: 210, ordT: 95, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Тут хмарочоси й сосиски! Ідеальне місто для єнота.'],
+            [B, 'Яйця й картоплю варимо, зелень ріжемо — і виходить знаменитий зелений соус.']],
+    outro: [[B, 'Ще сторінка! Шкодько тікає до Берліна.']] },
+  { id: 'berlin', country: 'de', city: 'Берлін', title: 'Каррівурст на розі',
+    recipes: ['currywurst', 'schnitzel'], crates: { 1: 'sausage', 2: 'curry', 3: 'meat', 4: 'potato' },
+    dur: 210, ordT: 95, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
+    grid: [
+      '###F#F#F#F#DD##',
+      '#.............#',
+      '1.@...........P',
+      '#..>>>>>>>v...#',
+      '2..^<<<<<<<...C',
+      '#.@.........@.W',
+      '3.............C',
+      '#.............#',
+      '#4##T####E#####',
+    ],
+    intro: [[R, 'Каррівурст — це ковбаска з соусом каррі. Простіше простого… але попробуй встигни!'],
+            [B, 'Тут продукти їздять по стрічці, як у метро. Мʼясо й картоплю — на пательні.']],
+    outro: [[B, 'Берлін пройдено! Шкодько поплив річкою до Гамбурга.']] },
+  { id: 'hamburg', country: 'de', city: 'Гамбург', title: 'Портова кухня',
+    recipes: ['fischbr', 'kartsalat', 'strudel'], crates: { 1: 'bun', 2: 'fish', 3: 'onion', 4: 'potato', 5: 'cucumber', 6: 'dough', 7: 'apple' },
+    gates: [{ at: [[6, 3]], period: 16, closed: 6 }, { at: [[6, 7]], period: 16, closed: 6, offset: 8 }],
+    dur: 230, ordT: 105, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    grid: [
+      '###S#S#O#O##DD#',
+      '1.....#.......P',
+      '#.@...#....@..#',
+      '2.............C',
+      '#.@...#....@..C',
+      '3.....#.......W',
+      'C.....#.......#',
+      '4.............#',
+      '#5#6#7#T####E##',
+    ],
+    intro: [[R, 'Порт, кораблі й рибні булочки! Мости тут розводять — ха-ха!'],
+            [B, 'Два містки по черзі піднімаються для кораблів. Передавайте продукти через стійку!']],
+    outro: [[B, 'Німеччину пройдено! Шкодько сховався на кораблі до Італії.']] },
   { id: 'napoli', country: 'it', city: 'Неаполь', title: 'Справжня піца',
     recipes: ['pizza'], crates: { 1: 'dough', 2: 'tomato', 3: 'cheese' },
     dur: 180, ordT: 90, iv: 24, maxO: 2, fire: true, wash: false, plates: 4,
@@ -143,7 +294,6 @@ export const LEVELS = [
     intro: [[R, 'Mamma mia! Піца — це мистецтво, а я в нього митець!'],
             [B, 'Тісто, нарізані томати й сир — усе в піч. Коли спечеться, перекладайте на тарілку.']],
     outro: [[B, 'Ось і сторінка про піцу! Шкодько побіг до Рима.']] },
-
   { id: 'roma', country: 'it', city: 'Рим', title: 'Гора посуду',
     recipes: ['pasta', 'pizza'], crates: { 1: 'pasta', 2: 'tomato', 3: 'dough', 4: 'cheese' },
     dur: 210, ordT: 95, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
@@ -159,9 +309,20 @@ export const LEVELS = [
       '#4##T####WE####',
     ],
     intro: [[R, 'Усі дороги ведуть до Рима… і до мийки! Ха-ха!'],
-            [B, 'Тарілки тепер повертаються брудні. Несіть їх до мийки й помийте, бо не буде в що накладати.']],
-    outro: [[B, 'Ще сторінка! А Шкодько поплив гондолою до Венеції.']] },
-
+            [B, 'Тут і паста, і піца, і гора брудного посуду. Хтось має стояти біля мийки!']],
+    outro: [[B, 'Ще сторінка! А Шкодько поїхав до Флоренції.']] },
+  { id: 'florence', country: 'it', city: 'Флоренція', title: 'Тосканська трапеза',
+    recipes: ['minestrone', 'bistecca'], gen: { layout: 'columns', extraBoard: true },
+    dur: 220, ordT: 100, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Тут стільки мистецтва! Я теж митець… кулінарний!'],
+            [B, 'Мінестроне: томати, морква й макарони — усе в одну каструлю. А мʼясо — на пательню.']],
+    outro: [[B, 'Браво! Шкодько помчав до Мілана.']] },
+  { id: 'milan', country: 'it', city: 'Мілан', title: 'Модне різотто',
+    recipes: ['risotto', 'milanese', 'pizza'], gen: { layout: 'conv' },
+    dur: 230, ordT: 105, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Мілан — столиця моди! Подивіться на мій кухарський ковпак!'],
+            [B, 'Різотто — рис із грибами, а сир настругайте зверху. Стрічка допоможе.']],
+    outro: [[B, 'Ще одна сторінка! Шкодько поплив гондолою до Венеції.']] },
   { id: 'venezia', country: 'it', city: 'Венеція', title: 'Кухня над каналом',
     recipes: ['pasta', 'pastam', 'pizzam'], crates: { 1: 'pasta', 2: 'tomato', 3: 'mushroom', 4: 'dough', 5: 'cheese' },
     dur: 220, ordT: 100, iv: 26, maxO: 3, fire: true, wash: true, plates: 3,
@@ -180,7 +341,6 @@ export const LEVELS = [
     intro: [[R, 'Тут канали! Передавайте продукти через стійку, якщо встигнете!'],
             [B, 'Кухню розділяє вода і лише вузенький місток. Одні ріжуть, інші варять: передавайте одне одному через стійку.']],
     outro: [[B, 'Італію пройдено! Шкодько полетів літаком аж до Японії.']] },
-
   { id: 'tokyo', country: 'jp', city: 'Токіо', title: 'Суші на стрічці',
     recipes: ['sushi', 'sushic'], crates: { 1: 'rice', 2: 'fish', 3: 'nori', 4: 'cucumber' },
     dur: 200, ordT: 95, iv: 24, maxO: 3, fire: true, wash: false, plates: 4,
@@ -197,7 +357,6 @@ export const LEVELS = [
     intro: [[R, 'Коннічіва! Тут продукти катаються по стрічці!'],
             [B, 'Рис зваріть, рибку чи огірок наріжте, візьміть лист норі — і рол готовий. Стрічка допоможе передавати.']],
     outro: [[B, 'Сторінка з ролами наша! Шкодько втік швидкісним потягом до Осаки.']] },
-
   { id: 'osaka', country: 'jp', city: 'Осака', title: 'Гарячий рамен',
     recipes: ['ramen', 'sushi'], crates: { 1: 'noodles', 2: 'meat', 3: 'onion', 4: 'rice', 5: 'fish', 6: 'nori' },
     dur: 220, ordT: 100, iv: 25, maxO: 3, fire: true, wash: true, plates: 3,
@@ -217,7 +376,6 @@ export const LEVELS = [
     intro: [[R, 'Рамен — моя улюблена страва! Але сторінку я не віддам!'],
             [B, 'Локшину варимо, мʼясо ріжемо й смажимо, цибульку ріжемо. Усе в одну миску!']],
     outro: [[B, 'Ще одна сторінка! Шкодько сховався в саду Кіото.']] },
-
   { id: 'kyoto', country: 'jp', city: 'Кіото', title: 'Сад і хаос',
     recipes: ['ramen', 'sushi', 'sushic'], crates: { 1: 'fish', 2: 'cucumber', 3: 'nori', 4: 'rice', 5: 'onion', 6: 'noodles', 7: 'meat' },
     dur: 230, ordT: 105, iv: 26, maxO: 3, fire: true, wash: true, plates: 3,
@@ -235,8 +393,19 @@ export const LEVELS = [
     ],
     intro: [[R, 'Тихий сад, а на кухні справжній хаос! Хі-хі!'],
             [B, 'Дві половини кухні зʼєднують стрічки й місток унизу. Ліві ріжуть рибку, праві варять і смажать.']],
-    outro: [[B, 'Японію пройдено! Шкодько сів на корабель до Мексики.']] },
-
+    outro: [[B, 'Сторінка наша! Шкодько втік до Хіросіми.']] },
+  { id: 'hiroshima', country: 'jp', city: 'Хіросіма', title: 'Окономіякі',
+    recipes: ['okonomi', 'ramen'], gen: { layout: 'lanes', gates: true },
+    dur: 230, ordT: 105, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Окономіякі — це «що хочеш, те й смаж»! Мені подобається!'],
+            [B, 'Тісто смажте на пательні, капусту наріжте, мʼясо підсмажте. Розсувні двері закриваються — стежте!']],
+    outro: [[B, 'Смачно! Шкодько поїхав на північ, до засніженого Саппоро.']] },
+  { id: 'sapporo', country: 'jp', city: 'Саппоро', title: 'Снігова завірюха',
+    recipes: ['misoramen', 'sushi'], gen: { layout: 'ring' }, wind: { period: 15, dur: 5, force: 2.4 },
+    dur: 230, ordT: 105, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Бррр, холодно! Нічого, гарячий рамен мене зігріє!'],
+            [B, 'Завірюха зносить кухарчат убік — тримайтеся! Локшину, кукурудзу й яйце — в одну каструлю.']],
+    outro: [[B, 'Японію пройдено! Шкодько поплив кораблем аж до Мексики.']] },
   { id: 'mexico', country: 'mx', city: 'Мехіко', title: 'Фієста тако',
     recipes: ['taco', 'burrito'], crates: { 1: 'tortilla', 2: 'meat', 3: 'tomato', 4: 'rice', 5: 'lettuce' },
     dur: 220, ordT: 100, iv: 24, maxO: 3, fire: true, wash: false, plates: 4,
@@ -253,8 +422,25 @@ export const LEVELS = [
     ],
     intro: [[R, '¡Hola! Тако — це просто, а буріто — справжній виклик!'],
             [B, 'Тортилья, смажене мʼясо і свіжі овочі. Для буріто ще й рис зваріть.']],
-    outro: [[B, 'Сторінка наша! Шкодько втік на пляжі Канкуна.']] },
-
+    outro: [[B, 'Сторінка наша! Шкодько втік до Пуебли.']] },
+  { id: 'puebla', country: 'mx', city: 'Пуебла', title: 'Шоколадне моле',
+    recipes: ['mole', 'taco'], gen: { layout: 'island' },
+    dur: 220, ordT: 100, iv: 23, maxO: 3, fire: true, wash: false, plates: 4,
+    intro: [[R, 'Курка з шоколадом? Звучить дивно, але пахне чудово!'],
+            [B, 'Курку підсмажте, рис зваріть, а шоколад — просто додайте на тарілку.']],
+    outro: [[B, 'Сторінка наша! Шкодько втік до Оахаки.']] },
+  { id: 'oaxaca', country: 'mx', city: 'Оахака', title: 'Тлаюда і кесадилья',
+    recipes: ['tlayuda', 'quesadilla'], gen: { layout: 'islands2' },
+    dur: 220, ordT: 100, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Тут тортилья буває величезна, як колесо!'],
+            [B, 'Тлаюду печемо в печі, а кесадилью смажимо на пательні з сиром.']],
+    outro: [[B, 'Ще сторінка! Шкодько подався до Гвадалахари.']] },
+  { id: 'guadalajara', country: 'mx', city: 'Гвадалахара', title: 'Начос маріачі',
+    recipes: ['nachos', 'burrito'], gen: { layout: 'split', gates: true, convBridge: true },
+    dur: 230, ordT: 105, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Маріачі грають, а я танцюю зі сторінкою!'],
+            [B, 'Кухня поділена навпіл: двері по черзі зачиняються, а стрічка возить продукти.']],
+    outro: [[B, 'Олé! Шкодько поїхав на пляжі Канкуна.']] },
   { id: 'cancun', country: 'mx', city: 'Канкун', title: 'Пляжна кухня',
     recipes: ['taco', 'burrito'], crates: { 1: 'tortilla', 2: 'meat', 3: 'tomato', 4: 'rice', 5: 'lettuce' },
     dur: 230, ordT: 100, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
@@ -274,7 +460,6 @@ export const LEVELS = [
     intro: [[R, 'Пляж, сонце і… гора брудного посуду!'],
             [B, 'Тут і пожежі, і миття, і стрічка. Діліть роботу: хтось ріже, хтось смажить, а хтось миє.']],
     outro: [[B, 'Мексику пройдено! Шкодько полетів до Нью-Йорка.']] },
-
   { id: 'newyork', country: 'us', city: 'Нью-Йорк', title: 'Місто бургерів',
     recipes: ['burger', 'cheeseb'], crates: { 1: 'bun', 2: 'meat', 3: 'lettuce', 4: 'cheese', 5: 'tomato' },
     dur: 220, ordT: 95, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
@@ -293,7 +478,6 @@ export const LEVELS = [
     intro: [[R, 'Місто, яке ніколи не спить і не перестає їсти бургери!'],
             [B, 'Булочка, смажена котлета й зелень. А для чизбургера ще сир і томат.']],
     outro: [[B, 'Сторінка з бургерами наша! Шкодько чкурнув до вітряного Чикаго.']] },
-
   { id: 'chicago', country: 'us', city: 'Чикаго', title: 'Вітряне місто',
     recipes: ['hotdog', 'burger'], crates: { 1: 'bun', 2: 'sausage', 3: 'meat', 4: 'lettuce', 5: 'bun' },
     dur: 220, ordT: 90, iv: 21, maxO: 3, fire: true, wash: true, plates: 3,
@@ -311,8 +495,19 @@ export const LEVELS = [
     ],
     intro: [[R, 'Тут вітряно, тримайте свої хот-доги!'],
             [B, 'Сосиски смажте на пательні й кладіть у булочку. Стрічка везе продукти довкола.']],
+    outro: [[B, 'Ще сторінка! Шкодько вирушив до Нового Орлеана.']] },
+  { id: 'neworleans', country: 'us', city: 'Новий Орлеан', title: 'Джаз і джамбалая',
+    recipes: ['jambalaya', 'hotdog'], gen: { layout: 'conv' },
+    dur: 230, ordT: 105, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Джаз грає, джамбалая булькає… а сторінка в мене!'],
+            [B, 'Рис, ковбаску й томати — все в одну каструлю. Хот-доги — на пательні.']],
+    outro: [[B, 'Сторінка наша! Шкодько поскакав на конику до Техасу.']] },
+  { id: 'austin', country: 'us', city: 'Остін', title: 'Техаський вітер',
+    recipes: ['chili', 'steakcorn', 'burger'], gen: { layout: 'islands2', extraBoard: true }, wind: { period: 14, dur: 5, force: 2.6 },
+    dur: 240, ordT: 105, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Yee-haw! У Техасі все велике — і вітер теж!'],
+            [B, 'Чилі: квасоля, мʼясо й томати в каструлі. Стейк — на пательні, а кукурудзу варимо.']],
     outro: [[B, 'Залишилась остання сторінка! Шкодько в Сан-Франциско.']] },
-
   { id: 'sanfran', country: 'us', city: 'Сан-Франциско', title: 'Остання сторінка',
     recipes: ['burger', 'cheeseb', 'hotdog'], crates: { 1: 'bun', 2: 'meat', 3: 'lettuce', 4: 'cheese', 5: 'tomato', 6: 'sausage' },
     dur: 240, ordT: 100, iv: 22, maxO: 3, fire: true, wash: true, plates: 3,
@@ -332,7 +527,6 @@ export const LEVELS = [
             [B, 'Ліворуч продукти, праворуч плити. Стрічки возять туди й назад, а внизу є прохід.']],
     outro: [[R, 'Ой… ви мене спіймали. Я просто дуже хотів навчитися готувати…'],
             [B, 'То поїхали з нами до Києва! Разом приготуємо великий бенкет.']] },
-
   { id: 'feast', country: 'ua', city: 'Київ', title: 'Бабусин бенкет', finale: true,
     recipes: ['borshch', 'varenyky', 'pizza', 'burger'],
     crates: { 1: 'beet', 2: 'cabbage', 3: 'potato', 4: 'dough', 5: 'tomato', 6: 'cheese', 7: 'bun', 8: 'meat', 9: 'lettuce' },
@@ -359,22 +553,29 @@ export const LEVELS = [
 // Розташування на карті світу: острови країн і міста (x, z на мапі)
 export const MAP = {
   islands: {
-    us: { x: -15, z: -2, r: 6.2 },
-    mx: { x: -11, z: 8.5, r: 4.6 },
-    it: { x: 2, z: 3, r: 5.0 },
-    ua: { x: 9, z: -6, r: 5.6 },
-    jp: { x: 18, z: 4, r: 4.8 },
-  },
-  // порядок рівнів: позиції міст
-  cities: {
-    kyiv: [9.5, -7.5], lviv: [6.4, -6.0], odesa: [10.6, -3.6],
-    napoli: [3.4, 4.6], roma: [1.6, 2.2], venezia: [0.8, -0.2],
-    tokyo: [19.2, 2.0], osaka: [17.6, 4.6], kyoto: [16.6, 6.6],
-    mexico: [-11.2, 8.0], cancun: [-8.6, 9.6],
-    newyork: [-11.6, -3.6], chicago: [-15.4, -4.6], sanfran: [-19.4, -1.0],
-    feast: [8.4, -8.8],
+    ua: { x: 15, z: -6, r: 6.6 },
+    de: { x: 0, z: -11, r: 6.2 },
+    it: { x: -1, z: 4, r: 6.0 },
+    jp: { x: 14, z: 9, r: 6.0 },
+    mx: { x: -16, z: 12, r: 6.0 },
+    us: { x: -22, z: -3, r: 6.8 },
   },
 };
+
+// кухні, описані як gen, будуємо генератором; ck — номер кухні в межах країни
+{
+  const perCountry = {};
+  for (const l of LEVELS) {
+    l.ck = l.finale ? 9 : (perCountry[l.country] = (perCountry[l.country] ?? -1) + 1);
+    if (!l.gen) continue;
+    const ids = [...new Set(l.recipes.flatMap(r => RECIPES[r].c.map(k => k.split(':')[0])))];
+    const st = new Set(l.recipes.flatMap(r => RECIPES[r].c.map(k => k.split(':')[1])));
+    const chop = l.recipes.some(r => RECIPES[r].c.some(k => { const [id, s] = k.split(':'); return s === 'c' || (ING[id].chop && ['b', 'f', 'k'].includes(s) && ING[id][({ b: 'pot', f: 'pan', k: 'oven' })[s]] === 'c'); }));
+    const g = genKitchen({ w: 15, h: 9, ...l.gen, crates: ids, fire: l.fire, wash: l.wash,
+      pots: st.has('b') ? 3 : 0, pans: st.has('f') ? 2 : 0, ovens: st.has('k') ? 2 : 0, boards: chop ? 2 : 0 });
+    l.grid = g.grid; l.crates = g.crates; if (g.gates && !l.gates) l.gates = g.gates;
+  }
+}
 
 export const SPEAKERS = {
   baba: { name: 'Бабуся Ганна', face: '👵' },
