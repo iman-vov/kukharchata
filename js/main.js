@@ -579,7 +579,7 @@ function openCoop(tab) {
       <p class="status" id="oSt"></p>`;
     else if (r === 'host') body = `
       <p class="sub">Код твоєї кімнати:</p><div class="code">${net.code || '—'}</div>
-      ${net.code ? `<div class="btnrow" style="justify-content:flex-start"><button class="btn blue" id="oShare">📤 Надіслати запрошення</button></div><p class="kbd">Посилання відкриває гру й одразу підключає до кімнати${turnCfg() ? ' (з твоїм TURN-сервером)' : ''}.</p>` : ''}
+      ${net.code ? `<div class="btnrow" style="justify-content:flex-start"><button class="btn blue" id="oShare">📤 Надіслати код</button></div><p class="kbd">Гостям достатньо ввести цей код у грі: «Гра разом» → «Приєднатися».</p>` : ''}
       <h3>Гравці (${countHumans()} з 6 кухарів)</h3><div class="plist">${plist}</div>`;
     else body = `<p>Ти в кімнаті <b>${esc(net.code || '')}</b> у ${esc(hostName())}.</p><div class="plist">${plist}</div>`;
     body += `<h3>🌍 Гра через кордон (TURN)</h3>
@@ -612,8 +612,8 @@ function openCoop(tab) {
   if ($('#oHost')) $('#oHost').onclick = () => hostRoom();
   if ($('#oJoin')) $('#oJoin').onclick = () => joinRoom($('#oCode').value);
   if ($('#oShare')) $('#oShare').onclick = async () => {
-    const link = inviteLink(), text = tr(`Давай готувати разом у «Кухарчатах»! 🍳 Код кімнати:`) + ` ${net.code}\n${link}`;
-    try { if (navigator.share) await navigator.share({ title: tr('Кухарчата'), text, url: link }); else { await navigator.clipboard.writeText(text); toast('Посилання скопійовано'); } } catch (_) { }
+    const link = location.href.split('?')[0].split('#')[0], text = tr(`Давай готувати разом у «Кухарчатах»! 🍳 Код кімнати:`) + ` ${net.code}\n` + tr('Відкрий гру з іконки → «Гра разом» → введи код → «Приєднатися».') + `\n` + tr('Якщо гри ще немає:') + ` ${link}`;
+    try { if (navigator.share) await navigator.share({ title: tr('Кухарчата'), text }); else { await navigator.clipboard.writeText(text); toast('Посилання скопійовано'); } } catch (_) { }
   };
   if ($('#tMet')) {
     const saveT = () => { Object.assign(S.set.turn, { meteredUrl: $('#tMet').value.trim(), turnUrl: $('#tUrl').value.trim(), turnUser: $('#tUser').value.trim(), turnPass: $('#tPass').value.trim() }); save(); };
