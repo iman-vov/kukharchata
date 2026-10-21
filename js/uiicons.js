@@ -1,7 +1,8 @@
 // Кухарчата — власні значки інтерфейсу (SVG) замість стандартних емодзі.
 // Усі емодзі на сторінці автоматично замінюються цими малюнками.
-const S = (body, vb = '0 0 24 24') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${body}</svg>`;
-const O = 'stroke="#3a2a1f" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"';
+// товщина лінії задається на групі, щоб окремі фігури могли її змінити без дубля атрибута
+const S = (body, vb = '0 0 24 24') => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}"><g stroke-width="1.4">${body}</g></svg>`;
+const O = 'stroke="#3a2a1f" stroke-linejoin="round" stroke-linecap="round"';
 const face = (skin, extra) => S(`<circle cx="12" cy="13" r="9" fill="${skin}" ${O}/><circle cx="9" cy="12" r="1.2" fill="#3a2a1f"/><circle cx="15" cy="12" r="1.2" fill="#3a2a1f"/><circle cx="7.5" cy="15" r="1.3" fill="#ff9aa8"/><circle cx="16.5" cy="15" r="1.3" fill="#ff9aa8"/>${extra}`);
 const ICONS = {
   '👫': S(`<circle cx="8" cy="7" r="3.2" fill="#ffd7b5" ${O}/><path d="M3.5 21v-5a4.5 4.5 0 019 0v5z" fill="#e5484d" ${O}/><circle cx="16" cy="8" r="3" fill="#f1c27d" ${O}/><path d="M11.5 21v-4.5a4.5 4.5 0 019 0V21z" fill="#3d7be0" ${O}/>`),
