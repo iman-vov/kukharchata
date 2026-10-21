@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#f4ead8;font:12px sans-serif}#g{display:flex;flex-wrap:wrap;gap:4px;padding:6px}figure{margin:0;width:96px;text-align:center}figure img{width:96px;height:96px;background:#fff;border-radius:10px}</style>
+<script type="importmap">{ "imports": { "three": "../vendor/three.module.min.js" } }</script></head><body><div id="g"></div>
+<script type="module">
+import { RECIPES, ING } from '../js/data.js';
+import { dishURL, ingURL } from '../js/icons.js';
+const g = document.getElementById('g');
+const mode = location.hash.slice(1) || 'dish';
+const list = mode === 'ing' ? Object.keys(ING) : Object.keys(RECIPES);
+for (const k of list) { const f = document.createElement('figure'); f.innerHTML = `<img src="${mode === 'ing' ? ingURL(k) : dishURL(k)}"><figcaption>${k}</figcaption>`; g.appendChild(f); }
+window.done = true;
+</script></body></html>

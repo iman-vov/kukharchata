@@ -7,7 +7,7 @@ for (let li=0; li<LEVELS.length; li++){
   for (let n=1;n<=6;n++){
     let sum=0; const seeds=[11,23,37];
     for (const seed of seeds){ let x=seed*9301+49297; const rand=()=>((x=(x*9301+49297)%233280)/233280);
-      const s=new Sim(li,{humans:n,rand}); for(let i=0;i<n;i++) s.addPlayer({id:'b'+i,bot:true}); s.started=true;
+      const s=new Sim(li,{humans:n,rand,botSkill:'full'}); for(let i=0;i<n;i++) s.addPlayer({id:'b'+i,bot:true}); s.started=true;
       while(!s.over){ s.step(1/30); s.events.length=0; } sum+=s.score; }
     row.push(Math.round(sum/seeds.length));
   }

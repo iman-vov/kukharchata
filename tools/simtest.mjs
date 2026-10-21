@@ -17,7 +17,7 @@ import { RECIPES } from '../js/data.js';
 function await_rec(r){ return RECIPES[r].c; }
 function run(li, bots, seed=1){
   let x = seed*9301+49297; const rand=()=>((x=(x*9301+49297)%233280)/233280);
-  const s = new Sim(li,{humans:bots, rand});
+  const s = new Sim(li,{humans:bots, rand, botSkill:'full'});
   for (let i=0;i<bots;i++) s.addPlayer({id:'b'+i, bot:true});
   s.started = true; const dt=1/30;
   while(!s.over) { s.step(dt); s.events.length=0; }

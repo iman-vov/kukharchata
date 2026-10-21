@@ -1,59 +1,92 @@
-// Значки інгредієнтів і страв (canvas): емодзі або власні малюнки
+// Кухарчата — власні значки: продукти й страви «фотографуються» з 3D-моделей,
+// значки стану (ніж, крапля, вогник, піч) намальовані вручну.
+import * as THREE from 'three';
 import { ING, RECIPES } from './data.js';
+import { makeIngMesh, dishMesh } from './food.js';
 
-export const STATE_BADGE = { c: '🔪', b: '💧', f: '🔥', k: '♨️', x: '💀' };
+const SIZE = 128;
+let R = null, scene, cam;
+function setup() {
+  if (R) return;
+  R = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  R.setPixelRatio(1); R.setSize(SIZE, SIZE, false); R.outputColorSpace = THREE.SRGBColorSpace;
+  R.setClearColor(0x000000, 0);
+  scene = new THREE.Scene();
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9a8a7a, 1.5));
+  const d = new THREE.DirectionalLight(0xffffff, 1.6); d.position.set(1.2, 2.5, 2); scene.add(d);
+  const b = new THREE.DirectionalLight(0xfff0e0, 0.5); b.position.set(-2, 1, -1); scene.add(b);
+  cam = new THREE.PerspectiveCamera(28, 1, 0.01, 20);
+}
+const cache = new Map();
+function snap(key, build, tilt = 0.75) {
+  if (cache.has(key)) return cache.get(key);
+  const out = document.createElement('canvas'); out.width = out.height = SIZE;
+  try {
+    setup();
+    const obj = build();
+    const box = new THREE.Box3().setFromObject(obj), size = box.getSize(new THREE.Vector3()), ctr = box.getCenter(new THREE.Vector3());
+    const r = Math.max(size.x, size.y * 1.1, size.z) * 0.62 || 0.3;
+    const dist = r / Math.tan(cam.fov * Math.PI / 360) * 1.15;
+    cam.position.set(ctr.x + dist * 0.05, ctr.y + dist * Math.sin(tilt), ctr.z + dist * Math.cos(tilt));
+    cam.lookAt(ctr);
+    scene.add(obj); R.render(scene, cam); scene.remove(obj);
+    out.getContext('2d').drawImage(R.domElement, 0, 0);
+  } catch (_) { /* без WebGL — порожній значок */ }
+  cache.set(key, out);
+  return out;
+}
+export const ingCanvas = (id) => snap('i' + id, () => makeIngMesh(id, 'r'), ING[id] && ING[id].liquid ? 0.35 : 0.75);
+export const dishCanvas = (rid) => snap('d' + rid, () => dishMesh(rid), RECIPES[rid] && RECIPES[rid].drink ? 0.4 : 0.85);
 
-function custom(ctx, name, x, y, s) {
-  const r = s / 2;
-  ctx.save(); ctx.translate(x, y);
-  const circ = (cx, cy, rr, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI * 2); ctx.fill(); };
-  switch (name) {
-    case 'beet':
-      ctx.fillStyle = '#3a9a3a'; ctx.beginPath(); ctx.ellipse(-r * .2, -r * .55, r * .18, r * .38, -.4, 0, 7); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(r * .22, -r * .55, r * .18, r * .38, .4, 0, 7); ctx.fill();
-      circ(0, r * .12, r * .62, '#8e1b4f'); circ(-r * .2, -r * .05, r * .16, '#b8457a');
-      ctx.fillStyle = '#8e1b4f'; ctx.beginPath(); ctx.moveTo(-r * .12, r * .65); ctx.lineTo(r * .12, r * .65); ctx.lineTo(0, r * .98); ctx.fill();
-      break;
-    case 'cabbage':
-      circ(0, 0, r * .8, '#9fd27a'); circ(0, 0, r * .58, '#c9eaa8');
-      ctx.strokeStyle = '#7fb85a'; ctx.lineWidth = s * .04;
-      for (let i = 0; i < 5; i++) { ctx.beginPath(); ctx.arc(0, 0, r * (.2 + i * .12), i, i + 2.2); ctx.stroke(); }
-      break;
-    case 'sausage':
-      ctx.rotate(-.5); ctx.fillStyle = '#c8553d'; ctx.beginPath(); ctx.roundRect(-r * .85, -r * .28, r * 1.7, r * .56, r * .28); ctx.fill();
-      ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.beginPath(); ctx.roundRect(-r * .6, -r * .2, r * 1.1, r * .12, r * .06); ctx.fill();
-      break;
-    case 'dough':
-      ctx.fillStyle = '#f3e6c8'; ctx.beginPath(); ctx.ellipse(0, r * .1, r * .85, r * .6, 0, 0, 7); ctx.fill();
-      ctx.fillStyle = '#e6d2a6'; ctx.beginPath(); ctx.ellipse(r * .1, r * .25, r * .5, r * .25, 0, 0, 7); ctx.fill();
-      circ(-r * .3, -r * .05, r * .08, '#fff');
-      break;
-    case 'pasta':
-      ctx.strokeStyle = '#e8b93a'; ctx.lineWidth = s * .07; ctx.lineCap = 'round';
-      for (let i = -3; i <= 3; i++) { ctx.beginPath(); ctx.moveTo(i * r * .14 - r * .3, -r * .8); ctx.lineTo(i * r * .14 + r * .3, r * .8); ctx.stroke(); }
-      ctx.fillStyle = '#c0392b'; ctx.fillRect(-r * .55, -r * .12, r * 1.1, r * .24);
-      break;
-    case 'noodles':
-      ctx.strokeStyle = '#e9c46a'; ctx.lineWidth = s * .06; ctx.lineCap = 'round';
-      for (let i = -2; i <= 2; i++) { ctx.beginPath(); for (let k = 0; k <= 12; k++) { const xx = -r * .8 + k * r * .135, yy = i * r * .28 + Math.sin(k * 1.4) * r * .1; k ? ctx.lineTo(xx, yy) : ctx.moveTo(xx, yy); } ctx.stroke(); }
-      break;
-    case 'nori':
-      ctx.fillStyle = '#1f3d2b'; ctx.beginPath(); ctx.roundRect(-r * .75, -r * .75, r * 1.5, r * 1.5, r * .12); ctx.fill();
-      ctx.strokeStyle = '#2f5a3e'; ctx.lineWidth = s * .03;
-      for (let i = -2; i <= 2; i++) { ctx.beginPath(); ctx.moveTo(-r * .7, i * r * .25); ctx.lineTo(r * .7, i * r * .25); ctx.stroke(); }
-      break;
-    case 'cream':
-      ctx.fillStyle = '#fbfbf5'; ctx.beginPath(); ctx.roundRect(-r * .55, -r * .45, r * 1.1, r * 1.25, r * .2); ctx.fill();
-      ctx.strokeStyle = '#ccc'; ctx.lineWidth = s * .03; ctx.stroke();
-      ctx.fillStyle = '#4a90d9'; ctx.beginPath(); ctx.roundRect(-r * .62, -r * .75, r * 1.24, r * .38, r * .1); ctx.fill();
-      ctx.fillStyle = '#4a90d9'; ctx.font = `bold ${s * .28}px sans-serif`; ctx.textAlign = 'center'; ctx.fillText('С', 0, r * .45);
-      break;
+/* ---------- значки стану ---------- */
+function badge(g, s, x, y, r) {
+  g.save(); g.translate(x, y);
+  g.fillStyle = '#fff'; g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
+  g.lineWidth = r * 0.12; g.strokeStyle = 'rgba(0,0,0,.18)'; g.stroke();
+  const k = r / 10;
+  switch (s) {
+    case 'c': // ніж
+      g.rotate(-0.7); g.fillStyle = '#cfd8dc'; g.beginPath(); g.moveTo(-1 * k, -6 * k); g.lineTo(2.2 * k, -6 * k); g.quadraticCurveTo(3 * k, 0, 2.2 * k, 2 * k); g.lineTo(-1 * k, 2 * k); g.fill();
+      g.fillStyle = '#6d4c41'; g.fillRect(-1.2 * k, 2 * k, 3.2 * k, 5 * k); break;
+    case 'b': // крапля води
+      g.fillStyle = '#3d9be9'; g.beginPath(); g.moveTo(0, -6.5 * k); g.bezierCurveTo(5 * k, -1 * k, 5 * k, 5.5 * k, 0, 5.5 * k); g.bezierCurveTo(-5 * k, 5.5 * k, -5 * k, -1 * k, 0, -6.5 * k); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.arc(-1.5 * k, 1.5 * k, 1.2 * k, 0, 7); g.fill(); break;
+    case 'f': // вогник
+      g.fillStyle = '#ff6d00'; g.beginPath(); g.moveTo(0, -7 * k); g.bezierCurveTo(6 * k, -1 * k, 5 * k, 6 * k, 0, 6 * k); g.bezierCurveTo(-5 * k, 6 * k, -5 * k, 0, -1 * k, -2 * k); g.bezierCurveTo(-1 * k, 0, 0, 1 * k, 1 * k, -1 * k); g.fill();
+      g.fillStyle = '#ffd54f'; g.beginPath(); g.ellipse(0, 3 * k, 2 * k, 2.6 * k, 0, 0, 7); g.fill(); break;
+    case 'k': // піч
+      g.fillStyle = '#b5532f'; g.beginPath(); g.roundRect(-6 * k, -5 * k, 12 * k, 11 * k, 2.5 * k); g.fill();
+      g.fillStyle = '#ffb300'; g.beginPath(); g.roundRect(-4 * k, -1 * k, 8 * k, 5 * k, 1.5 * k); g.fill();
+      g.fillStyle = '#5d2e16'; g.fillRect(-4 * k, -3.6 * k, 8 * k, 1.2 * k); break;
+    case 'x':
+      g.strokeStyle = '#333'; g.lineWidth = 2.4 * k; g.beginPath(); g.moveTo(-4 * k, -4 * k); g.lineTo(4 * k, 4 * k); g.moveTo(4 * k, -4 * k); g.lineTo(-4 * k, 4 * k); g.stroke(); break;
   }
+  g.restore();
+}
+const badgeCache = new Map();
+function badgeCanvas(s) {
+  if (badgeCache.has(s)) return badgeCache.get(s);
+  const c = document.createElement('canvas'); c.width = c.height = 40; badge(c.getContext('2d'), s, 20, 20, 18);
+  badgeCache.set(s, c); return c;
+}
+export const STATES_WITH_BADGE = new Set(['c', 'b', 'f', 'k', 'x']);
+
+/* ---------- малювання в canvas (бульбашки, вивіски) ---------- */
+export function drawIng(ctx, id, s, x, y, size, withBadge = true) {
+  ctx.drawImage(ingCanvas(id), x - size / 2, y - size / 2, size, size);
+  if (withBadge && STATES_WITH_BADGE.has(s)) badge(ctx, s, x + size * 0.32, y + size * 0.32, size * 0.2);
+}
+export function drawDish(ctx, rid, x, y, size) { ctx.drawImage(dishCanvas(rid), x - size / 2, y - size / 2, size, size); }
+export function drawKnife(ctx, x, y, s) { // великий ніж для ефекту нарізання
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-0.6); const k = s / 20;
+  ctx.fillStyle = '#eceff1'; ctx.strokeStyle = '#90a4ae'; ctx.lineWidth = k * 0.8;
+  ctx.beginPath(); ctx.moveTo(-3 * k, -9 * k); ctx.lineTo(4 * k, -9 * k); ctx.quadraticCurveTo(5 * k, 0, 4 * k, 3 * k); ctx.lineTo(-3 * k, 3 * k); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#6d4c41'; ctx.beginPath(); ctx.roundRect(-3 * k, 3 * k, 6 * k, 8 * k, 1.5 * k); ctx.fill();
+  ctx.fillStyle = '#bcaaa4'; ctx.beginPath(); ctx.arc(0, 6 * k, 0.8 * k, 0, 7); ctx.arc(0, 9 * k, 0.8 * k, 0, 7); ctx.fill();
   ctx.restore();
 }
-
+// запасний варіант для інших значків (емодзі в оформленні)
 export function drawIcon(ctx, icon, x, y, s) {
-  if (icon[0] === '@') { custom(ctx, icon.slice(1), x, y, s); return; }
   ctx.save();
   ctx.font = `${Math.round(s * .82)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -61,34 +94,16 @@ export function drawIcon(ctx, icon, x, y, s) {
   ctx.restore();
 }
 
-export function drawIng(ctx, id, s, x, y, size, badge = true) {
-  drawIcon(ctx, ING[id].icon, x, y, size);
-  if (badge && STATE_BADGE[s] && s !== 'r') {
-    const b = size * .42;
-    ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,.92)'; ctx.beginPath(); ctx.arc(x + size * .32, y + size * .32, b * .55, 0, 7); ctx.fill();
-    ctx.font = `${Math.round(b * .8)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(STATE_BADGE[s], x + size * .32, y + size * .34);
-    ctx.restore();
-  }
-}
-
-// HTML: <img> для власних значків (кеш), текст для емодзі
-const urlCache = new Map();
-export function iconURL(icon, size = 64) {
-  const k = icon + size;
-  if (urlCache.has(k)) return urlCache.get(k);
-  const c = document.createElement('canvas'); c.width = c.height = size;
-  drawIcon(c.getContext('2d'), icon, size / 2, size / 2, size * .9);
-  const u = c.toDataURL(); urlCache.set(k, u); return u;
-}
+/* ---------- HTML ---------- */
+const urls = new Map();
+const url = (k, c) => { if (!urls.has(k)) urls.set(k, c.toDataURL()); return urls.get(k); };
+export function ingURL(id) { return url('i' + id, ingCanvas(id)); }
+export function dishURL(rid) { return url('d' + rid, dishCanvas(rid)); }
 export function ingHTML(id, s, cls = 'ic') {
-  const ic = ING[id].icon;
-  const main = ic[0] === '@' ? `<img src="${iconURL(ic)}" alt="">` : `<span>${ic}</span>`;
-  const b = s && s !== 'r' && STATE_BADGE[s] ? `<i>${STATE_BADGE[s]}</i>` : '';
-  return `<b class="${cls}" title="${ING[id].name}">${main}${b}</b>`;
+  const b = STATES_WITH_BADGE.has(s) ? `<i><img src="${url('b' + s, badgeCanvas(s))}" alt=""></i>` : '';
+  return `<b class="${cls}" title="${ING[id].name}"><img src="${ingURL(id)}" alt="">${b}</b>`;
 }
 export function recipeHTML(rid) {
   return RECIPES[rid].c.map(k => { const [id, s] = k.split(':'); return ingHTML(id, s); }).join('');
 }
+export function dishHTML(rid, cls = 'dimg') { return `<img class="${cls}" src="${dishURL(rid)}" alt="${RECIPES[rid].name}">`; }

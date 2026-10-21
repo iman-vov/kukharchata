@@ -1,10 +1,17 @@
 // Кухарчата — керування: сенсорний джойстик і кнопки, клавіатура, геймпади
 const DEAD = 0.22;
+// власні значки кнопок (SVG)
+const SVG = {
+  hand: '<svg viewBox="0 0 40 40" width="38" height="38"><path d="M12 22V11a2.5 2.5 0 015 0v8m0-10a2.5 2.5 0 015 0v10m0-8a2.5 2.5 0 015 0v10m0-5a2.5 2.5 0 015 0v8c0 7-5 12-12 12h-2c-5 0-8-3-10-7l-4-7a2.6 2.6 0 014.5-2.6L12 22" fill="#ffe0b2" stroke="#8d5a3b" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>',
+  knife: '<svg viewBox="0 0 40 40" width="34" height="34"><g transform="rotate(-40 20 20)"><path d="M17 4h7c2 7 2 14 0 19h-7z" fill="#eceff1" stroke="#78909c" stroke-width="1.6"/><rect x="16.5" y="23" width="8" height="13" rx="2.5" fill="#6d4c41"/><circle cx="20.5" cy="27" r="1.1" fill="#d7ccc8"/><circle cx="20.5" cy="32" r="1.1" fill="#d7ccc8"/></g></svg>',
+  dash: '<svg viewBox="0 0 40 40" width="30" height="30"><path d="M6 14h18M3 20h22M8 26h16" stroke="#4fc3f7" stroke-width="3.2" stroke-linecap="round"/><path d="M26 10l9 10-9 10" fill="none" stroke="#0288d1" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  throw: '<svg viewBox="0 0 40 40" width="30" height="30"><path d="M6 30C12 10 26 6 34 10" fill="none" stroke="#ff8a65" stroke-width="3" stroke-dasharray="4 4" stroke-linecap="round"/><circle cx="32" cy="10" r="5" fill="#e53935"/><path d="M31 5l2-3" stroke="#43a047" stroke-width="2"/></svg>',
+};
 
 export class Input {
   constructor(layer) {
     this.layer = layer;
-    this.mode = 'single';
+    this.mode = 'single'; this.throwOn = false;
     this.src = {}; // джерело → {mx,my,grab,use,dash,_g,_d}
     this.keys = new Set();
     this.padPrev = [];
@@ -24,7 +31,7 @@ export class Input {
     addEventListener('blur', () => this.keys.clear());
     this.build();
   }
-  setMode(m) { this.mode = m; this.build(); }
+  setMode(m, throwOn = this.throwOn) { this.mode = m; this.throwOn = throwOn; this.build(); }
   show(on) { this.layer.classList.toggle('hide', !on); }
   build() {
     this.layer.innerHTML = '';
@@ -33,11 +40,11 @@ export class Input {
       const zone = document.createElement('div');
       zone.className = 'tzone ' + (this.mode === 'shared' ? (z ? 'zr' : 'zl') : 'zf');
       zone.innerHTML = `<div class="joy"><div class="base"><div class="knob"></div></div></div>
-        <div class="btns"><button class="tb grab" data-b="grab">✋<small>Взяти</small></button>
-        <button class="tb use" data-b="use">🔪<small>Дія</small></button>
-        <button class="tb dash" data-b="dash">💨</button></div>`;
+        <div class="btns"><button class="tb grab" data-b="grab">${SVG.hand}<small>Взяти</small></button>
+        <button class="tb use" data-b="use">${SVG.knife}<small>Дія</small></button>
+        <button class="tb dash" data-b="dash">${SVG.dash}</button>${this.throwOn ? `<button class="tb throw" data-b="throw">${SVG.throw}</button>` : ''}</div>`;
       this.layer.appendChild(zone);
-      const S = this.src['touch' + z] = { mx: 0, my: 0, grab: false, use: false, dash: false, _g: 0, _d: 0 };
+      const S = this.src['touch' + z] = { mx: 0, my: 0, grab: false, use: false, dash: false, _g: 0, _d: 0, _t: 0 };
       const joy = zone.querySelector('.joy'), base = zone.querySelector('.base'), knob = zone.querySelector('.knob');
       let pid = null, ox = 0, oy = 0;
       const R = 52;
@@ -61,7 +68,7 @@ export class Input {
       joy.addEventListener('pointerup', end); joy.addEventListener('pointercancel', end);
       zone.querySelectorAll('.tb').forEach(b => {
         const k = b.dataset.b;
-        b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('down'); S[k] = true; if (k === 'grab') S._g++; if (k === 'dash') S._d++; this.lastTouch = performance.now(); if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) { } });
+        b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('down'); S[k] = true; if (k === 'grab') S._g++; if (k === 'dash') S._d++; if (k === 'throw') S._t++; this.lastTouch = performance.now(); if (navigator.vibrate) try { navigator.vibrate(8); } catch (_) { } });
         const up = () => { b.classList.remove('down'); S[k] = false; };
         b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
         b.addEventListener('contextmenu', e => e.preventDefault());
@@ -74,8 +81,8 @@ export class Input {
     const out = {};
     for (const k in this.src) {
       const S = this.src[k];
-      out[k] = { mx: S.mx, my: S.my, grab: S._g > 0, use: S.use, dash: S._d > 0, active: Math.hypot(S.mx, S.my) > 0.1 || S.use };
-      S._g = 0; S._d = 0;
+      out[k] = { mx: S.mx, my: S.my, grab: S._g > 0, use: S.use, dash: S._d > 0, throw: S._t > 0, active: Math.hypot(S.mx, S.my) > 0.1 || S.use };
+      S._g = 0; S._d = 0; S._t = 0;
     }
     // клавіатура
     const K = this.keys, kb = { mx: 0, my: 0 };
@@ -86,6 +93,7 @@ export class Input {
     kb.grab = edge('Space') || edge('KeyJ');
     kb.use = K.has('KeyE') || K.has('KeyK') || K.has('ControlLeft');
     kb.dash = edge('ShiftLeft') || edge('ShiftRight') || edge('KeyL');
+    kb.throw = edge('KeyQ') || edge('KeyU');
     kb.active = !!(kb.mx || kb.my || kb.use);
     this._kprev = new Set(K);
     out.kb = kb;
@@ -98,7 +106,7 @@ export class Input {
       let mx = gp.axes[0] || 0, my = gp.axes[1] || 0;
       if (Math.hypot(mx, my) < DEAD) { mx = 0; my = 0; }
       if (b(14)) mx = -1; if (b(15)) mx = 1; if (b(12)) my = -1; if (b(13)) my = 1;
-      out['pad' + gp.index] = { mx, my, grab: e(0), use: b(2) || b(3) || b(7), dash: e(1) || e(5) || e(4), active: !!(mx || my || b(0) || b(2)), pressedA: e(0) };
+      out['pad' + gp.index] = { mx, my, grab: e(0), use: b(2) || b(7), dash: e(1) || e(5) || e(4), throw: e(3) || e(6), active: !!(mx || my || b(0) || b(2)), pressedA: e(0) };
       // навігація меню
       if (e(0)) this.nav.push('a'); if (e(1)) this.nav.push('b'); if (e(9) || e(8)) this.nav.push('start');
       const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, pax = this._ax?.[gp.index] || [0, 0];

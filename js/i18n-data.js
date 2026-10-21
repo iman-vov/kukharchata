@@ -116,6 +116,8 @@ export const UI = [
   ['Вимкнено: кожен геймпад — окремий кухарчик', 'Aus: jedes Gamepad ist ein eigener Koch', 'Off: every gamepad is its own cook'],
   ['🍽 Зала з гостями й офіціант', '🍽 Gastraum mit Gästen und Kellner', '🍽 Dining room with guests and a waiter'],
   ['Вимкни, якщо пристрій гальмує', 'Ausschalten, wenn das Gerät ruckelt', 'Turn off if your device is slow'],
+  ['🎯 Кидати продукти', '🎯 Zutaten werfen', '🎯 Throw ingredients'],
+  ['Як в Overcooked: кнопка 🎯, геймпад Ⓨ, клавіша Q. Можна ловити на льоту!', 'Wie in Overcooked: Taste 🎯, Gamepad Ⓨ, Taste Q. Man kann im Flug fangen!', 'Like in Overcooked: 🎯 button, gamepad Ⓨ, Q key. You can catch mid-air!'],
   ['💡 Підказки на перших рівнях', '💡 Tipps in den ersten Levels', '💡 Hints in the first levels'],
   ['Підключені геймпади:', 'Verbundene Gamepads:', 'Connected gamepads:'],
   ['немає (натисни кнопку на геймпаді, щоб браузер його побачив)', 'keine (drück eine Taste am Gamepad, damit der Browser es erkennt)', 'none (press a button on the gamepad so the browser sees it)'],

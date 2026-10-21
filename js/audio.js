@@ -58,6 +58,7 @@ export function sfx(name) {
     case 'click': tone(700, t, 0.05, 'triangle', 0.15); break;
     case 'join': tone(660, t, 0.12, 'sine', 0.2); tone(990, t + 0.1, 0.2, 'sine', 0.2); break;
     case 'nope': tone(220, t, 0.1, 'square', 0.08); break;
+    case 'throw': noise(t, 0.2, 0.2, 1800, 0.7); tone(500, t, 0.15, 'sine', 0.1, sfxBus, 900); break;
     case 'gate': tone(140, t, 0.18, 'square', 0.1, sfxBus, 90); noise(t, 0.15, 0.15, 500, 1); break;
     case 'wind': noise(t, 1.4, 0.25, 700, 0.4, 'lowpass'); break;
     case 'trash': noise(t, 0.2, 0.2, 400, 1); break;

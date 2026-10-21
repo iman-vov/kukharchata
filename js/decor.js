@@ -2,7 +2,7 @@
 // зала з гостями й офіціант, що відносить страви.
 import * as THREE from 'three';
 import { RECIPES } from './data.js';
-import { drawIcon } from './icons.js';
+import { dishCanvas } from './icons.js';
 
 const matC = new Map();
 const mat = (c, o = {}) => { const k = c + JSON.stringify(o); if (!matC.has(k)) matC.set(k, new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, ...o })); return matC.get(k); };
@@ -197,7 +197,7 @@ function waiterMesh() {
   return g;
 }
 function dishSprite(icon) {
-  const t = canvasTex(96, 96, (c) => { drawIcon(c, icon, 48, 52, 80); });
+  const t = canvasTex(96, 96, (c) => { if (RECIPES[icon]) c.drawImage(dishCanvas(icon), 0, 0, 96, 96); });
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true })); s.scale.set(0.42, 0.42, 1); return s;
 }
 
@@ -304,7 +304,7 @@ export class Decor {
       W.t += dt;
       if (W.state === 'idle' && this.queue.length) {
         const r = this.queue.shift();
-        W.dish = dishSprite(RECIPES[r] ? RECIPES[r].icon : '🍽'); W.dish.position.y = 0.2; W.m.userData.tray.add(W.dish);
+        W.dish = dishSprite(r); W.dish.position.y = 0.2; W.m.userData.tray.add(W.dish);
         W.table = this.tables[Math.floor(this.rnd() * this.tables.length)];
         W.target = [W.table.x + 0.6, W.table.z + 0.6]; W.state = 'go';
       }

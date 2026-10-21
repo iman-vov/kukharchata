@@ -66,12 +66,12 @@ button{font-family:inherit;color:inherit;border:0;cursor:pointer}
 .dlg .bub{background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 2px 0 var(--line);font-weight:600}
 .dlg .bub b{display:block;font-size:13px;color:var(--soft)}
 .rec{display:flex;align-items:center;gap:8px;background:#fff;border-radius:16px;padding:8px 10px;margin:6px 0;box-shadow:0 2px 0 var(--line)}
-.rec .dish{font-size:32px}
+.rec .dish{font-size:32px;display:flex}.rec .dish img{width:52px;height:52px}
 .rec .nm{font-weight:900;min-width:110px}
 .rec .how{font-size:13px;color:var(--soft);font-weight:700}
 b.ic{position:relative;display:inline-flex;width:30px;height:30px;align-items:center;justify-content:center;font-size:24px;font-weight:400}
-b.ic img{width:28px;height:28px}
-b.ic i{position:absolute;right:-5px;bottom:-4px;font-size:12px;font-style:normal;background:#fff;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+b.ic img{width:30px;height:30px}
+b.ic i{position:absolute;right:-5px;bottom:-4px;width:16px;height:16px;display:flex}b.ic i img{width:16px!important;height:16px!important}
 .stars{font-size:30px;letter-spacing:2px;color:var(--gold);text-shadow:0 2px 0 #c9901a}
 .thr{display:flex;gap:12px;font-weight:800;color:var(--soft);flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#fff;font-weight:800;box-shadow:0 2px 0 var(--line);font-size:15px}
@@ -82,10 +82,10 @@ b.ic i{position:absolute;right:-5px;bottom:-4px;font-size:12px;font-style:normal
 #orders{position:absolute;top:calc(8px + var(--safeT));left:calc(8px + var(--safeL));right:150px;display:flex;gap:8px;overflow:hidden}
 .ord{background:#fff;border-radius:14px;padding:6px 8px 8px;min-width:96px;box-shadow:0 3px 0 rgba(0,0,0,.12);animation:pop .3s;position:relative}
 .ord .top{display:flex;align-items:center;gap:4px}
-.ord .dish{font-size:30px;line-height:1}
+.ord .dish{font-size:30px;line-height:1;display:flex}.ord .dish img{width:46px;height:46px}
 .ord .parts{display:flex;gap:2px;flex-wrap:wrap}
 .ord .parts b.ic{width:24px;height:24px;font-size:19px}
-.ord .parts b.ic img{width:22px;height:22px}
+.ord .parts b.ic img{width:24px;height:24px}
 .ord .tbar{height:7px;border-radius:5px;background:#eee;margin-top:5px;overflow:hidden}
 .ord .tbar i{display:block;height:100%;background:var(--ok);border-radius:5px}
 .ord.warn{animation:shake .5s infinite}
@@ -115,6 +115,8 @@ b.ic i{position:absolute;right:-5px;bottom:-4px;font-size:12px;font-style:normal
 .tb.grab{width:96px;height:96px;right:24px;bottom:calc(40px + var(--safeB));background:rgba(255,236,170,.95)}
 .tb.use{width:78px;height:78px;right:128px;bottom:calc(28px + var(--safeB))}
 .tb.dash{width:58px;height:58px;right:44px;bottom:calc(146px + var(--safeB));font-size:24px}
+.tb.throw{width:58px;height:58px;right:150px;bottom:calc(118px + var(--safeB))}
+.zl .tb.throw,.zr .tb.throw{right:96px;bottom:calc(106px + var(--safeB));width:50px;height:50px}
 .zl .tb.grab,.zr .tb.grab{width:80px;height:80px;right:14px}
 .zl .tb.use,.zr .tb.use{width:66px;height:66px;right:100px}
 .zl .tb.dash,.zr .tb.dash{right:26px;bottom:calc(130px + var(--safeB))}

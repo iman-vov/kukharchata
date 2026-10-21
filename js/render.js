@@ -2,8 +2,10 @@
 import * as THREE from 'three';
 import { ING, RECIPES, COOKER, COOK_COLORS } from './data.js';
 import { cookerState, cookerNeed } from './sim.js';
-import { drawIcon, drawIng } from './icons.js';
+import { drawIng, drawDish, drawKnife } from './icons.js';
 import { Decor } from './decor.js';
+import { makeIngMesh, makeItemMesh, itemKey, plateMesh, mat as fmat } from './food.js';
+export { makeItemMesh, itemKey };
 
 export const THEMES = {
   ua: { sky: 0xcfe8ff, ground: 0x86c45f, floorA: 0xf6efdc, floorB: 0xdbe7f6, body: 0xc89a6a, top: 0xf7f2e6, accent: 0x2f6fd6, accent2: 0xffd23f, decor: 'sunflower' },
@@ -56,7 +58,7 @@ function bubble(items, big) { // items: [{id,s}] або recipe-емодзі
     g.fillStyle = 'rgba(255,255,255,.93)'; g.strokeStyle = 'rgba(0,0,0,.15)'; g.lineWidth = 3;
     g.beginPath(); g.roundRect(3, 3, W - 6, H - 14, 22); g.fill(); g.stroke();
     g.beginPath(); g.moveTo(W / 2 - 9, H - 12); g.lineTo(W / 2 + 9, H - 12); g.lineTo(W / 2, H - 1); g.fill();
-    if (big) drawIcon(g, big, W / 2, (H - 10) / 2, 70);
+    if (big) drawDish(g, big, W / 2, (H - 10) / 2, 84);
     else items.forEach((it, i) => drawIng(g, it.id, it.s, 12 + S / 2 + i * S, (H - 10) / 2, 60));
   }, big ? 0.5 : 0.42);
 }
@@ -71,128 +73,7 @@ export function textSprite(text, color = '#fff', size = 0.34, stroke = 'rgba(0,0
   }, size);
 }
 
-/* ---------- продукти ---------- */
-const STATE_TINT = { r: 1, c: 1, b: 1.08, f: 0.72, k: 0.9, x: 0.18 };
-export function makeIngMesh(id, s) {
-  const d = ING[id], g = new THREE.Group();
-  let col = d.col;
-  if (s === 'x') col = 0x2a2522;
-  else if (s === 'f') col = darker(d.col, 0.72) ;
-  else if (s === 'k') col = new THREE.Color(d.col).lerp(new THREE.Color(0xd9902f), 0.35).getHex();
-  const m = mat(col);
-  if (s === 'c' || s === 'b' || s === 'f' || s === 'k' || s === 'x') {
-    if (d.shape === 'disc' || d.shape === 'sheet' || d.shape === 'slab' && s !== 'c') { // цільне, але приготоване
-      if (d.shape === 'slab') { g.add(mesh(G.box, m, 0.32, 0.1, 0.24, 0, 0.05)); }
-      else if (d.shape === 'sheet') g.add(mesh(G.box, m, 0.3, 0.02, 0.3, 0, 0.01));
-      else g.add(mesh(G.cyl, m, 0.2, 0.05, 0.2, 0, 0.03));
-    } else if (d.shape === 'sack') { // зварене: купка
-      for (let i = 0; i < 6; i++) g.add(mesh(G.sphLo, m, 0.07, 0.05, 0.07, Math.cos(i) * 0.09, 0.05 + (i % 2) * 0.03, Math.sin(i * 1.7) * 0.09));
-    } else if (d.shape === 'stick' && s === 'f') {
-      g.add(mesh(new THREE.CapsuleGeometry(0.06, 0.24, 4, 8), m, 1, 1, 1, 0, 0.07)); g.children[0].rotation.z = Math.PI / 2;
-    } else { // нарізане шматочками
-      for (let i = 0; i < 4; i++) {
-        const a = i * 1.6, r = 0.07 + (i % 2) * 0.03;
-        const pc = mesh(d.shape === 'leaf' ? G.sphLo : G.box, m, 0.08, 0.06, 0.08, Math.cos(a) * r, 0.04 + (i === 3 ? 0.05 : 0), Math.sin(a) * r);
-        pc.rotation.y = a; g.add(pc);
-      }
-    }
-    return g;
-  }
-  switch (d.shape) {
-    case 'ball': g.add(mesh(G.sph, m, 0.15, 0.14, 0.15, 0, 0.14)); g.add(mesh(G.cone, mat(0x3c9a3c), 0.05, 0.08, 0.05, 0, 0.3)); break;
-    case 'leaf': for (let i = 0; i < 3; i++) g.add(mesh(G.sph, m, 0.12, 0.1, 0.16, (i - 1) * 0.08, 0.1, (i % 2) * 0.04)); break;
-    case 'stick': { const c = mesh(new THREE.CapsuleGeometry(0.06, 0.26, 4, 10), m); c.rotation.z = Math.PI / 2; c.position.y = 0.07; g.add(c); break; }
-    case 'egg': g.add(mesh(G.sph, m, 0.17, 0.12, 0.13, 0, 0.12)); break;
-    case 'slab': g.add(mesh(G.box, m, 0.32, 0.12, 0.24, 0, 0.06)); g.add(mesh(G.box, mat(0xfff0e8), 0.33, 0.04, 0.05, 0, 0.1, 0.08)); break;
-    case 'fish': g.add(mesh(G.sph, m, 0.2, 0.09, 0.1, 0, 0.1)); { const t = mesh(G.cone, m, 0.08, 0.12, 0.04, -0.24, 0.1); t.rotation.z = Math.PI / 2; g.add(t); } g.add(mesh(G.sphLo, mat(0x111111), 0.02, 0.02, 0.02, 0.14, 0.13, 0.08)); break;
-    case 'bun': g.add(mesh(G.sph, m, 0.18, 0.11, 0.18, 0, 0.1)); g.add(mesh(G.cyl, mat(darker(d.col, 1.15)), 0.18, 0.05, 0.18, 0, 0.03)); break;
-    case 'wedge': { const w = mesh(G.wedge, m, 0.2, 0.14, 0.2, 0, 0.07); w.rotation.y = 0.3; g.add(w); break; }
-    case 'mush': g.add(mesh(G.cylLo, mat(0xf2e8d8), 0.05, 0.14, 0.05, 0, 0.07)); g.add(mesh(G.sph, m, 0.14, 0.08, 0.14, 0, 0.16)); break;
-    case 'disc': g.add(mesh(G.cyl, m, 0.22, 0.05, 0.22, 0, 0.03)); break;
-    case 'sack': g.add(mesh(G.sph, mat(0xe9dcc0), 0.15, 0.17, 0.15, 0, 0.17)); g.add(mesh(G.cyl, m, 0.1, 0.03, 0.1, 0, 0.33)); g.add(mesh(G.tor, mat(0x8a5a2b), 0.06, 0.06, 0.06, 0, 0.3)); g.children[2].rotation.x = Math.PI / 2; break;
-    case 'sheet': g.add(mesh(G.box, m, 0.3, 0.02, 0.3, 0, 0.01)); g.add(mesh(G.box, m, 0.28, 0.02, 0.28, 0.01, 0.03)); break;
-    case 'cube': for (let i = 0; i < 3; i++) g.add(mesh(G.box, mat(0xdff6ff, { transparent: true, opacity: 0.8, roughness: 0.1 }), 0.1, 0.1, 0.1, (i - 1) * 0.09, 0.06 + (i % 2) * 0.05, (i % 2) * 0.05)); break;
-    case 'jar': g.add(mesh(G.cyl, m, 0.11, 0.2, 0.11, 0, 0.1)); g.add(mesh(G.cyl, mat(0x4a90d9), 0.12, 0.05, 0.12, 0, 0.22)); break;
-    default: g.add(mesh(G.sph, m, 0.15, 0.15, 0.15, 0, 0.15));
-  }
-  return g;
-}
-
-function plateMesh(dirty = false) {
-  const g = new THREE.Group();
-  g.add(mesh(G.cyl, mat(dirty ? 0xbfae94 : 0xffffff, { roughness: 0.3 }), 0.3, 0.04, 0.3, 0, 0.02));
-  g.add(mesh(G.cyl, mat(dirty ? 0xa89577 : 0xe9eef3, { roughness: 0.3 }), 0.22, 0.045, 0.22, 0, 0.03));
-  return g;
-}
-function cookerMesh(ck) {
-  const g = new THREE.Group();
-  if (ck.k === 'pot') {
-    g.add(mesh(G.cyl, mat(0x8a96a3, { metalness: 0.5, roughness: 0.35 }), 0.27, 0.28, 0.27, 0, 0.14));
-    g.add(mesh(G.cylLo, mat(0x2b2b2b), 0.035, 0.035, 0.12, 0.32, 0.22, 0)).rotation.z = Math.PI / 2;
-    g.add(mesh(G.cylLo, mat(0x2b2b2b), 0.035, 0.035, 0.12, -0.32, 0.22, 0)).rotation.z = Math.PI / 2;
-    if (ck.c.length) {
-      const st = cookerState(ck);
-      const cols = ck.c.map(i => new THREE.Color(ING[i.id].col));
-      const avg = cols.reduce((a, c) => a.add(c), new THREE.Color(0, 0, 0)).multiplyScalar(1 / cols.length);
-      if (st === 'burnt') avg.set(0x2a2522); else if (st === 'cooking') avg.lerp(new THREE.Color(0xffffff), 0.25);
-      const lvl = 0.08 + 0.06 * ck.c.length;
-      const soup = mesh(G.cyl, mat(avg.getHex(), { roughness: 0.25 }), 0.24, 0.02, 0.24, 0, lvl);
-      soup.name = 'soup'; g.add(soup);
-    }
-  } else if (ck.k === 'pan') {
-    g.add(mesh(G.cyl, mat(0x2d2d30, { metalness: 0.4, roughness: 0.4 }), 0.3, 0.05, 0.3, 0, 0.04));
-    const h = mesh(G.box, mat(0x6b4226), 0.32, 0.04, 0.06, 0.44, 0.06, 0); g.add(h);
-    if (ck.c.length) { const m = makeIngMesh(ck.c[0].id, ck.c[0].s); m.position.y = 0.06; g.add(m); }
-  }
-  return g;
-}
-export function makeItemMesh(it) {
-  if (!it) return null;
-  if (it.t === 'i') return makeIngMesh(it.id, it.s);
-  if (it.t === 'p') {
-    const g = plateMesh();
-    it.c.forEach((c, i) => {
-      const m = makeIngMesh(c.id, c.s); const a = i / Math.max(1, it.c.length) * Math.PI * 2;
-      const r = it.c.length > 1 ? 0.1 : 0;
-      m.position.set(Math.cos(a) * r, 0.05 + i * 0.01, Math.sin(a) * r); m.scale.setScalar(0.85); g.add(m);
-    });
-    return g;
-  }
-  if (it.t === 'c') { // кухоль
-    const g = new THREE.Group();
-    g.add(mesh(G.cyl, mat(0xffffff, { roughness: 0.25, transparent: true, opacity: 0.88 }), 0.13, 0.26, 0.13, 0, 0.13));
-    const h = mesh(G.tor, mat(0xffffff, { roughness: 0.25 }), 0.08, 0.08, 0.08, 0.15, 0.14); h.rotation.y = Math.PI / 2; g.add(h);
-    const liq = it.c.filter(c => c.s === 'l');
-    if (liq.length) {
-      const col = liq.reduce((a, c) => a.add(new THREE.Color(ING[c.id].col)), new THREE.Color(0, 0, 0)).multiplyScalar(1 / liq.length);
-      g.add(mesh(G.cyl, mat(col.getHex(), { roughness: 0.2 }), 0.115, 0.1 * liq.length + 0.02, 0.115, 0, 0.03 + (0.1 * liq.length) / 2));
-    }
-    const top = 0.06 + 0.1 * liq.length;
-    for (const c of it.c) {
-      if (c.id === 'ice') for (let i = 0; i < 3; i++) g.add(mesh(G.box, mat(0xe6f8ff, { transparent: true, opacity: 0.85 }), 0.06, 0.06, 0.06, (i - 1) * 0.05, top, (i % 2) * 0.04));
-      if (c.id === 'caramel') g.add(mesh(G.cyl, mat(0xc98a2a, { roughness: 0.2 }), 0.1, 0.02, 0.1, 0, top + 0.03));
-    }
-    return g;
-  }
-  if (it.t === 'd') { const g = new THREE.Group(); for (let i = 0; i < Math.min(it.n, 6); i++) { const p = plateMesh(true); p.position.y = i * 0.05; g.add(p); } return g; }
-  if (it.t === 'k') return cookerMesh(it);
-  if (it.t === 'x') {
-    const g = new THREE.Group();
-    g.add(mesh(G.cyl, mat(0xd62f2f, { roughness: 0.3 }), 0.1, 0.42, 0.1, 0, 0.21));
-    g.add(mesh(G.cylLo, mat(0x222222), 0.04, 0.08, 0.04, 0, 0.46));
-    g.add(mesh(G.box, mat(0x222222), 0.16, 0.03, 0.03, 0.08, 0.5));
-    return g;
-  }
-  return null;
-}
-export function itemKey(it) {
-  if (!it) return '';
-  if (it.t === 'i') return 'i' + it.id + it.s;
-  if (it.t === 'p' || it.t === 'c') return it.t + it.c.map(c => c.id + c.s).join(',');
-  if (it.t === 'k') return 'k' + it.k + it.c.map(c => c.id + c.s).join(',') + cookerState(it);
-  if (it.t === 'd') return 'd' + it.n;
-  return it.t;
-}
+/* продукти, страви, посуд — у food.js */
 
 /* ---------- кухарчата ---------- */
 const SKIN = [0xffd7b5, 0xf1c27d, 0xe0ac69, 0xffdbc4, 0xc68642, 0xffe0cc];
@@ -201,7 +82,23 @@ export function makeCook(colorIdx, hat = 0, isBot = false, name = '') {
   const skin = isBot ? 0xc9d3dc : SKIN[colorIdx % SKIN.length];
   const root = new THREE.Group(), g = new THREE.Group(); root.add(g);
   const body = mesh(G.sph, mat(col), 0.26, 0.24, 0.24, 0, 0.3); g.add(body);
-  g.add(mesh(G.sph, mat(0xffffff), 0.2, 0.18, 0.08, 0, 0.27, 0.17)); // фартух
+  // фартух: спідничка й нагрудник облягають тільце, кишенька, лямка на шиї й бантик ззаду
+  if (!isBot) {
+    const W = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.7, side: THREE.DoubleSide });
+    const skirt = new THREE.Mesh(new THREE.SphereGeometry(1, 24, 10, Math.PI / 2 - 0.85, 1.7, Math.PI * 0.47, Math.PI * 0.4), W);
+    skirt.scale.set(0.27, 0.25, 0.25); skirt.position.y = 0.3; skirt.castShadow = true; g.add(skirt);
+    const bib = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 8, Math.PI / 2 - 0.5, 1.0, Math.PI * 0.2, Math.PI * 0.3), W);
+    bib.scale.set(0.268, 0.248, 0.248); bib.position.y = 0.3; g.add(bib);
+    g.add(mesh(G.box, mat(col), 0.16, 0.025, 0.02, 0, 0.47, 0.205)); // кольорова облямівка нагрудника
+    g.add(mesh(G.box, mat(0xf0f0f0), 0.1, 0.06, 0.02, 0.0, 0.2, 0.235)); // кишенька
+    g.add(mesh(G.box, mat(col), 0.1, 0.012, 0.022, 0.0, 0.23, 0.237));
+    const strap = mesh(G.tor, mat(0xffffff), 0.13, 0.13, 0.13, 0, 0.52, 0.02); strap.rotation.x = Math.PI / 2 + 0.25; g.add(strap);
+    g.add(mesh(G.sphLo, mat(0xffffff), 0.045, 0.035, 0.03, -0.04, 0.33, -0.24)); g.add(mesh(G.sphLo, mat(0xffffff), 0.045, 0.035, 0.03, 0.04, 0.33, -0.24));
+    g.add(mesh(G.box, mat(0xffffff), 0.02, 0.08, 0.01, -0.03, 0.27, -0.245)); g.add(mesh(G.box, mat(0xffffff), 0.02, 0.08, 0.01, 0.03, 0.27, -0.245));
+  } else {
+    g.add(mesh(G.box, mat(0x5c6b78, { metalness: 0.5 }), 0.18, 0.14, 0.04, 0, 0.3, 0.21)); // панель робота
+    for (let i = 0; i < 3; i++) g.add(mesh(G.sphLo, mat([0xff5252, 0xffd740, 0x69f0ae][i], { emissive: [0xff5252, 0xffd740, 0x69f0ae][i], emissiveIntensity: 0.6 }), 0.018, 0.018, 0.01, -0.05 + i * 0.05, 0.32, 0.235));
+  }
   const head = new THREE.Group(); head.position.y = 0.72; g.add(head);
   head.add(mesh(G.sph, mat(skin, { roughness: 0.55, metalness: isBot ? 0.4 : 0 }), 0.3, 0.27, 0.28));
   if (isBot) {
@@ -212,8 +109,8 @@ export function makeCook(colorIdx, hat = 0, isBot = false, name = '') {
     head.add(mesh(G.sph, mat(0xff4040, { emissive: 0xff2020, emissiveIntensity: 0.6 }), 0.045, 0.045, 0.045, 0, 0.46));
   } else {
     const eye = mat(0x1d1d24, { roughness: 0.2 });
-    head.add(mesh(G.sph, eye, 0.045, 0.06, 0.03, -0.1, 0.02, 0.26));
-    head.add(mesh(G.sph, eye, 0.045, 0.06, 0.03, 0.1, 0.02, 0.26));
+    const eL = mesh(G.sph, eye, 0.045, 0.06, 0.03, -0.1, 0.02, 0.26), eR = mesh(G.sph, eye, 0.045, 0.06, 0.03, 0.1, 0.02, 0.26);
+    head.add(eL, eR); head.userData.eyes = [eL, eR];
     head.add(mesh(G.sph, mat(0xffffff), 0.015, 0.018, 0.01, -0.09, 0.04, 0.29));
     head.add(mesh(G.sph, mat(0xffffff), 0.015, 0.018, 0.01, 0.11, 0.04, 0.29));
     head.add(mesh(G.sph, mat(0xff9aa8), 0.05, 0.03, 0.02, -0.17, -0.06, 0.22));
@@ -247,39 +144,61 @@ export function makeCook(colorIdx, hat = 0, isBot = false, name = '') {
   // тінь-коло, щоб краще видно
   const sh = new THREE.Mesh(new THREE.CircleGeometry(0.3, 20), new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.18, depthWrite: false }));
   sh.rotation.x = -Math.PI / 2; sh.position.y = 0.01; root.add(sh);
-  return { root, g, head, hL, hR, fL, fR, carry, knife, label, t: Math.random() * 10, heldKey: '', heldObj: null };
+  return { root, g, head, hL, hR, fL, fR, carry, knife, label, t: Math.random() * 10, heldKey: '', heldObj: null, squash: 0, jump: 0, blink: 2 + Math.random() * 3, spin: 0 };
 }
 export function animateCook(c, p, dt) {
   c.t += dt * (p.moving ? 12 : 3);
-  const mv = p.moving ? 1 : 0;
-  c.g.position.y = mv ? Math.abs(Math.sin(c.t)) * 0.06 : Math.sin(c.t) * 0.008;
+  const mv = p.moving ? 1 : 0, now = performance.now();
+  // підстрибування при ходьбі, дихання на місці, радісний стрибок
+  if (c.jump > 0) c.jump = Math.max(0, c.jump - dt);
+  const hop = c.jump > 0 ? Math.sin((1 - c.jump / 0.7) * Math.PI) * 0.35 : 0;
+  c.g.position.y = (mv ? Math.abs(Math.sin(c.t)) * 0.06 : 0) + hop;
+  c.spin = c.jump > 0 ? (1 - c.jump / 0.7) * Math.PI * 2 : 0;
+  // сплющування, коли щось бере чи кладе
+  if (c.squash > 0) c.squash = Math.max(0, c.squash - dt * 4);
+  const sq = Math.sin(c.squash * Math.PI) * 0.12, breath = mv ? 0 : Math.sin(now / 600 + c.t) * 0.015;
+  c.g.scale.set(1 + sq * 0.6, 1 - sq + breath, 1 + sq * 0.6);
   c.fL.position.z = 0.02 + Math.sin(c.t) * 0.1 * mv; c.fR.position.z = 0.02 - Math.sin(c.t) * 0.1 * mv;
+  c.fL.position.y = 0.05 + Math.max(0, Math.sin(c.t)) * 0.04 * mv; c.fR.position.y = 0.05 + Math.max(0, -Math.sin(c.t)) * 0.04 * mv;
   c.head.rotation.z = Math.sin(c.t * 0.5) * 0.04;
-  const holding = !!p.held;
-  const act = p.act;
+  // кліпання очима
+  c.blink -= dt;
+  const eyes = c.head.userData.eyes;
+  if (eyes) { const closed = c.blink < 0.12 && c.blink > 0; eyes.forEach(e => e.scale.y = closed ? 0.008 : 0.06); if (c.blink <= 0) c.blink = 2.5 + Math.random() * 3; }
+  const holding = !!p.held, act = p.act;
   c.knife.visible = act === 'chop';
+  let lean = mv ? 0.08 : 0;
+  if (p.dashT > 0) lean = 0.35;
+  c.head.rotation.x = 0;
   if (act === 'chop') {
-    const ph = performance.now() / 70, k = Math.sin(ph), down = Math.max(0, -k);
+    const k = Math.sin(now / 70), down = Math.max(0, -k);
     c.hR.position.set(0.16, 0.62 + k * 0.22, 0.42); c.hL.position.set(-0.18, 0.4, 0.42);
-    c.knife.position.set(0.16, 0.6 + k * 0.22, 0.46);
-    c.knife.rotation.x = -0.3 + k * 0.5;
-    c.g.rotation.x = 0.12 + down * 0.08; // нахиляється над дошкою
-    c.head.rotation.x = 0.25;
+    c.knife.position.set(0.16, 0.6 + k * 0.22, 0.46); c.knife.rotation.x = -0.3 + k * 0.5;
+    lean = 0.12 + down * 0.08; c.head.rotation.x = 0.25;
   } else if (act === 'wash') {
-    c.g.rotation.x = 0.08;
-    const k = performance.now() / 120;
-    c.hR.position.set(0.15 + Math.cos(k) * 0.06, 0.38, 0.32 + Math.sin(k) * 0.05); c.hL.position.set(-0.15 - Math.cos(k) * 0.06, 0.38, 0.32 - Math.sin(k) * 0.05);
+    lean = 0.1; c.head.rotation.x = 0.2;
+    const k = now / 120;
+    c.hR.position.set(0.15 + Math.cos(k) * 0.07, 0.38, 0.34 + Math.sin(k) * 0.05); c.hL.position.set(-0.15 - Math.cos(k) * 0.07, 0.38, 0.34 - Math.sin(k) * 0.05);
+  } else if (act === 'spray') {
+    lean = -0.05; const k = Math.sin(now / 60) * 0.02;
+    c.hR.position.set(0.12, 0.5 + k, 0.38); c.hL.position.set(-0.12, 0.46 - k, 0.36);
+  } else if (c.throwT > 0) {
+    c.throwT -= dt; const k = 1 - c.throwT / 0.35;
+    c.hR.position.set(0.24, 0.45 + Math.sin(k * Math.PI) * 0.35, 0.05 + k * 0.4); c.hL.position.set(-0.27, 0.32, 0.05);
+    lean = -0.1 + k * 0.3;
   } else if (holding) {
-    c.g.rotation.x = 0; c.head.rotation.x = 0;
-    c.hR.position.set(0.2, 0.42, 0.3); c.hL.position.set(-0.2, 0.42, 0.3);
+    const b = Math.sin(c.t) * 0.02 * mv;
+    c.hR.position.set(0.2, 0.42 + b, 0.3); c.hL.position.set(-0.2, 0.42 + b, 0.3);
+    c.carry.position.y = 0.42 + b;
   } else {
-    c.g.rotation.x = 0; c.head.rotation.x = 0;
-    c.hR.position.set(0.27, 0.3 + Math.sin(c.t) * 0.03 * mv, 0.05 - Math.sin(c.t) * 0.08 * mv);
-    c.hL.position.set(-0.27, 0.3 - Math.sin(c.t) * 0.03 * mv, 0.05 + Math.sin(c.t) * 0.08 * mv);
+    c.hR.position.set(0.27, 0.3 + Math.sin(c.t) * 0.03 * mv, 0.05 - Math.sin(c.t) * 0.1 * mv);
+    c.hL.position.set(-0.27, 0.3 - Math.sin(c.t) * 0.03 * mv, 0.05 + Math.sin(c.t) * 0.1 * mv);
   }
+  c.g.rotation.x += (lean - c.g.rotation.x) * Math.min(1, dt * 12);
   // що в руках
   const k = itemKey(p.held);
   if (k !== c.heldKey) {
+    if (c.heldKey !== undefined && c.heldObj !== undefined) c.squash = 1;
     c.heldKey = k;
     if (c.heldObj) c.carry.remove(c.heldObj);
     c.heldObj = makeItemMesh(p.held);
@@ -317,7 +236,7 @@ function stationMesh(t, th) {
       g.add(mesh(G.box, mat(col, { roughness: 0.3 }), 0.66, 0.22, 0.02, 0, TOP_Y + 0.55, -0.02));
       g.add(mesh(G.box, mat(0x555a60, { metalness: 0.6 }), 0.08, 0.14, 0.08, 0, TOP_Y + 0.38, 0.0));
       g.add(mesh(G.box, mat(0x3a3f45), 0.5, 0.03, 0.4, 0, TOP_Y + 0.015, 0.1));
-      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIcon(c, ING[t.liq].icon, 48, 48, 72); }, 0.34);
+      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.92)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIng(c, t.liq, 'r', 48, 48, 84, false); }, 0.34);
       lab.position.set(0, TOP_Y + 1.0, -0.1); lab.material.depthTest = true; g.add(lab);
       break;
     }
@@ -333,7 +252,7 @@ function stationMesh(t, th) {
       for (const z of [-0.3, 0, 0.3]) g.add(mesh(G.box, mat(0x8a5530), 1.0, 0.06, 0.08, 0, 0.6, z));
       g.add(mesh(G.box, mat(0xc98d5a), 0.98, 0.05, 0.98, 0, TOP_Y - 0.03));
       const ic = makeIngMesh(t.ing, 'r'); ic.position.y = TOP_Y; ic.scale.setScalar(1.1); g.add(ic);
-      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIcon(c, ING[t.ing].icon, 48, 48, 72); }, 0.34);
+      const lab = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.85)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); drawIng(c, t.ing, 'r', 48, 48, 84, false); }, 0.34);
       lab.position.set(0, TOP_Y + 0.55, 0); lab.material.depthTest = true; g.add(lab);
       break;
     }
@@ -501,7 +420,7 @@ export class KitchenView {
       let bk = '';
       let bItems = null, big = null;
       if (it && (it.t === 'p' || it.t === 'c') && it.c.length) {
-        const full = this.fullRecipe(it); if (full) { big = RECIPES[full].icon; bk = 'B' + full; } else { bItems = it.c; bk = 'p' + k; }
+        const full = this.fullRecipe(it); if (full) { big = full; bk = 'B' + full; } else { bItems = it.c; bk = 'p' + k; }
       } else if (ck && ck.c.length) { bItems = ck.c; bk = 'k' + ck.c.map(c => c.id + c.s).join(','); }
       else if (t.type === 'plates' && (t.clean || t.dirty)) bk = 'pl' + t.clean + '/' + t.dirty;
       else if (t.type === 'sink' && (t.clean || t.dirty)) bk = 'sk' + t.clean + '/' + t.dirty;
@@ -551,7 +470,7 @@ export class KitchenView {
       } else if (f) f.visible = false;
       // нарізання: продукт підстрибує, летять шматочки
       if (rec.o && t.type === 'board') {
-        if (!this.knifeFx) { this.knifeFx = canvasSprite(96, 96, (c) => drawIcon(c, '🔪', 48, 48, 84), 0.85); this.knifeFx.renderOrder = 23; this.knifeFx.visible = false; scene.add(this.knifeFx); this.knifeOn = new Set(); }
+        if (!this.knifeFx) { this.knifeFx = canvasSprite(96, 96, (c) => drawKnife(c, 48, 48, 84), 0.85); this.knifeFx.renderOrder = 23; this.knifeFx.visible = false; scene.add(this.knifeFx); this.knifeOn = new Set(); }
         if (chopT.has(t) && it && it.t === 'i') this.knifeOn.add(t);
         if (chopT.has(t) && it && it.t === 'i') {
           rec.o.position.y = TOP_Y + 0.01 + Math.abs(Math.sin(this.time * 22)) * 0.05;
@@ -577,6 +496,20 @@ export class KitchenView {
       this.knifeFx.visible = !!t;
       if (t) { const k = Math.sin(this.time * 22); this.knifeFx.position.set(t.x + 0.15, TOP_Y + 0.35 + Math.abs(k) * 0.25, t.y + 0.35); this.knifeFx.material.rotation = -0.6 + k * 0.6; }
     }
+    // кинуті продукти й ті, що на підлозі
+    const flyKey = sim.proj.map(p => itemKey(p.item)).join('|') + '#' + sim.floor.map(f => itemKey(f.item)).join('|');
+    if (flyKey !== this.flyKey) {
+      this.flyKey = flyKey;
+      for (const o of this.flyObjs || []) scene.remove(o);
+      this.flyObjs = [...sim.proj, ...sim.floor].map(f => { const o = makeItemMesh(f.item); scene.add(o); return o; });
+    }
+    [...sim.proj, ...sim.floor].forEach((f, i) => {
+      const o = this.flyObjs[i]; if (!o) return;
+      const fly = i < sim.proj.length;
+      const arc = fly ? 0.75 + Math.sin(Math.min(1, (f.d || 0) / 5) * Math.PI) * 0.6 : 0.02;
+      o.position.set(f.x, arc, f.y);
+      o.rotation.y = fly ? this.time * 12 : 0.4;
+    });
     // перегородки
     for (const G2 of this.gateMeshes) {
       const target = G2.t.blocked ? 0 : -0.8;
@@ -610,6 +543,7 @@ export class KitchenView {
       let d = ang - c.g.rotation.y; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2;
       c.g.rotation.y += d * Math.min(1, dt * 16);
       animateCook(c, p, dt);
+      c.root.rotation.y = c.spin;
       // підсвітка цілі для своїх
       let h = this.hl.get(p.id);
       if (myIds.has(p.id)) {
@@ -665,7 +599,9 @@ export class KitchenView {
   }
   onEvent(e) {
     switch (e.e) {
-      case 'serve': this.floatText(e.x, e.y, '+' + e.pts, '#ffd23f'); this.puff(e.x, e.y, 0xffe066); this.dec.onServe(e); break;
+      case 'serve': { this.floatText(e.x, e.y, '+' + e.pts, '#ffd23f'); this.puff(e.x, e.y, 0xffe066); this.dec.onServe(e); const c = e.pid && this.cooks.get(e.pid); if (c) c.jump = 0.7; break; }
+      case 'throw': { const c = e.pid && this.cooks.get(e.pid); if (c) c.throwT = 0.35; break; }
+      case 'dash': this.puff(e.x, e.y, 0xffffff); break;
       case 'filled': this.puff(e.x, e.y, 0x9ed8ff); break;
       case 'chopped': this.puff(e.x, e.y, 0xffffff); break;
       case 'burnt': this.puff(e.x, e.y, 0x333333); break;

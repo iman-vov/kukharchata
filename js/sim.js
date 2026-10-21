@@ -106,6 +106,9 @@ export class Sim {
     for (const g of this.gates) for (const t of g.tiles) t.gate = true;
     this.wind = this.lv.wind ? { ...this.lv.wind, t: this.lv.wind.period * 0.6, on: 0, dir: 1 } : null;
     this.windV = [0, 0];
+    this.throwOn = !!opts.throwOn; this.proj = []; this.floor = [];
+    this.botFull = opts.botSkill === 'full'; // для калібрування — швидкі боти, у грі — повільніші помічники
+    this.collide2 = opts.collide !== false;
     // групи для плит: які набори можуть бути в одній каструлі/пательні/печі
     this.groups = { pot: [], pan: [], oven: [] };
     for (const r of this.lv.recipes) for (const ck of ['pot', 'pan', 'oven']) {
@@ -170,7 +173,8 @@ export class Sim {
     let mx = p.mx, my = p.my; const m = Math.hypot(mx, my);
     if (m > 1) { mx /= m; my /= m; }
     if (m > 0.15) { const l = Math.hypot(mx, my); p.fx = mx / l; p.fy = my / l; }
-    let vx = mx * SPEED, vy = my * SPEED;
+    const sp = SPEED * (p.bot && !this.botFull ? 0.72 : 1);
+    let vx = mx * sp, vy = my * sp;
     if (p.dashT > 0) { p.dashT -= dt; vx = p.fx * DASH_V; vy = p.fy * DASH_V; }
     if (p.dashCd > 0) p.dashCd -= dt;
     if (this.windV[0] || this.windV[1]) { vx += this.windV[0]; vy += this.windV[1]; }
@@ -193,11 +197,67 @@ export class Sim {
       }
     }
   }
+  // кухарі штовхаються: не можна пройти крізь іншого
+  separate(p) {
+    if (!this.collide2) return;
+    for (const q of this.players) {
+      if (q === p) continue;
+      const dx = p.x - q.x, dy = p.y - q.y, d = Math.hypot(dx, dy), min = PLAYER_R * 1.9;
+      if (d < min && d > 1e-4) {
+        const push = (min - d) * (q.remote ? 1 : 0.5);
+        p.x += dx / d * push; p.y += dy / d * push;
+        if (!q.remote) { q.x -= dx / d * push; q.y -= dy / d * push; this.collide(q); }
+        this.collide(p);
+      } else if (d <= 1e-4) { p.x += 0.05; }
+    }
+  }
   unstick(p) {
     const cx = Math.round(p.x), cy = Math.round(p.y);
     let best = null, bd = 1e9;
     for (let y = cy - 2; y <= cy + 2; y++) for (let x = cx - 2; x <= cx + 2; x++) if (this.walk(x, y)) { const d = Math.hypot(x - p.x, y - p.y); if (d < bd) { bd = d; best = [x, y]; } }
     if (best) { p.x = best[0]; p.y = best[1]; }
+  }
+  // кинути продукт уперед (лише інгредієнти, як в Overcooked)
+  throwItem(p) {
+    if (!this.throwOn || !p.held || p.held.t !== 'i') return false;
+    const v = 8.5;
+    this.proj.push({ item: p.held, x: p.x + p.fx * 0.35, y: p.y + p.fy * 0.35, vx: p.fx * v, vy: p.fy * v, d: 0, owner: p.id, age: 0 });
+    p.held = null;
+    this.emit({ e: 'throw', pid: p.id, x: p.x, y: p.y });
+    return true;
+  }
+  landItem(it, t) { // чи може продукт приземлитися на цю клітинку
+    if (!t || t.fire > 0) return false;
+    if (t.type === 'trash') { this.emit({ e: 'trash', x: t.x, y: t.y }); return true; }
+    if (t.type === 'oven') { if (this.cookerAccepts(t.ck, it)) { t.ck.c.push({ id: it.id, s: it.s }); return true; } return false; }
+    if (['counter', 'board', 'conv', 'stove', 'tap'].includes(t.type)) {
+      if (t.item) { const r = this.combine(it, t.item); if (r) { t.item = r.item; return true; } return false; }
+      if (this.canPlace(t, it)) { t.item = it; return true; }
+    }
+    return false;
+  }
+  updateProj(dt) {
+    for (const pr of this.proj) {
+      pr.age += dt;
+      const steps = 4;
+      for (let k = 0; k < steps && !pr.done; k++) {
+        const nx = pr.x + pr.vx * dt / steps, ny = pr.y + pr.vy * dt / steps;
+        pr.d += Math.hypot(nx - pr.x, ny - pr.y);
+        // хтось ловить
+        const c = this.players.find(q => !q.held && (q.id !== pr.owner || pr.age > 0.3) && Math.hypot(q.x - nx, q.y - ny) < 0.42);
+        if (c) { c.held = pr.item; pr.done = true; this.emit({ e: 'catch', pid: c.id, x: c.x, y: c.y }); break; }
+        const tx = Math.round(nx), ty = Math.round(ny);
+        if (!this.walk(tx, ty)) {
+          const t = this.tile(tx, ty);
+          if (this.landItem(pr.item, t)) { pr.done = true; this.emit({ e: 'land', x: tx, y: ty }); }
+          else { pr.done = true; this.floor.push({ item: pr.item, x: pr.x, y: pr.y }); this.emit({ e: 'drop', x: pr.x, y: pr.y }); }
+          break;
+        }
+        pr.x = nx; pr.y = ny;
+        if (pr.d > 5) { pr.done = true; this.floor.push({ item: pr.item, x: pr.x, y: pr.y }); this.emit({ e: 'drop', x: pr.x, y: pr.y }); }
+      }
+    }
+    this.proj = this.proj.filter(p => !p.done);
   }
   dash(p) { if (p.dashCd <= 0) { p.dashT = DASH_T; p.dashCd = DASH_CD; this.emit({ e: 'dash', x: p.x, y: p.y }); } }
 
@@ -270,6 +330,12 @@ export class Sim {
 
   /* ---------- дія «Взяти / Покласти» ---------- */
   grab(p) {
+    // підняти продукт із підлоги (після кидка)
+    if (!p.held && this.floor.length) {
+      const fx = p.x + p.fx * 0.5, fy = p.y + p.fy * 0.5;
+      const i = this.floor.findIndex(f => Math.hypot(f.x - fx, f.y - fy) < 0.65);
+      if (i >= 0) { p.held = this.floor[i].item; this.floor.splice(i, 1); this.emit({ e: 'pick', x: p.x, y: p.y, pid: p.id }); return true; }
+    }
     const t = this.facing(p);
     if (!t) return false;
     if (t.fire > 0) { this.emit({ e: 'nope', x: t.x, y: t.y }); return false; }
@@ -297,7 +363,7 @@ export class Sim {
         if (!isCont(H)) return false;
         const o = this.matchOrder(H);
         if (!o) { this.emit({ e: 'wrong', x: t.x, y: t.y }); return false; }
-        this.serve(o, H, t); p.held = null; return true;
+        this.serve(o, H, t, p.id); p.held = null; return true;
       }
       case 'sink': {
         if (!H) { if (t.clean > 0) { t.clean--; p.held = mkPlate(); return true; } return false; }
@@ -338,7 +404,7 @@ export class Sim {
     }
   }
 
-  serve(o, pl, t) {
+  serve(o, pl, t, pid) {
     const n = RECIPES[o.r].c.length;
     const base = 20 + 6 * n, tip = Math.ceil(8 * o.t / o.T);
     this.streak++;
@@ -347,7 +413,7 @@ export class Sim {
     this.score += pts; this.delivered++;
     this.orders = this.orders.filter(q => q !== o);
     if (pl.t === 'p') this.returns.push({ t: RETURN_T, dirty: this.lv.wash });
-    this.emit({ e: 'serve', x: t.x, y: t.y, pts, r: o.r });
+    this.emit({ e: 'serve', x: t.x, y: t.y, pts, r: o.r, pid });
     if (this.orders.length < 1) this.nextOrder = Math.min(this.nextOrder, 1.2);
   }
 
@@ -371,13 +437,13 @@ export class Sim {
     if (!t || t.fire > 0) { p.act = ''; return; }
     if (t.type === 'board' && t.item && t.item.t === 'i' && t.item.s === 'r' && ING[t.item.id].chop) {
       p.act = 'chop';
-      t.item.p = (t.item.p || 0) + dt / CHOP_T;
+      t.item.p = (t.item.p || 0) + dt / CHOP_T * (p.bot && !this.botFull ? 0.65 : 1);
       if (t.item.p >= 1) { t.item.s = 'c'; t.item.p = 0; this.emit({ e: 'chopped', x: t.x, y: t.y }); }
       return;
     }
     if (t.type === 'sink' && t.dirty > 0) {
       p.act = 'wash';
-      t.wp += dt / WASH_T;
+      t.wp += dt / WASH_T * (p.bot && !this.botFull ? 0.75 : 1);
       if (t.wp >= 1) { t.wp = 0; t.dirty--; t.clean++; this.emit({ e: 'washed', x: t.x, y: t.y }); }
       return;
     }
@@ -394,10 +460,11 @@ export class Sim {
     if (hostSide) this.updateMovers(dt);
     for (const p of this.players) {
       if (p.bot) this.botTick(p, dt);
-      if (!p.remote) this.movePlayer(p, dt);
+      if (!p.remote) { this.movePlayer(p, dt); this.separate(p); }
       if (p.using) this.doUse(p, dt); else p.act = '';
     }
     if (!hostSide) return;
+    if (this.proj.length) this.updateProj(dt);
     // плити й печі
     for (const t of this.tiles) {
       const ck = t.type === 'oven' ? t.ck : (t.type === 'stove' && t.item && t.item.t === 'k' ? t.item : null);
@@ -538,7 +605,8 @@ export class Sim {
       p.using = false;
       // застрягли?
       B.stuck += dt;
-      if (B.stuck > 5) { this.botDone(p, 0.4); }
+      if (Math.hypot(p.x - B.lx, p.y - B.ly) > 0.3) { B.lx = p.x; B.ly = p.y; B.still = 0; } else B.still = (B.still || 0) + dt;
+      if (B.stuck > 6 || B.still > 1.6) { B.still = 0; this.botDone(p, 0.3 + this.rand() * 0.6); }
       return;
     }
     const dx = sx - p.x, dy = sy - p.y;
@@ -557,15 +625,16 @@ export class Sim {
       if ((G.until && G.until()) || G.tt > 9) { p.using = false; this.botDone(p, 0.1); }
     }
   }
-  botDone(p, w) { p.bot.goal = null; p.bot.path = null; p.bot.wait = w; p.bot.intent = null; p.using = false; }
+  botDone(p, w) { if (!this.botFull) w += 0.45 + this.rand() * 0.6 + (this.rand() < 0.1 ? 1.8 : 0); p.bot.goal = null; p.bot.path = null; p.bot.wait = w; p.bot.intent = null; p.using = false; }
 
   // маршрут: BFS по підлозі до клітинки поруч із ціллю
-  route(p, tgt, stand) {
+  route(p, tgt, stand, avoid = true) {
     const sx = Math.round(p.x), sy = Math.round(p.y);
     const goals = new Set();
     const nbs = stand ? [stand] : [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [tgt.x + dx, tgt.y + dy]);
     for (const [x, y] of nbs) if (this.walk(x, y)) goals.add(x + ',' + y);
     if (!goals.size) return null;
+    const busy = new Set(avoid && this.collide2 ? this.players.filter(q => q !== p).map(q => Math.round(q.x) + ',' + Math.round(q.y)) : []);
     const prev = new Map([[sx + ',' + sy, null]]), q = [[sx, sy]];
     let end = null;
     while (q.length) {
@@ -573,10 +642,10 @@ export class Sim {
       if (goals.has(k)) { end = [x, y]; break; }
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy, nk = nx + ',' + ny;
-        if (!prev.has(nk) && this.walk(nx, ny)) { prev.set(nk, k); q.push([nx, ny]); }
+        if (!prev.has(nk) && this.walk(nx, ny) && (!busy.has(nk) || goals.has(nk))) { prev.set(nk, k); q.push([nx, ny]); }
       }
     }
-    if (!end) return null;
+    if (!end) return avoid && busy.size ? this.route(p, tgt, stand, false) : null;
     const path = []; let k = end[0] + ',' + end[1];
     while (k) { const [x, y] = k.split(',').map(Number); path.unshift([x, y]); k = prev.get(k); }
     path.shift();
@@ -922,6 +991,7 @@ export class Sim {
       if (!prev || prev.get(i) !== s) { out.push([i, o]); if (prev) prev.set(i, s); }
     }
     return {
+      pr: this.proj.map(p => [p.item, +p.x.toFixed(2), +p.y.toFixed(2), +(p.d / 5).toFixed(2)]), fo: this.floor.map(f => [f.item, +f.x.toFixed(2), +f.y.toFixed(2)]),
       wv: this.windV.map(v => +v.toFixed(2)), tl: Math.round(this.timeLeft * 10) / 10, sc: this.score, dv: this.delivered, fl: this.failed, ov: this.over, st: this.started,
       o: this.orders.map(o => [o.id, o.r, Math.round(o.t * 10) / 10, o.T]),
       p: this.players.map(p => [p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.fx.toFixed(2), +p.fy.toFixed(2), p.held, p.act, p.moving ? 1 : 0]),
@@ -940,6 +1010,8 @@ export class Sim {
       if (t.type === 'tap') t.fp = o.fp || 0;
     }
     if (s.wv) this.windV = s.wv;
+    this.proj = (s.pr || []).map(([item, x, y, d]) => ({ item, x, y, d: d * 5 }));
+    this.floor = (s.fo || []).map(([item, x, y]) => ({ item, x, y }));
     const seen = new Set();
     for (const [id, x, y, fx, fy, held, act, mv] of s.p) {
       seen.add(id);
