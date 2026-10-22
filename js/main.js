@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.12';
+const VERSION = '1.13';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -745,8 +745,8 @@ async function testTurn() {
     } catch (_) { return false; }
   };
   const names = ['STUN', 'PeerJS', 'OpenRelay', 'свій TURN', 'свій TURN 2'];
-  const res = await Promise.all(all.map((srv, i) => probe(srv, i > 0)));
-  return res.map((ok, i) => `${names[i] || 'TURN'} ${ok ? '✓' : '✗'}`).join(' · ');
+  const [sig, ...res] = await Promise.all([net.signalTest(), ...all.map((srv, i) => probe(srv, i > 0))]);
+  return `Сервер ${sig ? '✓' : '✗'} · ` + res.map((ok, i) => `${names[i] || 'TURN'} ${ok ? '✓' : '✗'}`).join(' · ');
 }
 function setSt(msg, bad) { const e = $('#oSt'); if (e) { e.textContent = msg; e.className = 'status ' + (bad ? 'bad' : 'ok'); } }
 async function hostRoom(retry = false) {
@@ -767,7 +767,7 @@ async function joinRoom(code) {
   setSt('Підключаюсь…');
   try { await net.joinOnline(code, turnCfg()); afterGuestJoin(); }
   catch (e) {
-    setSt(e && e.type === 'peer-unavailable' ? 'Кімнату не знайдено. Перевір код і чи відкрита гра в хоста.' : e && e.type === 'timeout' ? 'Не вдалося зʼєднатися. Спробуйте додати TURN-сервер (нижче).' + (e.info ? ' [' + e.info + ']' : '') : 'Не вдалося підключитися.', true);
+    setSt(e && e.type === 'signal' ? 'Немає звʼязку із сервером-посередником (PeerJS). Перевір інтернет і спробуй ще раз за хвилину.' : e && e.type === 'peer-unavailable' ? 'Кімнату не знайдено. Перевір код і чи відкрита гра в хоста.' : e && e.type === 'timeout' ? 'Не вдалося зʼєднатися. Спробуйте додати TURN-сервер (нижче).' + (e.info ? ' [' + e.info + ']' : '') : 'Не вдалося підключитися.', true);
   }
 }
 function afterGuestJoin() {

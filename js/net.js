@@ -142,17 +142,33 @@ export class Net {
   async joinOnline(code, turnCfg) {
     await loadScript('vendor/peerjs.min.js');
     const iceServers = await this.iceServers(turnCfg);
+    // спершу з'єднуємось із сервером-посередником (до двох спроб), потім — напряму з хостом
+    const openPeer = () => new Promise((res, rej) => {
+      const peer = new Peer({ config: { iceServers } });
+      const to = setTimeout(() => { try { peer.destroy(); } catch (_) { } rej({ type: 'signal' }); }, 12000);
+      peer.on('open', () => { clearTimeout(to); res(peer); });
+      peer.on('error', e => { clearTimeout(to); try { peer.destroy(); } catch (_) { } rej(e && e.type === 'network' || e && e.type === 'server-error' || e && e.type === 'socket-error' ? { type: 'signal' } : e); });
+    });
+    let peer;
+    try { peer = await openPeer(); } catch (e) { if (e.type !== 'signal') throw e; peer = await openPeer(); }
+    this.peer = peer;
     return new Promise((res, rej) => {
-      const peer = new Peer({ config: { iceServers } }); this.peer = peer;
       let done = false;
-      let c = null;
-      const to = setTimeout(async () => { if (!done) { done = true; const info = c && c.peerConnection ? await candInfo(c.peerConnection) : 'no pc'; rej({ type: 'timeout', info }); } }, 30000);
-      peer.on('open', () => {
-        c = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
-        const conn = new Conn('peer', c);
-        conn.onOpen = () => { if (done) return; done = true; clearTimeout(to); this.role = 'guest'; this.code = code; this.setHostConn(conn); res(conn); };
-      });
-      peer.on('error', e => { if (!done) { done = true; clearTimeout(to); rej(e); } });
+      const c = peer.connect(PREFIX + code, { reliable: true, serialization: 'json' });
+      const to = setTimeout(async () => { if (!done) { done = true; const info = c && c.peerConnection ? await candInfo(c.peerConnection) : 'no pc'; try { peer.destroy(); } catch (_) { } rej({ type: 'timeout', info }); } }, 30000);
+      const conn = new Conn('peer', c);
+      conn.onOpen = () => { if (done) return; done = true; clearTimeout(to); this.role = 'guest'; this.code = code; this.setHostConn(conn); res(conn); };
+      peer.on('error', e => { if (!done) { done = true; clearTimeout(to); try { peer.destroy(); } catch (_) { } rej(e); } });
+    });
+  }
+  // чи доступний сервер-посередник (PeerJS)
+  async signalTest() {
+    await loadScript('vendor/peerjs.min.js');
+    return new Promise(res => {
+      let peer; try { peer = new Peer(); } catch (_) { return res(false); }
+      const end = ok => { clearTimeout(to); try { peer.destroy(); } catch (_) { } res(ok); };
+      const to = setTimeout(() => end(false), 10000);
+      peer.on('open', () => end(true)); peer.on('error', () => end(false));
     });
   }
 

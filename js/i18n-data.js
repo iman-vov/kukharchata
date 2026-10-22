@@ -6,6 +6,8 @@ export const UI = [
   ['Дитячий режим: роботи спритні й самі подають страви', 'Kindermodus: Roboter sind flink und servieren selbst', 'Kids mode: robots are quick and serve dishes themselves'],
   ['. Роботи готують, а подаєш гостям ти', '. Roboter kochen mit, servieren musst du', '. Robots cook, but you serve the guests'],
   ['Робот приготував страву — віднеси її до віконця ▲', 'Der Roboter hat ein Gericht fertig – bring es zur Ausgabe ▲', 'A robot made a dish – take it to the pass ▲'],
+  ['Немає звʼязку із сервером-посередником (PeerJS). Перевір інтернет і спробуй ще раз за хвилину.', 'Keine Verbindung zum Vermittlungsserver (PeerJS). Prüfe das Internet und versuche es in einer Minute erneut.', 'Can’t reach the matchmaking server (PeerJS). Check the internet and try again in a minute.'],
+  ['Сервер ', 'Server ', 'Server '],
   // слоти й чат
   ['Грати', 'Spielen', 'Play'],
   ['Моя гра', 'Mein Spiel', 'My game'], ['Слот: ', 'Spielstand: ', 'Save: '], ['Слот ', 'Spielstand ', 'Save '],
