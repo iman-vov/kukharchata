@@ -1,5 +1,5 @@
 // Кухарчата — офлайн-кеш: гра працює без інтернету після першого відкриття
-const CACHE = 'kukharchata-v16';
+const CACHE = 'kukharchata-v17';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-180.png', 'icons/icon-192.png', 'icons/icon-512.png',
   'js/main.js', 'js/i18n.js', 'js/i18n-data.js', 'js/data.js', 'js/gen.js', 'js/decor.js', 'js/food.js', 'js/hats.js', 'js/style.js', 'js/uiicons.js', 'js/sim.js', 'js/calib.js', 'js/render.js', 'js/map.js', 'js/input.js', 'js/audio.js', 'js/net.js', 'js/icons.js',
   'vendor/three.module.min.js', 'vendor/peerjs.min.js', 'vendor/jsQR.js', 'vendor/qrcode.js'];

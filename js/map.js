@@ -3,6 +3,13 @@ import * as THREE from 'three';
 import { LEVELS, MAP, COUNTRIES } from './data.js';
 import { textSprite } from './render.js';
 import { tr } from './i18n.js';
+import { iconSrc } from './uiicons.js';
+// спрайт із власного SVG-значка (без системних емодзі)
+const iconTex = new Map();
+function iconSprite(e, size) {
+  if (!iconTex.has(e)) { const c = document.createElement('canvas'); c.width = c.height = 128; const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; const img = new Image(); img.onload = () => { c.getContext('2d').drawImage(img, 0, 0, 128, 128); t.needsUpdate = true; }; img.src = iconSrc(e); iconTex.set(e, t); }
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: iconTex.get(e), transparent: true, depthTest: false })); sp.scale.set(size, size, 1); sp.renderOrder = 10; return sp;
+}
 
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, ...o });
 function m(geo, mt, x = 0, y = 0, z = 0) { const o = new THREE.Mesh(geo, mt); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; }
@@ -179,7 +186,8 @@ export class MapView {
       const p = new THREE.Group(); p.position.copy(this.pts[i]);
       const base = m(new THREE.CylinderGeometry(0.55, 0.6, 0.14, 18), mat(0xffffff), 0, 0.07); p.add(base);
       const top = m(new THREE.CylinderGeometry(0.42, 0.42, 0.16, 18), mat(l.finale ? 0xffc93c : 0xe5484d), 0, 0.16); top.name = 'top'; p.add(top);
-      const lab = textSprite(l.id === 'feast' ? tr('🎉 Бенкет') : l.finale ? '🏆 ' + tr(l.city) : tr(l.city), '#ffffff', 0.55, 'rgba(0,0,0,.6)'); lab.position.y = 1.0; p.add(lab);
+      const lab = textSprite(l.id === 'feast' ? tr('🎉 Бенкет').replace(/^\S+\s/, '') : tr(l.city), l.finale ? '#ffd23f' : '#ffffff', 0.55, 'rgba(0,0,0,.6)'); lab.position.y = 1.0; p.add(lab);
+      if (l.finale) { const ic = iconSprite(l.id === 'feast' ? '🎉' : '🏆', 0.6); ic.position.y = 2.15; p.add(ic); }
       const st = textSprite('☆☆☆', '#ffd23f', 0.45, 'rgba(0,0,0,.5)'); st.position.y = 1.55; st.name = 'stars'; p.add(st);
       p.userData = { i, top, lab, starsSprite: st };
       this.scene.add(p); this.pins.push(p);
@@ -206,7 +214,7 @@ export class MapView {
     this.pins.forEach((p, i) => {
       const s = stars[LEVELS[i].id] || 0;
       p.remove(p.userData.starsSprite);
-      const st = textSprite(i <= unlocked ? '★'.repeat(s) + '☆'.repeat(3 - s) : '🔒', '#ffd23f', 0.45, 'rgba(0,0,0,.5)');
+      const st = i <= unlocked ? textSprite('★'.repeat(s) + '☆'.repeat(3 - s), '#ffd23f', 0.45, 'rgba(0,0,0,.5)') : iconSprite('🔒', 0.5);
       st.position.y = 1.55; p.add(st); p.userData.starsSprite = st;
       p.userData.top.material.color.setHex(i > unlocked ? 0x9aa3ab : LEVELS[i].finale ? 0xffc93c : s ? 0x3cb371 : 0xe5484d);
     });

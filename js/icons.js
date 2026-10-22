@@ -85,14 +85,6 @@ export function drawKnife(ctx, x, y, s) { // великий ніж для ефе
   ctx.fillStyle = '#bcaaa4'; ctx.beginPath(); ctx.arc(0, 6 * k, 0.8 * k, 0, 7); ctx.arc(0, 9 * k, 0.8 * k, 0, 7); ctx.fill();
   ctx.restore();
 }
-// запасний варіант для інших значків (емодзі в оформленні)
-export function drawIcon(ctx, icon, x, y, s) {
-  ctx.save();
-  ctx.font = `${Math.round(s * .82)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(icon, x, y + s * .04);
-  ctx.restore();
-}
 
 /* ---------- HTML ---------- */
 const urls = new Map();
