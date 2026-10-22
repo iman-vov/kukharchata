@@ -55,6 +55,9 @@ export function sfx(name) {
     case 'go': tone(523, t, 0.15, 'triangle', 0.25); tone(659, t + 0.12, 0.15, 'triangle', 0.25); tone(784, t + 0.24, 0.3, 'triangle', 0.25); break;
     case 'star': tone(1318, t, 0.25, 'triangle', 0.22); tone(1976, t + 0.05, 0.35, 'sine', 0.15); break;
     case 'end': [523, 659, 784, 1046].forEach((f, i) => tone(f, t + i * 0.12, 0.3, 'triangle', 0.22)); break;
+    case 'meow': tone(620, t, 0.18, 'sine', 0.16, sfxBus, 900); tone(900, t + 0.16, 0.28, 'sine', 0.14, sfxBus, 520); break;
+    case 'steal': tone(1200, t, 0.06, 'triangle', 0.12); tone(700, t + 0.06, 0.1, 'triangle', 0.12); break;
+    case 'hiss': noise(t, 0.35, 0.25, 5200, 1.2, 'highpass'); tone(300, t, 0.15, 'sawtooth', 0.06, sfxBus, 180); break;
     case 'msg': tone(988, t, 0.1, 'sine', 0.18); tone(1319, t + 0.09, 0.16, 'sine', 0.16); break;
     case 'click': tone(700, t, 0.05, 'triangle', 0.15); break;
     case 'join': tone(660, t, 0.12, 'sine', 0.2); tone(990, t + 0.1, 0.2, 'sine', 0.2); break;
@@ -68,9 +71,9 @@ export function sfx(name) {
 
 /* ---------- музика: короткі весели мелодії на кожну країну ---------- */
 const SCALES = {
-  ua: [0, 2, 3, 5, 7, 8, 10], it: [0, 2, 4, 5, 7, 9, 11], jp: [0, 2, 3, 7, 8], mx: [0, 2, 4, 5, 7, 9, 10], us: [0, 3, 5, 6, 7, 10], map: [0, 2, 4, 7, 9],
+  in: [0, 1, 4, 5, 7, 8, 11], fr: [0, 2, 4, 6, 7, 9, 11], ua: [0, 2, 3, 5, 7, 8, 10], it: [0, 2, 4, 5, 7, 9, 11], jp: [0, 2, 3, 7, 8], mx: [0, 2, 4, 5, 7, 9, 10], us: [0, 3, 5, 6, 7, 10], map: [0, 2, 4, 7, 9],
 };
-const ROOT = { ua: 57, it: 60, jp: 62, mx: 59, us: 55, map: 60 };
+const ROOT = { in: 62, fr: 65, ua: 57, it: 60, jp: 62, mx: 59, us: 55, map: 60 };
 let mus = null;
 export function music(theme, tempo = 116) {
   if (!ctx) return;

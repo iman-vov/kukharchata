@@ -66,6 +66,25 @@ function wallPattern(theme) {
         g.fillStyle = '#2a9d8f'; g.fillRect(0, 0, W, 10);
         break;
       }
+      case 'in': { // теракотова стіна з орнаментом
+        g.fillStyle = '#f6c98a'; g.fillRect(0, 0, W, H);
+        g.fillStyle = '#d35e2a'; g.fillRect(0, H * 0.8, W, H * 0.2);
+        for (let i = 0; i < W; i += 32) {
+          const cx = i + 16, cy = H * 0.42;
+          g.fillStyle = '#138808'; g.beginPath(); g.arc(cx, cy, 11, 0, 7); g.fill();
+          g.fillStyle = '#ff9933'; for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2; g.beginPath(); g.ellipse(cx + Math.cos(a) * 9, cy + Math.sin(a) * 9, 5, 2.5, a, 0, 7); g.fill(); }
+          g.fillStyle = '#fff3d6'; g.beginPath(); g.arc(cx, cy, 4, 0, 7); g.fill();
+        }
+        g.fillStyle = '#7b2d8b'; g.fillRect(0, 6, W, 6); g.fillStyle = '#ffc93c'; g.fillRect(0, 12, W, 3);
+        break;
+      }
+      case 'fr': { // смугасті шпалери бістро й кахлі
+        for (let i = 0; i < W; i += 16) { g.fillStyle = (i / 16) % 2 ? '#f4efe4' : '#dfe6f3'; g.fillRect(i, 0, 16, H * 0.6); }
+        const s = 16;
+        for (let i = 0; i < W / s; i++) for (let j = 0; j < 4; j++) { g.fillStyle = (i + j) % 2 ? '#ffffff' : '#2f3b5c'; g.fillRect(i * s, H * 0.6 + j * s * 0.8, s, s * 0.8); }
+        g.fillStyle = '#c9a227'; g.fillRect(0, H * 0.58, W, 4);
+        break;
+      }
       case 'us': {
         g.fillStyle = '#fdfdfb'; g.fillRect(0, 0, W, H);
         const s = 16;
@@ -77,7 +96,7 @@ function wallPattern(theme) {
     }
   };
 }
-const GARLAND = { ua: ['#2f6fd6', '#ffd23f'], de: ['#2f78c8', '#ffffff'], it: ['#2f9e44', '#ffffff', '#d63a3a'], mx: ['#e63946', '#ffb703', '#2a9d8f', '#8338ec', '#fb5607'], us: ['#d43a3a', '#ffffff', '#3355aa'] };
+const GARLAND = { in: ['#ff9933', '#ffc93c', '#e5484d', '#7b2d8b', '#138808'], fr: ['#0055a4', '#ffffff', '#ef4135'], ua: ['#2f6fd6', '#ffd23f'], de: ['#2f78c8', '#ffffff'], it: ['#2f9e44', '#ffffff', '#d63a3a'], mx: ['#e63946', '#ffb703', '#2a9d8f', '#8338ec', '#fb5607'], us: ['#d43a3a', '#ffffff', '#3355aa'] };
 const HALL = {
   ua: { floor: 0xc9a27a, cloth: 0xffffff, cloth2: 0xc8202a },
   de: { floor: 0xa87b52, cloth: 0x2f78c8, cloth2: 0xffffff },
@@ -85,6 +104,8 @@ const HALL = {
   jp: { floor: 0xd8c597, cloth: 0x6b3b24, cloth2: 0x6b3b24 },
   mx: { floor: 0xe7b277, cloth: 0x2a9d8f, cloth2: 0xffb703 },
   us: { floor: 0xeeeeee, cloth: 0xd43a3a, cloth2: 0xd43a3a },
+  in: { floor: 0xd9a46a, cloth: 0xff9933, cloth2: 0x7b2d8b },
+  fr: { floor: 0xb08a62, cloth: 0xffffff, cloth2: 0xef4135 },
 };
 
 /* ---------- речі на стіні ---------- */
@@ -110,7 +131,7 @@ function wallProps(theme, x, wallZ, rnd) {
     case 'ua': {
       const k = Math.floor(rnd() * 3);
       if (k === 0) { const p = new THREE.Mesh(new THREE.CircleGeometry(0.28, 28), new THREE.MeshStandardMaterial({ map: canvasTex(128, 128, plateArt), roughness: 0.4 })); p.position.y = y; g.add(p); }
-      else if (k === 1) { const r = new THREE.Mesh(PLANE, new THREE.MeshStandardMaterial({ map: canvasTex(64, 256, rushnyk), side: THREE.DoubleSide })); r.scale.set(0.32, 1.0, 1); r.position.y = y - 0.05; g.add(r); g.add(m(CYL, mat(0x6b4226), 0.03, 0.6, 0.03, 0, y + 0.47)).rotation.z = Math.PI / 2; }
+      else if (k === 1) { const r = new THREE.Mesh(PLANE, new THREE.MeshStandardMaterial({ map: canvasTex(64, 256, rushnyk), side: THREE.DoubleSide })); r.scale.set(0.32, 1.0, 1); r.position.y = y - 0.05; g.add(r); { const _o = m(CYL, mat(0x6b4226), 0.03, 0.6, 0.03, 0, y + 0.47); _o.rotation.z = Math.PI / 2; g.add(_o); } }
       else { // поличка з Кобзарем і глечиком
         g.add(m(BOX, mat(0x8a5a3a), 0.8, 0.05, 0.2, 0, y - 0.2, 0.05));
         g.add(m(BOX, mat(0x5a2a1a), 0.22, 0.3, 0.12, -0.18, y - 0.02, 0.05));
@@ -125,7 +146,7 @@ function wallProps(theme, x, wallZ, rnd) {
       if (rnd() < 0.5) { // годинник із зозулею
         g.add(m(BOX, mat(0x5a3418), 0.36, 0.4, 0.12, 0, y));
         const roof = m(CONE, mat(0x3a2210), 0.32, 0.18, 0.1, 0, y + 0.28); roof.rotation.y = Math.PI / 4; g.add(roof);
-        g.add(m(CYL, mat(0xfff7e6), 0.11, 0.02, 0.11, 0, y + 0.02, 0.07)).rotation.x = Math.PI / 2;
+        { const _o = m(CYL, mat(0xfff7e6), 0.11, 0.02, 0.11, 0, y + 0.02, 0.07); _o.rotation.x = Math.PI / 2; g.add(_o); }
         g.add(m(CYL, mat(0xc9a227, { metalness: 0.6 }), 0.02, 0.4, 0.02, -0.06, y - 0.4)); g.add(m(CYL, mat(0xc9a227, { metalness: 0.6 }), 0.02, 0.32, 0.02, 0.06, y - 0.36));
       } else { // брецель-вивіска
         const b = new THREE.Group(); b.position.y = y;
@@ -149,13 +170,33 @@ function wallProps(theme, x, wallZ, rnd) {
       if (rnd() < 0.55) { // сомбреро
         const s = new THREE.Group(); s.position.set(0, y + 0.05, 0.08); s.rotation.x = Math.PI / 2 - 0.35;
         const c = [0xe63946, 0xffb703, 0x2a9d8f][Math.floor(rnd() * 3)];
-        s.add(m(CYL, mat(0xe9c46a), 0.42, 0.03, 0.42)); s.add(m(CONE, mat(0xe9c46a), 0.17, 0.32, 0.17, 0, 0.16)); s.add(m(TOR, mat(c), 0.3, 0.3, 0.3, 0, 0.03)).rotation.x = Math.PI / 2;
+        s.add(m(CYL, mat(0xe9c46a), 0.42, 0.03, 0.42)); s.add(m(CONE, mat(0xe9c46a), 0.17, 0.32, 0.17, 0, 0.16)); { const _o = m(TOR, mat(c), 0.3, 0.3, 0.3, 0, 0.03); _o.rotation.x = Math.PI / 2; s.add(_o); }
         g.add(s);
       } else { // гітара
         const gt = new THREE.Group(); gt.position.set(0, y, 0.05); gt.rotation.z = 0.3;
-        gt.add(m(CYL, mat(0xc77d3a), 0.17, 0.05, 0.17, 0, -0.15)).rotation.x = Math.PI / 2; gt.add(m(CYL, mat(0xc77d3a), 0.13, 0.05, 0.13, 0, 0.07)).rotation.x = Math.PI / 2;
-        gt.add(m(CYL, mat(0x222222), 0.05, 0.06, 0.05, 0, -0.1, 0.01)).rotation.x = Math.PI / 2;
+        { const _o = m(CYL, mat(0xc77d3a), 0.17, 0.05, 0.17, 0, -0.15); _o.rotation.x = Math.PI / 2; gt.add(_o); } { const _o = m(CYL, mat(0xc77d3a), 0.13, 0.05, 0.13, 0, 0.07); _o.rotation.x = Math.PI / 2; gt.add(_o); }
+        { const _o = m(CYL, mat(0x222222), 0.05, 0.06, 0.05, 0, -0.1, 0.01); _o.rotation.x = Math.PI / 2; gt.add(_o); }
         gt.add(m(BOX, mat(0x5a3418), 0.05, 0.42, 0.03, 0, 0.35)); g.add(gt);
+      }
+      break;
+    }
+    case 'in': {
+      if (rnd() < 0.5) { // мідні тарілки й глечик
+        { const _o = m(CYL, mat(0xc9822a, { metalness: 0.7, roughness: 0.3 }), 0.24, 0.02, 0.24, 0, y + 0.05, 0.02); _o.rotation.x = Math.PI / 2; g.add(_o); }
+        { const _o = m(CYL, mat(0xe0a040, { metalness: 0.7, roughness: 0.3 }), 0.14, 0.022, 0.14, 0, y + 0.05, 0.03); _o.rotation.x = Math.PI / 2; g.add(_o); }
+      } else { // гірлянда з квітів-чорнобривців
+        for (let i = 0; i < 7; i++) g.add(m(SPH, mat(i % 2 ? 0xff9933 : 0xffc93c), 0.06, 0.06, 0.06, 0, y + 0.35 - i * 0.11, 0.03));
+        g.add(m(SPH, mat(0xe5484d), 0.05, 0.05, 0.05, 0, y - 0.45, 0.03));
+      }
+      break;
+    }
+    case 'fr': {
+      if (rnd() < 0.5) { // мідні каструльки на гачках
+        { const _o = m(CYL, mat(0x3a2a1a), 0.02, 0.8, 0.02, 0, y + 0.35, 0); _o.rotation.z = Math.PI / 2; g.add(_o); }
+        for (let i = 0; i < 3; i++) { { const _o = m(CYL, mat(0xc46a3a, { metalness: 0.75, roughness: 0.25 }), 0.1 + i * 0.02, 0.02, 0.1 + i * 0.02, -0.25 + i * 0.25, y + 0.05, 0.04); _o.rotation.x = Math.PI / 2; g.add(_o); } g.add(m(BOX, mat(0x3a2a1a), 0.02, 0.2, 0.02, -0.25 + i * 0.25, y + 0.24, 0.04)); }
+      } else { // крейдяна дошка меню
+        const n = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ map: canvasTex(192, 160, (c) => { c.fillStyle = '#5a3a24'; c.fillRect(0, 0, 192, 160); c.fillStyle = '#26302a'; c.fillRect(8, 8, 176, 144); c.fillStyle = '#f4f1e8'; c.font = 'italic bold 26px serif'; c.textAlign = 'center'; c.fillText('Menu', 96, 40); c.font = '16px serif'; ['Soupe', 'Quiche', 'Crêpes'].forEach((t, i) => c.fillText('~ ' + t + ' ~', 96, 72 + i * 26)); }) }));
+        n.scale.set(0.5, 0.42, 1); n.position.y = y; g.add(n);
       }
       break;
     }

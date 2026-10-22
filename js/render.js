@@ -16,6 +16,8 @@ export const THEMES = {
   mx: { sky: 0xffdcae, ground: 0xe9cb8c, floorA: 0xf2c38b, floorB: 0x93d5cb, body: 0x2a9d8f, top: 0xf6e7c8, accent: 0xe76f51, accent2: 0xf4a261, decor: 'cactus' },
   de: { sky: 0xd6ebff, ground: 0x7fbf5f, floorA: 0xd9b48a, floorB: 0xc79f72, body: 0x6b4426, top: 0xf3ead8, accent: 0x2f78c8, accent2: 0xffffff, decor: 'bavaria' },
   us: { sky: 0xcad8ea, ground: 0x8fa0ad, floorA: 0xf4f4f4, floorB: 0x2e2e33, body: 0xc0392b, top: 0xdde1e6, accent: 0x3355aa, accent2: 0xffffff, decor: 'city' },
+  in: { sky: 0xffe6c4, ground: 0xc9b86a, floorA: 0xf3d9a4, floorB: 0x5fb3a8, body: 0xd35e2a, top: 0xfaf0dc, accent: 0xff9933, accent2: 0x138808, decor: 'palm' },
+  fr: { sky: 0xdfe8ff, ground: 0x9fc37a, floorA: 0xf4f1ea, floorB: 0x2f3b5c, body: 0x3c5a8a, top: 0xf7f4ee, accent: 0x0055a4, accent2: 0xef4135, decor: 'lavender' },
 };
 
 const M = {}; // спільні матеріали
@@ -221,6 +223,39 @@ export function animateCook(c, p, dt) {
   }
 }
 
+/* ---------- кіт-злодюжка Мурчало ---------- */
+export function catMesh() {
+  const root = new THREE.Group(), g = new THREE.Group(); root.add(g);
+  const fur = mat(0xf0943a, { roughness: 0.8 }), dark = mat(0xb9601f, { roughness: 0.8 }), white = mat(0xfff4e6), black = mat(0x1d1d24);
+  g.add(mesh(G.sph, fur, 0.26, 0.2, 0.34, 0, 0.26, -0.05));
+  for (let i = 0; i < 3; i++) g.add(mesh(G.sph, dark, 0.27, 0.05, 0.06, 0, 0.36 - i * 0.02, -0.2 + i * 0.12));
+  g.add(mesh(G.sph, white, 0.16, 0.12, 0.1, 0, 0.24, 0.22));
+  const head = new THREE.Group(); head.position.set(0, 0.52, 0.2); g.add(head);
+  head.add(mesh(G.sph, fur, 0.24, 0.21, 0.21));
+  head.add(mesh(G.sph, white, 0.12, 0.08, 0.06, 0, -0.07, 0.17));
+  for (const sx of [-1, 1]) {
+    const ear = mesh(G.cone, fur, 0.09, 0.14, 0.06, sx * 0.14, 0.2, 0); ear.rotation.z = -sx * 0.35; head.add(ear);
+    const inn = mesh(G.cone, mat(0xff9aa8), 0.05, 0.09, 0.03, sx * 0.14, 0.19, 0.03); inn.rotation.z = -sx * 0.35; head.add(inn);
+    head.add(mesh(G.sph, mat(0x8bd34a, { roughness: 0.3 }), 0.045, 0.055, 0.03, sx * 0.085, 0.03, 0.18));
+    head.add(mesh(G.sph, black, 0.015, 0.045, 0.02, sx * 0.085, 0.03, 0.205));
+    for (const k of [-1, 1]) { const w = mesh(G.box, mat(0x333333), 0.16, 0.006, 0.006, sx * 0.17, -0.06 + k * 0.02, 0.15); w.rotation.z = sx * k * 0.15; head.add(w); }
+  }
+  head.add(mesh(G.sph, mat(0xff7a8a), 0.03, 0.02, 0.02, 0, -0.03, 0.22));
+  // маленький чорний ковпак суперника
+  head.add(mesh(G.cyl, black, 0.09, 0.08, 0.09, 0.02, 0.24, -0.02));
+  head.add(mesh(G.sph, black, 0.12, 0.07, 0.12, 0.02, 0.3, -0.02));
+  // червона хустинка
+  { const sc = mesh(G.cone, mat(0xd63a3a), 0.12, 0.12, 0.04, 0, 0.36, 0.25); sc.rotation.x = Math.PI; g.add(sc); }
+  const legs = [];
+  for (const [x, z] of [[-0.12, 0.16], [0.12, 0.16], [-0.12, -0.2], [0.12, -0.2]]) { const l = mesh(G.sph, fur, 0.07, 0.12, 0.07, x, 0.1, z); g.add(l); legs.push(l); g.add(mesh(G.sph, white, 0.065, 0.04, 0.08, x, 0.03, z + 0.02)); }
+  const tail = new THREE.Group(); tail.position.set(0, 0.3, -0.36); g.add(tail);
+  for (let i = 0; i < 6; i++) tail.add(mesh(G.sph, i % 2 ? dark : fur, 0.06, 0.06, 0.06, 0, i * 0.07, -i * 0.03));
+  const carry = new THREE.Group(); carry.position.set(0, 0.55, 0.42); g.add(carry);
+  const alert = textSprite('!', '#ff4d4d', 0.5); alert.position.y = 1.15; alert.visible = false; root.add(alert);
+  root.scale.setScalar(1.45);
+  return { root, g, head, legs, tail, carry, alert, heldKey: '', t: 0 };
+}
+
 /* ---------- станції ---------- */
 function stationMesh(t, th) {
   const g = new THREE.Group();
@@ -383,8 +418,26 @@ export class KitchenView {
         case 'bavaria': {
           if (rnd() < 0.15) { // майське дерево
             g.add(mesh(G.cylLo, mat(0xffffff), 0.07, 4, 0.07, 0, 2)); for (let i = 0; i < 8; i++) g.add(mesh(G.cylLo, mat(0x2f78c8), 0.075, 0.18, 0.075, 0, 0.3 + i * 0.45));
-            g.add(mesh(G.tor, mat(0x2e7d32), 0.35, 0.35, 0.35, 0, 3.6)).rotation.x = Math.PI / 2;
+            { const _o = mesh(G.tor, mat(0x2e7d32), 0.35, 0.35, 0.35, 0, 3.6); _o.rotation.x = Math.PI / 2; g.add(_o); }
           } else { g.add(mesh(G.cylLo, mat(0x6b4a2e), 0.1, 1.1, 0.1, 0, 0.55)); g.add(mesh(G.sph, mat(0x3f8a3a), 0.7, 0.6, 0.7, 0, 1.45)); g.add(mesh(G.sph, mat(0x4f9a46), 0.45, 0.4, 0.45, 0.35, 1.75, 0.1)); }
+          break;
+        }
+        case 'palm': {
+          if (rnd() < 0.25) { // слоник
+            g.add(mesh(G.sph, mat(0x9aa3ad), 0.5, 0.42, 0.7, 0, 0.75)); g.add(mesh(G.sph, mat(0x9aa3ad), 0.32, 0.3, 0.3, 0, 1.05, 0.6));
+            g.add(mesh(G.cylLo, mat(0x9aa3ad), 0.08, 0.5, 0.08, 0, 0.75, 0.85)); for (const [x, z] of [[-0.25, 0.3], [0.25, 0.3], [-0.25, -0.3], [0.25, -0.3]]) g.add(mesh(G.cylLo, mat(0x8a939d), 0.12, 0.5, 0.12, x, 0.25, z));
+            g.add(mesh(G.box, mat(0xd63a3a), 0.6, 0.05, 0.5, 0, 1.15, 0)); g.add(mesh(G.box, mat(0xffc93c), 0.62, 0.02, 0.1, 0, 1.12, 0.22));
+          } else {
+            g.add(mesh(G.cylLo, mat(0x8a6a48), 0.08, 2.2, 0.08, 0, 1.1)); g.children[0].rotation.z = 0.12;
+            for (let i = 0; i < 6; i++) { const l = mesh(G.sph, mat(0x3f9b3a), 0.6, 0.06, 0.16, Math.cos(i * 1.05) * 0.45 + 0.13, 2.15, Math.sin(i * 1.05) * 0.45); l.rotation.y = -i * 1.05; l.rotation.z = -0.35; g.add(l); }
+            g.add(mesh(G.sphLo, mat(0x7a5236), 0.09, 0.09, 0.09, 0.15, 2.05, 0.05));
+          }
+          break;
+        }
+        case 'lavender': {
+          if (rnd() < 0.2) { // вулична лампа
+            g.add(mesh(G.cylLo, mat(0x2a2f3a), 0.05, 2.2, 0.05, 0, 1.1)); g.add(mesh(G.box, mat(0x2a2f3a), 0.25, 0.32, 0.25, 0, 2.3)); g.add(mesh(G.box, mat(0xfff3b0, { emissive: 0xffd77a, emissiveIntensity: 0.6 }), 0.2, 0.26, 0.2, 0, 2.3));
+          } else { for (let i = 0; i < 7; i++) { const x = (rnd() - 0.5) * 1.1, z = (rnd() - 0.5) * 1.1; g.add(mesh(G.cylLo, mat(0x6a9a4a), 0.02, 0.5, 0.02, x, 0.25, z)); g.add(mesh(new THREE.CapsuleGeometry(0.05, 0.2, 3, 6), mat(0x9b7fd6), 1, 1, 1, x, 0.6, z)); } }
           break;
         }
         case 'city': { const h = 1 + rnd() * 3.5; g.add(mesh(G.box, mat([0x8899aa, 0x6f7f90, 0xa3b1bf, 0xc7a27a][Math.floor(rnd() * 4)]), 1.1, h, 1.1, 0, h / 2)); for (let i = 0; i < h * 2; i++) g.add(mesh(G.box, mat(0xfff3b0, { emissive: 0xffe08a, emissiveIntensity: 0.3 }), 0.9, 0.08, 1.12, 0, 0.4 + i * 0.45)); break; }
@@ -549,6 +602,25 @@ export class KitchenView {
       o.position.set(f.x, arc, f.y);
       o.rotation.y = fly ? this.time * 12 : 0.4;
     });
+    // кіт-злодюжка
+    if (sim.cat) {
+      const c = sim.cat;
+      if (!this.catObj) { this.catObj = catMesh(); scene.add(this.catObj.root); this.catObj.root.position.set(c.x, 0, c.y); }
+      const K = this.catObj;
+      if (c.tx !== undefined) { c.x += (c.tx - c.x) * Math.min(1, dt * 12); c.y += (c.ty - c.y) * Math.min(1, dt * 12); }
+      const prev = K.root.position.clone(); K.root.position.set(c.x, 0, c.y);
+      const v = prev.distanceTo(K.root.position) / Math.max(dt, 1e-3);
+      if (c.fx || c.fy) { const ang = Math.atan2(c.fx, c.fy); let d = ang - K.g.rotation.y; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; K.g.rotation.y += d * Math.min(1, dt * 14); }
+      K.t += dt * (2 + v * 3);
+      K.legs.forEach((l, i) => { l.position.y = 0.1 + Math.max(0, Math.sin(K.t * 2 + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0))) * 0.06 * Math.min(1, v); });
+      K.g.position.y = Math.abs(Math.sin(K.t * 2)) * 0.03 * Math.min(1, v);
+      K.tail.rotation.z = Math.sin(this.time * 4) * 0.5; K.tail.rotation.x = -0.4 - (c.st === 'flee' ? 0.6 : 0);
+      K.head.rotation.x = c.sniff ? 0.35 + Math.sin(this.time * 18) * 0.08 : 0;
+      K.alert.visible = !!c.sniff || c.st === 'flee';
+      if (K.alert.visible) K.alert.position.y = 1.15 + Math.abs(Math.sin(this.time * 8)) * 0.1;
+      const hk = itemKey(c.held);
+      if (hk !== K.heldKey) { K.heldKey = hk; K.carry.clear(); if (c.held) { const o = makeItemMesh(c.held); o.scale.setScalar(0.85); K.carry.add(o); } }
+    } else if (this.catObj) { scene.remove(this.catObj.root); this.catObj = null; }
     // перегородки
     for (const G2 of this.gateMeshes) {
       const target = G2.t.blocked ? 0 : -0.8;
@@ -648,6 +720,10 @@ export class KitchenView {
       case 'wrong': this.floatText(e.x, e.y, '✗', '#ff5a5a'); break;
       case 'cooked': this.floatText(e.x, e.y, '✓', '#5ad16a', 1.9); break;
       case 'washed': this.puff(e.x, e.y, 0x9ed8ff); break;
+      case 'catin': this.puff(e.x, e.y, 0xffc48a); this.floatText(e.x, e.y, tr('Мяу!'), '#f0943a', 1.5); break;
+      case 'steal': this.floatText(e.x, e.y, tr('Цап!'), '#ff4d4d', 1.6); break;
+      case 'scared': this.puff(e.x, e.y, 0xffffff); this.floatText(e.x, e.y, tr('Ш-ш-ш!'), '#ff4d4d', 1.5); break;
+      case 'catout': this.puff(e.x, e.y, 0xffc48a); break;
     }
   }
   render() { this.r.render(this.scene, this.cam); }

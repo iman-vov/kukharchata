@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.13';
+const VERSION = '1.14';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -307,7 +307,7 @@ function beginLevel(P) {
   app.local = mine.map(pl => ({ pid: pl.id, srcs: (cooks.find(c => pl.id.endsWith(':' + c.lid)) || cooks[0]).srcs, lastUse: false }));
   app.myIds = new Set(mine.map(p => p.id));
   app.sim = sim; app.lvl = P; app.paused = false; app.over = false; app.prevSnap = new Map(); app.snapT = 0; app.keyT = 0; app.posT = 0;
-  app.evOut = []; app.lastSec = 999; app.hurry = false;
+  app.evOut = []; app.lastSec = 999; app.hurry = false; app.catTold = false;
   app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall });
   app.view.setZoom(app.zoom || 1);
   app.scene = 'level';
@@ -400,12 +400,14 @@ function levelFrame(dt) {
 function handleEvent(e) {
   const v = app.view;
   if (v) v.onEvent(e);
-  const S2 = { pick: 'pick', drop: 'drop', chopped: 'chopped', serve: 'serve', wrong: 'wrong', order: 'order', expired: 'expired', fire: 'fire', out: 'out', cooked: 'cooked', washed: 'washed', dash: 'dash', plate: 'plate', trash: 'trash', nope: 'nope', gate: 'gate', wind: 'wind', throw: 'throw', catch: 'pick', land: 'drop' }[e.e];
+  const S2 = { pick: 'pick', drop: 'drop', chopped: 'chopped', serve: 'serve', wrong: 'wrong', order: 'order', expired: 'expired', fire: 'fire', out: 'out', cooked: 'cooked', washed: 'washed', dash: 'dash', plate: 'plate', trash: 'trash', nope: 'nope', gate: 'gate', wind: 'wind', throw: 'throw', catch: 'pick', land: 'drop', catin: 'meow', steal: 'steal', scared: 'hiss' }[e.e];
   if (S2) {
     // підняти/покласти — лише для своїх, щоб не було какофонії
     if ((e.e === 'pick' || e.e === 'drop') && e.pid && !app.myIds.has(e.pid)) return;
     sfx(S2);
   }
+  if (e.e === 'catin' && !app.catTold) { app.catTold = true; toast('🐱 Кіт Мурчало крадеться! Наздожени його ривком'); }
+  if (e.e === 'catout' && e.stole) toast('🐱 Мурчало втік із продуктом!');
   if (e.e === 'wind') toast(e.dir > 0 ? '💨 Порив вітру → тримайтеся!' : '💨 ← Порив вітру, тримайтеся!');
   if (e.e === 'fire' && performance.now() - (app.fireToast || 0) > 8000) { app.fireToast = performance.now(); toast('🔥 Пожежа! Хапайте вогнегасник 🧯'); }
 }

@@ -8,6 +8,10 @@ export const UI = [
   ['Робот приготував страву — віднеси її до віконця ▲', 'Der Roboter hat ein Gericht fertig – bring es zur Ausgabe ▲', 'A robot made a dish – take it to the pass ▲'],
   ['Немає звʼязку із сервером-посередником (PeerJS). Перевір інтернет і спробуй ще раз за хвилину.', 'Keine Verbindung zum Vermittlungsserver (PeerJS). Prüfe das Internet und versuche es in einer Minute erneut.', 'Can’t reach the matchmaking server (PeerJS). Check the internet and try again in a minute.'],
   ['Сервер ', 'Server ', 'Server '],
+  // друга подорож
+  ['Мяу!', 'Miau!', 'Meow!'], ['Цап!', 'Schnapp!', 'Snatch!'], ['Ш-ш-ш!', 'Fauch!', 'Hiss!'],
+  ['🐱 Кіт Мурчало крадеться! Наздожени його ривком', '🐱 Kater Schnurrli schleicht herum! Fang ihn mit einem Sprint', '🐱 Purrcy the Cat is sneaking around! Catch him with a dash'],
+  ['🐱 Мурчало втік із продуктом!', '🐱 Schnurrli ist mit einer Zutat entwischt!', '🐱 Purrcy ran off with an ingredient!'],
   // слоти й чат
   ['Грати', 'Spielen', 'Play'],
   ['Моя гра', 'Mein Spiel', 'My game'], ['Слот: ', 'Spielstand: ', 'Save: '], ['Слот ', 'Spielstand ', 'Save '],
@@ -227,12 +231,14 @@ export const UI = [
   // назви капелюшків і кольорів
   ['ковпак', 'Kochmütze', 'chef hat'], ['бандана', 'Bandana', 'bandana'], ['кепка', 'Kappe', 'cap'], ['корона', 'Krone', 'crown'], ['вушка', 'Öhrchen', 'ears'], ['квітка', 'Blume', 'flower'],
   ['Червоний', 'Rot', 'Red'], ['Синій', 'Blau', 'Blue'], ['Зелений', 'Grün', 'Green'], ['Жовтий', 'Gelb', 'Yellow'], ['Фіолетовий', 'Lila', 'Purple'], ['Помаранчевий', 'Orange', 'Orange'],
-  ['Бабуся Ганна', 'Oma Hanna', 'Grandma Hanna'], ['Єнот Шкодько', 'Waschbär Schabernack', 'Raccoon Mischief'],
+  ['Бабуся Ганна', 'Oma Hanna', 'Grandma Hanna'], ['Кіт Мурчало', 'Kater Schnurrli', 'Purrcy the Cat'], ['Єнот Шкодько', 'Waschbär Schabernack', 'Raccoon Mischief'],
   ['Кухарчата', 'Kukharchata', 'Kukharchata'],
 ];
 
 // назви інгредієнтів, страв, країн, міст: id → [de, en]
 export const ING_T = {
+  paneer: ['Paneer', 'Paneer'], spinach: ['Spinat', 'Spinach'], chickpeas: ['Kichererbsen', 'Chickpeas'], lentils: ['Linsen', 'Lentils'],
+  eggplant: ['Aubergine', 'Eggplant'], zucchini: ['Zucchini', 'Zucchini'], baguette: ['Baguette', 'Baguette'], chai: ['Masala-Tee', 'Masala tea'], mangoj: ['Mangosaft', 'Mango juice'],
   tomato: ['Tomate', 'Tomato'], lettuce: ['Salatblatt', 'Lettuce'], cucumber: ['Gurke', 'Cucumber'], onion: ['Zwiebel', 'Onion'],
   beet: ['Rote Bete', 'Beetroot'], cabbage: ['Kohl', 'Cabbage'], potato: ['Kartoffel', 'Potato'], meat: ['Fleisch', 'Meat'],
   fish: ['Fisch', 'Fish'], sausage: ['Würstchen', 'Sausage'], bun: ['Brötchen', 'Bun'], cheese: ['Käse', 'Cheese'],
@@ -246,6 +252,11 @@ export const ING_T = {
   coffee: ['Kaffee', 'Coffee'], milk: ['Milch', 'Milk'], tea: ['Grüner Tee', 'Green tea'], horchata: ['Horchata', 'Horchata'], lemonade: ['Limonade', 'Lemonade'],
 };
 export const REC_T = {
+  butterchk: ['Butter Chicken', 'Butter chicken'], naan: ['Naan mit Kräutern', 'Herb naan'], samosa: ['Samosas', 'Samosas'], chana: ['Chana Masala', 'Chana masala'],
+  palak: ['Palak Paneer', 'Palak paneer'], dal: ['Dal mit Naan', 'Dal with naan'], biryani: ['Biryani', 'Biryani'], fishcurry: ['Fischcurry', 'Fish curry'],
+  nicoise: ['Salade Niçoise', 'Salade niçoise'], ratatouille: ['Ratatouille', 'Ratatouille'], bouill: ['Bouillabaisse', 'Bouillabaisse'], onionsoup: ['Zwiebelsuppe', 'Onion soup'],
+  steakfr: ['Steak mit Pommes', 'Steak frites'], quiche: ['Pilz-Quiche', 'Mushroom quiche'], crepe: ['Schoko-Crêpes', 'Chocolate crêpes'], flammek: ['Flammkuchen', 'Flammkuchen'], coqvin: ['Hähnchen mit Pilzen', 'Chicken with mushrooms'],
+  lassi: ['Mango-Lassi', 'Mango lassi'], masala: ['Masala Chai', 'Masala chai'], chocchaud: ['Heiße Schokolade', 'Hot chocolate'], citron: ['Citronnade', 'Citronnade'],
   salad: ['Salat', 'Salad'], salad3: ['Gemüsesalat', 'Garden salad'], deruny: ['Kartoffelpuffer mit Schmand', 'Potato pancakes with sour cream'],
   tsoup: ['Tomatensuppe', 'Tomato soup'], borshch: ['Borschtsch', 'Borscht'], varenyky: ['Wareniki', 'Varenyky'],
   pizza: ['Pizza Margherita', 'Pizza Margherita'], pizzam: ['Pilzpizza', 'Mushroom pizza'], pasta: ['Pasta mit Tomaten', 'Tomato pasta'],
@@ -266,10 +277,32 @@ export const REC_T = {
   horchata: ['Horchata mit Eis', 'Horchata with ice'], limonada: ['Limonada', 'Limonada'], colaice: ['Cola mit Eis', 'Cola with ice'],
   caramellatte: ['Karamell-Latte', 'Caramel latte'], icedlatte: ['Eiskaffee Latte', 'Iced latte'],
 };
-export const COUNTRY_T = { ua: ['Ukraine', 'Ukraine'], de: ['Deutschland', 'Germany'], it: ['Italien', 'Italy'], jp: ['Japan', 'Japan'], mx: ['Mexiko', 'Mexico'], us: ['USA', 'USA'] };
+export const COUNTRY_T = { ua: ['Ukraine', 'Ukraine'], de: ['Deutschland', 'Germany'], it: ['Italien', 'Italy'], jp: ['Japan', 'Japan'], mx: ['Mexiko', 'Mexico'], us: ['USA', 'USA'], in: ['Indien', 'India'], fr: ['Frankreich', 'France'] };
 
 // міста, назви рівнів, історія: id → { de: [city, title, ...рядки], en: [...] } — рядки в тому самому порядку, що intro, потім outro
 export const STORY = {
+  delhi: { de: ['Delhi', 'Tandur und Curry', 'Kinder, ein Brief! Wir sind zur Weltmeisterschaft der Köche in Paris eingeladen! Aber zuerst die Qualifikation in Indien und Frankreich.', 'Schnurr… Ich bin Kater Schnurrli, der schlaueste Koch der Welt. Der Sieg gehört mir – und eure Zutaten auch!', 'Vorsicht, er klaut heimlich Zutaten von den Theken! Lasst sie nicht unbewacht – und wenn ihr den Kater seht, rennt hin: Bei einem Sprint lässt er alles fallen.', 'Das Curry ist großartig! Schnurrli hat wütend mit dem Schwanz gewedelt und ist nach Mumbai gezogen.'],
+           en: ['Delhi', 'Tandoor and curry', 'Kids, a letter! We’re invited to the World Cooking Championship in Paris! But first – qualifiers in India and France.', 'Purr… I’m Purrcy the Cat, the craftiest cook in the world. Victory will be mine – and so will your ingredients!', 'Careful, he sneaks ingredients off the counters! Don’t leave them unattended – and if you see the cat, run at him: one dash and he drops everything.', 'The curry was a triumph! Purrcy angrily swished his tail and headed to Mumbai.'] },
+  mumbai: { de: ['Mumbai', 'Samosas von der Straße', 'Auf dem Markt in Mumbai gibt es so viele Leckereien… Ich nehme die besten!', 'Samosas braten wir in der Pfanne, die Füllung kochen wir. Chana sind Kichererbsen mit Tomaten im Topf. Mehr Schritte, mehr Hände!', 'Schnurrli ist wieder entwischt! Anscheinend in die rosa Stadt – nach Jaipur.'],
+            en: ['Mumbai', 'Street samosas', 'The Mumbai market has so many treats… I’ll take the best ones!', 'Fry the samosas in the pan and boil the filling. Chana is chickpeas with tomato in the pot. More steps, more hands!', 'Purrcy got away again! Looks like he went to the pink city – Jaipur.'] },
+  jaipur: { de: ['Jaipur', 'Die rosa Stadt', 'Die Palasttore öffnen sich, wann sie wollen. Schnurr, viel Glück!', 'Spinat und Reis kochen wir zusammen, Paneer braten wir. Sprecht ab, wer auf welcher Seite der Küche ist.', 'Toll! Und Schnurrli wartet schon im verregneten Kolkata.'],
+            en: ['Jaipur', 'The pink city', 'The palace gates open whenever they please. Purr, good luck!', 'Spinach and rice boil together, paneer gets fried. Agree who takes which side of the kitchen.', 'Great! And Purrcy is already waiting in rainy Kolkata.'] },
+  kolkata: { de: ['Kolkata', 'Monsunzeit', 'Monsun! Der Regen schubst richtig zur Seite!', 'Biryani ist das schwierigste Gericht: Reis und Ei kochen, Hähnchen und Zwiebeln braten. Bereitet die Teile gleichzeitig zu!', 'Ihr habt es sogar im Regen geschafft! Die letzte Qualifikation in Indien ist in Goa.'],
+             en: ['Kolkata', 'Monsoon season', 'Monsoon! The downpour keeps pushing us sideways!', 'Biryani is the hardest dish: boil rice and egg, fry chicken and onion. Make the parts at the same time!', 'You managed even in the rain! The last qualifier in India is in Goa.'] },
+  goa: { de: ['Goa', 'Curry am Strand', 'Strand, Palmen und Fischcurry… und ich bin der schnellste Kater an der Küste!', 'Jetzt gibt es bis zu vier Bestellungen gleichzeitig. Teilt die Arbeit auf!', 'Die Qualifikation in Indien ist geschafft! Packt den Wagen – wir fahren nach Frankreich.'],
+         en: ['Goa', 'Curry on the beach', 'Beach, palms and fish curry… and I’m the fastest cat on the coast!', 'Now there can be up to four orders at once. Split the work!', 'India’s qualifier is done! Pack the van – we’re off to France.'] },
+  nice: { de: ['Nizza', 'Salade Niçoise', 'Bonjour, Frankreich! Die Köche hier sind anspruchsvoll: vier Zutaten in einem Salat.', 'Schnurr-r-r, Ratatouille ist mein Lieblingsgericht. Die Auberginen habe ich mir schon ausgesucht!', 'Schnurrli ist in den Hafen von Marseille geflitzt!'],
+          en: ['Nice', 'Salade niçoise', 'Bonjour, France! The chefs here are demanding: four ingredients in one salad.', 'Purr-r-r, ratatouille is my favourite dish. I’ve already got my eye on the eggplants!', 'Purrcy dashed off to the port of Marseille!'] },
+  marseille: { de: ['Marseille', 'Bouillabaisse im Hafen', 'Frischer Fisch aus dem Hafen ist für Kater, nicht für Kochkinder!', 'Bouillabaisse: Fisch, Tomate und Karotte in einem Topf kochen. Und den Fisch für den Salat braten wir.', 'Lecker wie bei einem echten Chefkoch! Weiter geht’s nach Lyon, der Hauptstadt der französischen Küche.'],
+               en: ['Marseille', 'Bouillabaisse in the port', 'Fresh fish from the port is for cats, not for little cooks!', 'Bouillabaisse: boil fish, tomato and carrot in one pot. And fry the fish for the salad.', 'Tasty like a real chef’s! Next – Lyon, the capital of French cuisine.'] },
+  lyon: { de: ['Lyon', 'Zwiebelsuppe', 'Hier ist die Küche ein Ring – ihr trefft den Kater, wo ihr ihn nicht erwartet!', 'In die Suppe kommen zwei Zwiebeln und ein im Ofen geröstetes Baguette. Steak und Pommes – in die Pfanne.', 'Bravo! Schnurrli ist schon in Bordeaux.'],
+          en: ['Lyon', 'Onion soup', 'The kitchen here is a ring – you’ll meet the cat where you least expect!', 'The soup takes two onions and a baguette toasted in the oven. Steak and fries – in the pan.', 'Bravo! Purrcy is already in Bordeaux.'] },
+  bordeaux: { de: ['Bordeaux', 'Quiche und Crêpes', 'Die Türen schließen sich, das Band fährt… und ich nasche derweil Käse!', 'Quiche – vier Zutaten in einem Ofen! Crêpes braten wir, und den Apfel schneiden wir.', 'Nur noch ein bisschen – und dann Paris! Aber zuerst Straßburg.'],
+              en: ['Bordeaux', 'Quiche and crêpes', 'The doors close, the belt rolls… and meanwhile I’ll nibble some cheese!', 'Quiche – four ingredients in one oven! Fry the crêpes and chop the apple.', 'Just a little more – then Paris! But first, Strasbourg.'] },
+  strasbourg: { de: ['Straßburg', 'Weihnachtsmarkt', 'Schnee, Tannen, Markt… und ein Schneesturm!', 'Schnurr, im Schneesturm bemerkt niemand einen Kater mit einem Hähnchen!', 'Ihr seid bereit für das Finale. Paris wartet!'],
+                en: ['Strasbourg', 'Christmas market', 'Snow, fir trees, a market… and a blizzard!', 'Purr, in a blizzard nobody notices a cat with a chicken!', 'You’re ready for the final. Paris awaits!'] },
+  paris: { de: ['Paris', 'Grand Prix der Meisterschaft', 'Das Finale der Weltmeisterschaft! Gerichte aus der ganzen Reise – in einer Küche.', 'Schnurr… Das ist meine letzte Chance. Ich klaue alles, was herumliegt!', 'Kochkinder, ihr seid das beste Team. Zeigt, was ihr könnt!', 'Miau… ihr kocht wirklich besser als ich. Darf… darf ich auch mit euch zusammen kochen lernen?', 'Natürlich! In der Küche ist Platz für alle. Der Meisterpokal gehört uns! 🏆'],
+           en: ['Paris', 'Championship Grand Prix', 'The World Championship final! Dishes from the whole journey – in one kitchen.', 'Purr… This is my last chance. I’ll snatch everything that’s lying around!', 'Little cooks, you’re the best team. Show what you can do!', 'Meow… you really do cook better than me. May I… may I learn to cook with you too?', 'Of course! There’s room in the kitchen for everyone. The champions’ cup is ours! 🏆'] },
   kyiv: { de: ['Kyjiw', 'Die erste Schicht', 'Oh je! Jemand hat Seiten aus meinem Rezeptbuch gestohlen!', 'Hihi! Ich bin’s, Waschbär Schabernack! Ich werde der beste Koch der Welt, und die Seiten gehören jetzt mir!', 'Kukharchata, helft mir! Fangen wir einfach an: ein Salat für Kyjiw. Auf dem Brett schneiden, auf den Teller legen und zur Durchreiche bringen.', 'Gut gemacht! Schabernack hat die erste Seite verloren. Die Spur führt nach Lwiw!'],
           en: ['Kyiv', 'First shift', 'Oh dear! Someone stole pages from my recipe book!', 'Hee-hee! It’s me, Raccoon Mischief! I’ll be the best cook in the world, and the pages are mine now!', 'Kukharchata, help! Let’s start simple: a salad for Kyiv. Chop on the board, put it on a plate and take it to the pass.', 'Well done! Mischief dropped the first page. The trail leads to Lviv!'] },
   lviv: { de: ['Lwiw', 'Café mit Puffern', 'Hier duftet es nach Kaffee und die Puffer brutzeln! Versucht doch, mich zu fangen!', 'Kartoffeln schneiden, in der Pfanne braten und mit Schmand auf den Teller. Und vergesst den Salat nicht!', 'Noch eine Seite gehört uns! Schabernack flitzt schon nach Poltawa.'],

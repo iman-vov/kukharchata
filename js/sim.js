@@ -107,6 +107,9 @@ export class Sim {
     this.wind = this.lv.wind ? { ...this.lv.wind, t: this.lv.wind.period * 0.6, on: 0, dir: 1 } : null;
     this.windV = [0, 0];
     this.throwOn = !!opts.throwOn; this.proj = []; this.floor = [];
+    // кіт-злодюжка: час від часу краде продукти зі стійок
+    this.thief = this.lv.thief ? { every: this.lv.thief.every * (opts.kid ? 1.6 : 1), t: this.lv.thief.every * 0.7 } : null;
+    this.cat = null;
     this.kid = !!opts.kid; this.assist = opts.assist | 0; // дитячий режим: роботи спритніші й самі подають страви, гості терплячіші
     this.botFull = opts.botSkill === 'full' || this.kid; // для калібрування — швидкі боти, у грі — повільніші помічники
     // звичайні роботи-помічники готують, але гостям страву подає лише живий кухарчик
@@ -469,6 +472,7 @@ export class Sim {
     }
     if (!hostSide) return;
     if (this.proj.length) this.updateProj(dt);
+    if (this.thief) this.updateCat(dt);
     // плити й печі
     for (const t of this.tiles) {
       const ck = t.type === 'oven' ? t.ck : (t.type === 'stove' && t.item && t.item.t === 'k' ? t.item : null);
@@ -510,6 +514,81 @@ export class Sim {
     }
     this.timeLeft -= dt;
     if (this.timeLeft <= 0) { this.timeLeft = 0; this.over = true; this.emit({ e: 'end' }); }
+  }
+  /* ---------- кіт-злодюжка ---------- */
+  catDoors() {
+    if (this._doors) return this._doors;
+    // двері — клітинки підлоги біля зовнішньої стіни
+    const d = this.tiles.filter(t => t.type === 'floor' && !t.gate && (t.x <= 1 || t.y <= 1 || t.x >= this.w - 2 || t.y >= this.h - 2));
+    return (this._doors = d.length ? d : this.tiles.filter(t => t.type === 'floor'));
+  }
+  catPath(c, tgt, stand) { const r = this.route({ x: c.x, y: c.y }, tgt, stand, false); return r ? r.path : null; }
+  catLoot() {
+    return this.surfaces(t => t.item && t.item.t === 'i' && t.fire <= 0 && t.type !== 'stove' && t.type !== 'tap'
+      && !this.players.some(p => Math.hypot(p.x - t.x, p.y - t.y) < 1.6));
+  }
+  updateCat(dt) {
+    const T = this.thief;
+    if (!this.cat) {
+      T.t -= dt;
+      if (T.t > 0 || this.timeLeft < 15) return;
+      T.t = T.every * (0.8 + this.rand() * 0.4);
+      const loot = this.catLoot(); if (!loot.length) { T.t = 4; return; }
+      // з'являємось біля дверей, подалі від кухарів
+      const doors = this.catDoors().filter(t => !this.players.some(p => Math.hypot(p.x - t.x, p.y - t.y) < 3));
+      const door = (doors.length ? doors : this.catDoors())[Math.floor(this.rand() * (doors.length || this.catDoors().length))];
+      this.cat = { x: door.x, y: door.y, door, st: 'sneak', path: null, tgt: null, held: null, wait: 0.6, fx: 0, fy: 1, life: 0 };
+      this.emit({ e: 'catin', x: door.x, y: door.y });
+      return;
+    }
+    const c = this.cat; c.life += dt;
+    // зіткнення з кухарем — кіт лякається й усе впускає
+    if (c.st !== 'flee' && c.st !== 'gone') {
+      const hit = this.players.find(p => Math.hypot(p.x - c.x, p.y - c.y) < (p.dashT > 0 ? 0.95 : 0.62));
+      if (hit) {
+        if (c.held) { this.floor.push({ item: c.held, x: c.x, y: c.y }); c.held = null; }
+        c.st = 'flee'; c.path = null; c.wait = 0;
+        this.emit({ e: 'scared', x: c.x, y: c.y, pid: hit.id });
+      }
+    }
+    if (c.wait > 0) { c.wait -= dt; return; }
+    const SPD = { sneak: 2.0, run: 2.9, flee: 4.6 }[c.st] || 2.0;
+    if (c.st === 'sneak') {
+      if (!c.tgt || !c.tgt.item || c.tgt.item.t !== 'i') {
+        const loot = this.catLoot();
+        let best = null, bd = Infinity;
+        for (const t of loot) { const pth = this.catPath(c, t); if (pth && pth.length < bd) { bd = pth.length; best = t; c.path = pth; } }
+        if (!best || c.life > 25) { c.st = 'run'; c.path = null; return; }
+        c.tgt = best;
+      }
+      if (!c.path || !c.path.length) {
+        // поруч зі здобиччю: принюхатись і схопити
+        if (!c.sniff) { c.sniff = 1.7; this.emit({ e: 'sniff', x: c.x, y: c.y }); }
+        c.sniff -= dt; c.fx = c.tgt.x - c.x; c.fy = c.tgt.y - c.y;
+        if (c.sniff <= 0) {
+          c.sniff = 0;
+          if (c.tgt.item && c.tgt.item.t === 'i') { c.held = c.tgt.item; c.tgt.item = null; this.emit({ e: 'steal', x: c.tgt.x, y: c.tgt.y }); }
+          c.st = 'run'; c.path = null;
+        }
+        return;
+      }
+    }
+    if ((c.st === 'run' || c.st === 'flee') && !c.path) {
+      c.path = this.catPath(c, null, [c.door.x, c.door.y]) || [];
+      if (!c.path.length && Math.hypot(c.x - c.door.x, c.y - c.door.y) > 0.3) c.path = [[c.door.x, c.door.y]];
+    }
+    // рух уздовж шляху
+    let step = SPD * dt;
+    while (step > 0 && c.path && c.path.length) {
+      const [nx, ny] = c.path[0], dx = nx - c.x, dy = ny - c.y, d = Math.hypot(dx, dy);
+      if (d < 1e-3) { c.path.shift(); continue; }
+      c.fx = dx / d; c.fy = dy / d;
+      if (d <= step) { c.x = nx; c.y = ny; step -= d; c.path.shift(); } else { c.x += dx / d * step; c.y += dy / d * step; step = 0; }
+    }
+    if ((c.st === 'run' || c.st === 'flee') && c.path && !c.path.length) {
+      this.emit({ e: 'catout', x: c.x, y: c.y, stole: c.held ? c.held.id : null });
+      this.cat = null;
+    }
   }
   updateMovers(dt) {
     for (const g of this.gates) {
@@ -1003,6 +1082,7 @@ export class Sim {
     }
     return {
       pr: this.proj.map(p => [p.item, +p.x.toFixed(2), +p.y.toFixed(2), +(p.d / 5).toFixed(2)]), fo: this.floor.map(f => [f.item, +f.x.toFixed(2), +f.y.toFixed(2)]),
+      ct: this.cat ? [+this.cat.x.toFixed(2), +this.cat.y.toFixed(2), +this.cat.fx.toFixed(2), +this.cat.fy.toFixed(2), this.cat.st, this.cat.held, this.cat.sniff > 0 ? 1 : 0] : 0,
       wv: this.windV.map(v => +v.toFixed(2)), tl: Math.round(this.timeLeft * 10) / 10, sc: this.score, dv: this.delivered, fl: this.failed, ov: this.over, st: this.started,
       o: this.orders.map(o => [o.id, o.r, Math.round(o.t * 10) / 10, o.T]),
       p: this.players.map(p => [p.id, +p.x.toFixed(2), +p.y.toFixed(2), +p.fx.toFixed(2), +p.fy.toFixed(2), p.held, p.act, p.moving ? 1 : 0]),
@@ -1021,6 +1101,7 @@ export class Sim {
       if (t.type === 'tap') t.fp = o.fp || 0;
     }
     if (s.wv) this.windV = s.wv;
+    if (s.ct) { const [x, y, fx, fy, st, held, sn] = s.ct; this.cat = Object.assign(this.cat || { x, y }, { tx: x, ty: y, fx, fy, st, held, sniff: sn }); } else this.cat = null;
     this.proj = (s.pr || []).map(([item, x, y, d]) => ({ item, x, y, d: d * 5 }));
     this.floor = (s.fo || []).map(([item, x, y]) => ({ item, x, y }));
     const seen = new Set();

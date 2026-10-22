@@ -10,12 +10,12 @@ export const ING = {
   tomato:    { name: 'Помідор',   icon: '🍅', col: 0xe8412c, shape: 'ball',   chop: true, pot: 'c', oven: 'c' },
   lettuce:   { name: 'Листя салату',     icon: '🥬', col: 0x6cc24a, shape: 'leaf',   chop: true },
   cucumber:  { name: 'Огірок',    icon: '🥒', col: 0x3f9b3a, shape: 'stick',  chop: true },
-  onion:     { name: 'Цибуля',    icon: '🧅', col: 0xe9c79a, shape: 'ball',   chop: true, pot: 'c' },
+  onion:     { name: 'Цибуля',    icon: '🧅', col: 0xe9c79a, shape: 'ball',   chop: true, pot: 'c', pan: 'c', oven: 'c' },
   beet:      { name: 'Буряк',     icon: '@beet', col: 0x8e1b4f, shape: 'ball', chop: true, pot: 'c' },
   cabbage:   { name: 'Капуста',   icon: '@cabbage', col: 0xc4e3a0, shape: 'ball', chop: true, pot: 'c' },
   potato:    { name: 'Картопля',  icon: '🥔', col: 0xc79a5b, shape: 'egg',    chop: true, pot: 'c', pan: 'c' },
   meat:      { name: 'Мʼясо',     icon: '🥩', col: 0xd65a5a, shape: 'slab',   chop: true, pan: 'c', pot: 'c' },
-  fish:      { name: 'Рибка',     icon: '🐟', col: 0x7fb4d9, shape: 'fish',   chop: true },
+  fish:      { name: 'Рибка',     icon: '🐟', col: 0x7fb4d9, shape: 'fish',   chop: true, pot: 'c', pan: 'c' },
   sausage:   { name: 'Сосиска',   icon: '@sausage', col: 0xc8553d, shape: 'stick', pan: 'r', pot: 'r' },
   bun:       { name: 'Булочка',   icon: '🍞', col: 0xe0a85a, shape: 'bun' },
   cheese:    { name: 'Сир',       icon: '🧀', col: 0xf5c84a, shape: 'wedge',  chop: true, oven: 'c' },
@@ -31,14 +31,22 @@ export const ING = {
   salt:      { name: 'Сіль',      icon: '🧂', col: 0xffffff, shape: 'jar' },
   honey:     { name: 'Мед',       icon: '🍯', col: 0xf2b134, shape: 'jar' },
   curry:     { name: 'Соус каррі', icon: '🥫', col: 0xd9822b, shape: 'jar' },
-  egg:       { name: 'Яйце',      icon: '🥚', col: 0xfdf6e3, shape: 'egg',    pot: 'r' },
+  egg:       { name: 'Яйце',      icon: '🥚', col: 0xfdf6e3, shape: 'egg',    pot: 'r', oven: 'r' },
   herbs:     { name: 'Зелень',    icon: '🌿', col: 0x3aa346, shape: 'leaf',   chop: true },
   apple:     { name: 'Яблуко',    icon: '🍎', col: 0xd8323a, shape: 'ball',   chop: true, oven: 'c' },
   carrot:    { name: 'Морква',    icon: '🥕', col: 0xf28c28, shape: 'stick',  chop: true, pot: 'c' },
   corn:      { name: 'Кукурудза', icon: '🌽', col: 0xf5cf3a, shape: 'stick',  pot: 'r' },
-  chicken:   { name: 'Курка',     icon: '🍗', col: 0xe7b98a, shape: 'slab',   chop: true, pan: 'c' },
+  chicken:   { name: 'Курка',     icon: '🍗', col: 0xe7b98a, shape: 'slab',   chop: true, pan: 'c', pot: 'c' },
   choco:     { name: 'Шоколад',   icon: '🍫', col: 0x5a3320, shape: 'sheet' },
   beans:     { name: 'Квасоля',   icon: '🫘', col: 0x8a3a2a, shape: 'sack',   pot: 'r' },
+  // друга подорож: Індія і Франція
+  paneer:    { name: 'Панір',     icon: '@paneer', col: 0xfbf3dc, shape: 'cube', chop: true, pan: 'c' },
+  spinach:   { name: 'Шпинат',    icon: '@spinach', col: 0x2f7d32, shape: 'leaf', chop: true, pot: 'c' },
+  chickpeas: { name: 'Нут',       icon: '@chickpeas', col: 0xe0b56a, shape: 'sack', pot: 'r' },
+  lentils:   { name: 'Сочевиця',  icon: '@lentils', col: 0xe5783a, shape: 'sack', pot: 'r' },
+  eggplant:  { name: 'Баклажан',  icon: '🍆', col: 0x5b2a6e, shape: 'egg', chop: true, oven: 'c' },
+  zucchini:  { name: 'Кабачок',   icon: '@zucchini', col: 0x4f8a2e, shape: 'stick', chop: true, oven: 'c' },
+  baguette:  { name: 'Багет',     icon: '🥖', col: 0xd9a05a, shape: 'stick', chop: true, oven: 'c' },
   // для напоїв
   ice:       { name: 'Лід',       icon: '🧊', col: 0xcfefff, shape: 'cube' },
   caramel:   { name: 'Карамель',  icon: '🍮', col: 0xc98a2a, shape: 'jar' },
@@ -53,6 +61,8 @@ export const ING = {
   tea:       { name: 'Зелений чай', icon: '🍵', col: 0x7fb24a, liquid: true },
   horchata:  { name: 'Орчата',    icon: '🌾', col: 0xf0e6d0, liquid: true },
   lemonade:  { name: 'Лимонад',   icon: '🍋', col: 0xfff27a, liquid: true },
+  chai:      { name: 'Чай масала', icon: '🫖', col: 0xb5753a, liquid: true },
+  mangoj:    { name: 'Манговий сік', icon: '🥭', col: 0xffb02e, liquid: true },
 };
 
 export const COOKER = {
@@ -108,6 +118,25 @@ export const RECIPES = {
   jambalaya: { name: 'Джамбалая',         icon: '🥘', c: ['rice:b', 'sausage:b', 'tomato:b'] },
   chili:     { name: 'Чилі кон карне',    icon: '🌶️', c: ['beans:b', 'meat:b', 'tomato:b'] },
   steakcorn: { name: 'Стейк із кукурудзою', icon: '🥩', c: ['meat:f', 'corn:b'] },
+  // Індія
+  butterchk: { name: 'Курка в маслі',      icon: '🍛', c: ['chicken:b', 'curry:r', 'rice:b'] },
+  naan:      { name: 'Наан із зеленню',    icon: '🫓', c: ['dough:k', 'garlic:c', 'herbs:c'] },
+  samosa:    { name: 'Самоси',             icon: '🥟', c: ['dough:f', 'potato:b', 'onion:c'] },
+  chana:     { name: 'Чана масала',        icon: '🍲', c: ['chickpeas:b', 'tomato:b', 'onion:c'] },
+  palak:     { name: 'Палак панір',        icon: '🥬', c: ['spinach:b', 'paneer:f', 'rice:b'] },
+  dal:       { name: 'Дал із наном',       icon: '🍲', c: ['lentils:b', 'tomato:b', 'dough:k'] },
+  biryani:   { name: 'Біріані',            icon: '🍛', c: ['rice:b', 'chicken:f', 'onion:f', 'egg:b'] },
+  fishcurry: { name: 'Рибне каррі',        icon: '🐟', c: ['fish:b', 'curry:r', 'rice:b'] },
+  // Франція
+  nicoise:   { name: 'Салат Нісуаз',       icon: '🥗', c: ['lettuce:c', 'egg:b', 'tomato:c', 'fish:f'] },
+  ratatouille:{ name: 'Рататуй',           icon: '🍆', c: ['eggplant:k', 'zucchini:k', 'tomato:k'] },
+  bouill:    { name: 'Буйабес',            icon: '🍲', c: ['fish:b', 'tomato:b', 'carrot:b'] },
+  onionsoup: { name: 'Цибулевий суп',      icon: '🥣', c: ['onion:b', 'onion:b', 'baguette:k'] },
+  steakfr:   { name: 'Стейк із картоплею фрі', icon: '🥩', c: ['meat:f', 'potato:f', 'herbs:c'] },
+  quiche:    { name: 'Кіш із грибами',     icon: '🥧', c: ['dough:k', 'egg:k', 'cheese:k', 'mushroom:k'] },
+  crepe:     { name: 'Млинці з шоколадом', icon: '🥞', c: ['dough:f', 'choco:r', 'apple:c'] },
+  flammek:   { name: 'Фламмкухен',         icon: '🍕', c: ['dough:k', 'onion:k', 'cheese:k'] },
+  coqvin:    { name: 'Курка з грибами',    icon: '🍗', c: ['chicken:b', 'mushroom:b', 'carrot:b'] },
   // напої (вмикаються перемикачем у картці рівня)
   kompot:    { drink: true, name: 'Компот з льодом',  icon: '🍹', c: ['kompot:l', 'ice:r'] },
   uzvar:     { drink: true, name: 'Узвар',            icon: '🫖', c: ['uzvar:l'] },
@@ -122,15 +151,20 @@ export const RECIPES = {
   colaice:   { drink: true, name: 'Кола з льодом',    icon: '🥤', c: ['cola:l', 'ice:r'] },
   caramellatte:{ drink: true, name: 'Карамельне лате', icon: '☕', c: ['coffee:l', 'milk:l', 'caramel:r'] },
   icedlatte: { drink: true, name: 'Айс-лате',         icon: '🧋', c: ['coffee:l', 'milk:l', 'ice:r'] },
+  lassi:     { drink: true, name: 'Манго-ласі',       icon: '🥭', c: ['mangoj:l', 'milk:l'] },
+  masala:    { drink: true, name: 'Масала-чай',       icon: '🫖', c: ['chai:l', 'milk:l'] },
+  chocchaud: { drink: true, name: 'Гарячий шоколад',  icon: '☕', c: ['milk:l', 'choco:r'] },
+  citron:    { drink: true, name: 'Ситронад',         icon: '🍋', c: ['lemonade:l', 'soda:l', 'ice:r'] },
 };
 
 export const DRINKS = {
   ua: ['kompot', 'uzvar'], de: ['spezi', 'schorle'], it: ['espresso', 'cappuccino'], jp: ['icetea', 'matcha'],
   mx: ['limonada', 'horchata'], us: ['colaice', 'icedlatte', 'caramellatte'], feast: ['kompot', 'cappuccino', 'caramellatte'],
+  in: ['lassi', 'masala'], fr: ['chocchaud', 'citron'], paris: ['citron', 'chocchaud', 'masala'],
 };
 // напої рівня: на перших двох кухнях країни — один простий, далі всі
 export function drinksFor(lv) {
-  const list = lv.finale ? DRINKS.feast : DRINKS[lv.country] || [];
+  const list = lv.finale ? (DRINKS[lv.id] || DRINKS.feast) : DRINKS[lv.country] || [];
   return lv.ck < 2 ? list.slice(0, 1) : list;
 }
 
@@ -146,9 +180,11 @@ export const COUNTRIES = {
   jp: { name: 'Японія',   flag: ['#ffffff', '#d63a3a'], theme: 'jp' },
   mx: { name: 'Мексика',  flag: ['#1f8a4c', '#ffffff', '#c8343a'], theme: 'mx' },
   us: { name: 'США',      flag: ['#3355aa', '#ffffff', '#cc3344'], theme: 'us' },
+  in: { name: 'Індія',    flag: ['#ff9933', '#ffffff', '#138808'], theme: 'in' },
+  fr: { name: 'Франція',  flag: ['#0055a4', '#ffffff', '#ef4135'], theme: 'fr' },
 };
 
-const B = 'baba', R = 'racc', K = 'kids';
+const B = 'baba', R = 'racc', K = 'kids', CAT = 'cat';
 
 export const LEVELS = [
   { id: 'kyiv', country: 'ua', city: 'Київ', title: 'Перша зміна',
@@ -548,6 +584,76 @@ export const LEVELS = [
     intro: [[B, 'Усі сторінки повернулися додому! Готуймо великий сімейний бенкет!'],
             [R, 'А я допомагатиму! Чесно-чесно, нічого не поцуплю!']],
     outro: [[B, 'Найсмачніше, коли готуємо разом. Дякую вам, мої Кухарчата! ❤️']] },
+  /* ===== Друга подорож: Всесвітній кулінарний чемпіонат ===== */
+  { id: 'delhi', country: 'in', city: 'Делі', title: 'Тандур і каррі',
+    recipes: ['butterchk', 'naan'], gen: { layout: 'island' }, thief: { every: 34 },
+    dur: 230, ordT: 95, iv: 21, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[B, 'Кухарчата, лист! Нас запросили на Всесвітній кулінарний чемпіонат у Парижі! Але спершу — відбір в Індії та Франції.'],
+            [CAT, 'Мур-р… Я Кіт Мурчало, найхитріший кухар світу. Перемога буде моя — а ваші продукти теж стануть моїми!'],
+            [R, 'Обережно, він крадькома тягне продукти зі стійок! Не лишайте їх без нагляду — а як побачите кота, бігом до нього: від ривка він усе впустить.']],
+    outro: [[B, 'Каррі вдалося на славу! Мурчало сердито махнув хвостом і подався до Мумбаї.']] },
+  { id: 'mumbai', country: 'in', city: 'Мумбаї', title: 'Вуличні самоси',
+    recipes: ['samosa', 'chana'], gen: { layout: 'conv' }, thief: { every: 28 },
+    dur: 230, ordT: 95, iv: 20, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'На ринку Мумбаї стільки смаколиків… Я заберу найкращі!'],
+            [B, 'Самоси смажимо на пательні, а начинку варимо. Чана — нут із томатом у каструлі. Більше кроків, більше рук!']],
+    outro: [[R, 'Мурчало знову втік! Здається, до рожевого міста — Джайпура.']] },
+  { id: 'jaipur', country: 'in', city: 'Джайпур', title: 'Рожеве місто',
+    recipes: ['palak', 'naan', 'butterchk'], gen: { layout: 'split', gates: true }, thief: { every: 26 },
+    dur: 240, ordT: 100, iv: 20, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'Палацові брами відчиняються, коли їм заманеться. Мур-р, удачі!'],
+            [B, 'Шпинат і рис варимо разом, панір смажимо. Домовтеся, хто з якого боку кухні.']],
+    outro: [[B, 'Чудово! А Мурчало вже чекає в дощовій Колкаті.']] },
+  { id: 'kolkata', country: 'in', city: 'Колката', title: 'Сезон дощів',
+    recipes: ['biryani', 'dal'], gen: { layout: 'columns', extraBoard: true, pans: 3 }, thief: { every: 24 }, wind: { period: 17, dur: 5, force: 2.4 },
+    dur: 250, ordT: 110, iv: 21, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Мусон! Злива так і штовхає вбік!'],
+            [B, 'Біріані — найскладніша страва: рис і яйце варимо, курку й цибулю смажимо. Готуйте частини одночасно!']],
+    outro: [[B, 'Ви впоралися навіть у зливу! Останній відбір в Індії — у Гоа.']] },
+  { id: 'goa', country: 'in', city: 'Гоа', title: 'Каррі на пляжі',
+    recipes: ['fishcurry', 'samosa', 'biryani'], gen: { layout: 'lanes', gates: true, w: 17, h: 10, pans: 3 }, thief: { every: 22 },
+    dur: 260, ordT: 110, iv: 19, maxO: 4, fire: true, wash: true, plates: 4,
+    intro: [[CAT, 'Пляж, пальми й рибне каррі… а я — найшвидший кіт на узбережжі!'],
+            [B, 'Тепер замовлень буде до чотирьох одночасно. Діліть роботу!']],
+    outro: [[B, 'Індійський відбір пройдено! Пакуємо фургончик — їдемо до Франції.']] },
+  { id: 'nice', country: 'fr', city: 'Ніцца', title: 'Салат Нісуаз',
+    recipes: ['nicoise', 'ratatouille'], gen: { layout: 'islands2' }, thief: { every: 26 },
+    dur: 240, ordT: 105, iv: 20, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[B, 'Bonjour, Франціє! Тут кухарі вимогливі: чотири складники в одному салаті.'],
+            [CAT, 'Мур-р-р, рататуй — моя улюблена страва. Баклажани я вже собі приглядів!']],
+    outro: [[R, 'Мурчало чкурнув у порт Марселя!']] },
+  { id: 'marseille', country: 'fr', city: 'Марсель', title: 'Буйабес у порту',
+    recipes: ['bouill', 'nicoise'], gen: { layout: 'conv', w: 17, h: 10 }, thief: { every: 22 },
+    dur: 250, ordT: 105, iv: 20, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'Свіжа рибка з порту — це для котів, а не для кухарчат!'],
+            [B, 'Буйабес: рибу, томат і моркву варимо в одній каструлі. А рибу для салату — смажимо.']],
+    outro: [[B, 'Смачно, як у справжнього шефа! Далі — Ліон, столиця французької кухні.']] },
+  { id: 'lyon', country: 'fr', city: 'Ліон', title: 'Цибулевий суп',
+    recipes: ['onionsoup', 'steakfr'], gen: { layout: 'ring' }, thief: { every: 20 },
+    dur: 250, ordT: 105, iv: 19, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Тут кухня колом — зустрінетесь із котом, де не чекаєте!'],
+            [B, 'У суп дві цибулини й підсмажений у печі багет. Стейк і картоплю фрі — на пательні.']],
+    outro: [[B, 'Браво! Мурчало вже в Бордо.']] },
+  { id: 'bordeaux', country: 'fr', city: 'Бордо', title: 'Кіш і млинці',
+    recipes: ['quiche', 'crepe', 'onionsoup'], gen: { layout: 'split', gates: true, convBridge: true, w: 17, h: 10 }, thief: { every: 19 },
+    dur: 260, ordT: 110, iv: 19, maxO: 4, fire: true, wash: true, plates: 4,
+    intro: [[CAT, 'Двері зачиняються, стрічка везе… а я тим часом поласую сиром!'],
+            [B, 'Кіш — чотири складники в одній печі! Млинці смажимо, а яблучко ріжемо.']],
+    outro: [[B, 'Ще трохи — і Париж! Але спершу Страсбург.']] },
+  { id: 'strasbourg', country: 'fr', city: 'Страсбург', title: 'Різдвяний ярмарок',
+    recipes: ['flammek', 'coqvin', 'crepe'], gen: { layout: 'islands2', extraBoard: true, w: 17, h: 10 }, thief: { every: 18 }, wind: { period: 15, dur: 5, force: 2.6 },
+    dur: 260, ordT: 110, iv: 18, maxO: 4, fire: true, wash: true, plates: 4,
+    intro: [[R, 'Сніг, ялинки, ярмарок… і хуртовина!'],
+            [CAT, 'Мур-р, у хуртовину ніхто не помітить кота з куркою!']],
+    outro: [[B, 'Ви готові до фіналу. Париж чекає!']] },
+  { id: 'paris', country: 'fr', city: 'Париж', title: 'Гран-прі чемпіонату', finale: true,
+    recipes: ['ratatouille', 'biryani', 'onionsoup', 'chana'], gen: { layout: 'islands2', w: 17, h: 10, pans: 3, boards: 3 }, thief: { every: 16 },
+    dur: 280, ordT: 115, iv: 18, maxO: 4, fire: true, wash: true, plates: 4,
+    intro: [[B, 'Фінал Всесвітнього чемпіонату! Страви з усієї подорожі — на одній кухні.'],
+            [CAT, 'Мур-р… Це мій останній шанс. Я поцуплю все, що погано лежить!'],
+            [R, 'Кухарчата, ви найкраща команда. Покажіть, на що здатні!']],
+    outro: [[CAT, 'Мяу… ви справді готуєте краще за мене. Можна… я теж навчуся готувати разом із вами?'],
+            [B, 'Звісно! На кухні місця вистачить усім. Кубок чемпіонів — наш! 🏆']] },
 ];
 
 // Розташування на карті світу: острови країн і міста (x, z на мапі)
@@ -559,6 +665,8 @@ export const MAP = {
     jp: { x: 14, z: 9, r: 6.0 },
     mx: { x: -16, z: 12, r: 6.0 },
     us: { x: -22, z: -3, r: 6.8 },
+    in: { x: 31, z: 1, r: 6.6 },
+    fr: { x: -13, z: -16, r: 6.6 },
   },
 };
 
@@ -572,7 +680,7 @@ export const MAP = {
     const st = new Set(l.recipes.flatMap(r => RECIPES[r].c.map(k => k.split(':')[1])));
     const chop = l.recipes.some(r => RECIPES[r].c.some(k => { const [id, s] = k.split(':'); return s === 'c' || (ING[id].chop && ['b', 'f', 'k'].includes(s) && ING[id][({ b: 'pot', f: 'pan', k: 'oven' })[s]] === 'c'); }));
     const g = genKitchen({ w: 15, h: 9, ...l.gen, crates: ids, fire: l.fire, wash: l.wash,
-      pots: st.has('b') ? 3 : 0, pans: st.has('f') ? 2 : 0, ovens: st.has('k') ? 2 : 0, boards: chop ? 2 : 0 });
+      pots: l.gen.pots ?? (st.has('b') ? 3 : 0), pans: l.gen.pans ?? (st.has('f') ? 2 : 0), ovens: l.gen.ovens ?? (st.has('k') ? 2 : 0), boards: l.gen.boards ?? (chop ? 2 : 0) });
     l.grid = g.grid; l.crates = g.crates; if (g.gates && !l.gates) l.gates = g.gates;
   }
 }
@@ -581,6 +689,7 @@ export const SPEAKERS = {
   baba: { name: 'Бабуся Ганна', face: '👵' },
   racc: { name: 'Єнот Шкодько', face: '🦝' },
   kids: { name: 'Кухарчата', face: '🧑‍🍳' },
+  cat: { name: 'Кіт Мурчало', face: '🐱' },
 };
 
 // Кольори кухарів (до 6) і бота

@@ -7,7 +7,7 @@ import { tr } from './i18n.js';
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, ...o });
 function m(geo, mt, x = 0, y = 0, z = 0) { const o = new THREE.Mesh(geo, mt); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; }
 
-const ISLAND_COL = { ua: 0x9ed36a, de: 0x8fcf73, it: 0xb7d67a, jp: 0xa6d98a, mx: 0xe2c27a, us: 0x9cc77c };
+const ISLAND_COL = { ua: 0x9ed36a, de: 0x8fcf73, it: 0xb7d67a, jp: 0xa6d98a, mx: 0xe2c27a, us: 0x9cc77c, in: 0xd6c47a, fr: 0xa9d58a };
 
 // міста розкладаємо дугою по острову країни
 export function cityPositions() {
@@ -27,6 +27,7 @@ function flag(cols, horiz) {
   if (horiz) { cols.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 64 / cols.length, 96, 64 / cols.length + 1); }); }
   else if (cols.length === 2 && cols[0] === '#ffffff') { g.fillStyle = '#fff'; g.fillRect(0, 0, 96, 64); g.fillStyle = cols[1]; g.beginPath(); g.arc(48, 32, 16, 0, 7); g.fill(); }
   else if (cols.length === 2) { g.fillStyle = cols[0]; g.fillRect(0, 0, 96, 32); g.fillStyle = cols[1]; g.fillRect(0, 32, 96, 32); }
+  else if (cols[0] === '#ff9933') { cols.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 64 / 3, 96, 64 / 3 + 1); }); g.strokeStyle = '#000080'; g.lineWidth = 2; g.beginPath(); g.arc(48, 32, 8, 0, 7); g.stroke(); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.moveTo(48, 32); g.lineTo(48 + Math.cos(a) * 8, 32 + Math.sin(a) * 8); g.stroke(); } }
   else if (cols[0] === '#3355aa') { for (let i = 0; i < 7; i++) { g.fillStyle = i % 2 ? '#fff' : '#cc3344'; g.fillRect(0, i * 64 / 7, 96, 64 / 7 + 1); } g.fillStyle = '#3355aa'; g.fillRect(0, 0, 42, 34); }
   else { cols.forEach((col, i) => { g.fillStyle = col; g.fillRect(i * 32, 0, 33, 64); }); }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
@@ -45,11 +46,11 @@ function landmark(cc) {
     case 'it': { // Колізей
       const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 0.8, 20, 1, true), mat(0xe2c39a, { side: THREE.DoubleSide }));
       ring.position.y = 0.4; g.add(ring);
-      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; g.add(m(new THREE.BoxGeometry(0.12, 0.3, 0.06), mat(0x8a6a48), Math.cos(a) * 0.91, 0.45, Math.sin(a) * 0.91)).rotation.y = -a; }
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; { const _o = m(new THREE.BoxGeometry(0.12, 0.3, 0.06), mat(0x8a6a48), Math.cos(a) * 0.91, 0.45, Math.sin(a) * 0.91); _o.rotation.y = -a; g.add(_o); } }
       break;
     }
     case 'jp': { // пагода
-      for (let i = 0; i < 4; i++) { g.add(m(new THREE.BoxGeometry(0.6 - i * 0.1, 0.32, 0.6 - i * 0.1), mat(0xc0392b), 0, 0.16 + i * 0.42)); g.add(m(new THREE.ConeGeometry(0.62 - i * 0.1, 0.2, 4), mat(0x2b2b33), 0, 0.42 + i * 0.42)).rotation.y = Math.PI / 4; }
+      for (let i = 0; i < 4; i++) { g.add(m(new THREE.BoxGeometry(0.6 - i * 0.1, 0.32, 0.6 - i * 0.1), mat(0xc0392b), 0, 0.16 + i * 0.42)); { const _o = m(new THREE.ConeGeometry(0.62 - i * 0.1, 0.2, 4), mat(0x2b2b33), 0, 0.42 + i * 0.42); _o.rotation.y = Math.PI / 4; g.add(_o); } }
       g.add(m(new THREE.CylinderGeometry(0.02, 0.02, 0.4), mat(0xffc93c), 0, 1.9));
       break;
     }
@@ -62,6 +63,21 @@ function landmark(cc) {
       for (let i = 0; i < 4; i++) g.add(m(new THREE.BoxGeometry(0.16, 1.0, 0.3), mat(0xe8dcc0), -0.6 + i * 0.4, 0.5));
       g.add(m(new THREE.BoxGeometry(1.5, 0.25, 0.4), mat(0xe8dcc0), 0, 1.12));
       g.add(m(new THREE.BoxGeometry(0.5, 0.18, 0.3), mat(0x5a8a6a), 0, 1.33));
+      break;
+    }
+    case 'in': { // Тадж-Махал
+      g.add(m(new THREE.BoxGeometry(1.5, 0.12, 1.5), mat(0xf2ede4), 0, 0.06));
+      g.add(m(new THREE.BoxGeometry(0.9, 0.6, 0.9), mat(0xfbf8f2), 0, 0.42));
+      g.add(m(new THREE.SphereGeometry(0.38, 16, 12), mat(0xfbf8f2), 0, 0.95)); g.add(m(new THREE.ConeGeometry(0.06, 0.3, 8), mat(0xffc93c, { metalness: 0.6 }), 0, 1.42));
+      for (const [x, z] of [[-0.68, -0.68], [0.68, -0.68], [-0.68, 0.68], [0.68, 0.68]]) { g.add(m(new THREE.CylinderGeometry(0.06, 0.07, 1.1, 8), mat(0xfbf8f2), x, 0.6, z)); g.add(m(new THREE.SphereGeometry(0.08, 8, 6), mat(0xfbf8f2), x, 1.2, z)); }
+      break;
+    }
+    case 'fr': { // Ейфелева вежа
+      const iron = mat(0x8a6a4a, { metalness: 0.4 });
+      for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { const l = m(new THREE.CylinderGeometry(0.04, 0.07, 1.0, 6), iron, x * 0.32, 0.45, z * 0.32); l.rotation.set(z * 0.45, 0, -x * 0.45); g.add(l); }
+      g.add(m(new THREE.BoxGeometry(0.55, 0.06, 0.55), iron, 0, 0.88));
+      g.add(m(new THREE.CylinderGeometry(0.06, 0.2, 1.0, 4), iron, 0, 1.4));
+      g.add(m(new THREE.BoxGeometry(0.22, 0.04, 0.22), iron, 0, 1.92)); g.add(m(new THREE.CylinderGeometry(0.015, 0.05, 0.5, 4), iron, 0, 2.2));
       break;
     }
     case 'us': { // хмарочоси і статуя
@@ -105,7 +121,7 @@ export function truckMesh() {
   for (const [x, z] of [[0.62, 0.38], [0.62, -0.38], [-0.45, 0.38], [-0.45, -0.38]]) {
     const w = new THREE.Group(); w.position.set(x, 0.2, z);
     const tire = m(new THREE.TorusGeometry(0.13, 0.065, 10, 18), mat(0x222222)); w.add(tire);
-    w.add(m(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 14), mat(0xd9dee4, { metalness: 0.7, roughness: 0.25 }))).rotation.x = Math.PI / 2;
+    { const _o = m(new THREE.CylinderGeometry(0.1, 0.1, 0.08, 14), mat(0xd9dee4, { metalness: 0.7, roughness: 0.25 })); _o.rotation.x = Math.PI / 2; w.add(_o); }
     b.add(w);
   }
   g.userData.body = b;
@@ -121,7 +137,7 @@ export class MapView {
     this.cam = new THREE.PerspectiveCamera(42, 1, 0.1, 300);
     s.add(new THREE.HemisphereLight(0xffffff, 0x5a7a9a, 1.3));
     const sun = new THREE.DirectionalLight(0xffffff, 1.8); sun.position.set(-10, 25, 15); sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -32, right: 32, top: 24, bottom: -24, near: 1, far: 80 });
+    sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -42, right: 42, top: 30, bottom: -30, near: 1, far: 80 });
     s.add(sun);
     // океан
     const sea = new THREE.Mesh(new THREE.PlaneGeometry(200, 200, 60, 60), mat(0x3fa9e6, { roughness: 0.35 }));
