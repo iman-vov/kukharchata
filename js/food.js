@@ -29,7 +29,7 @@ const C = (a, b, t) => new THREE.Color(a).lerp(new THREE.Color(b), t).getHex();
 let seed = 1; const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
 
 /* ================= сирі продукти ================= */
-const INNER = { paneer: 0xfff8e6, spinach: 0x3f9a3f, eggplant: 0xf1e6c4, zucchini: 0xe9f2c4, baguette: 0xf6e3b8, tomato: 0xf26a4f, potato: 0xf3e1a6, onion: 0xf6efe0, beet: 0xa3245e, cabbage: 0xdcefc4, cucumber: 0xc9e7a2, apple: 0xfbefc9, carrot: 0xf7983a, meat: 0xd9645f, fish: 0xf6c3a8, chicken: 0xf1d2b0, mushroom: 0xeedcc0, cheese: 0xffd34d, garlic: 0xfaf3df, lettuce: 0x8fd16a, herbs: 0x3aa346, tortilla: 0xe8c98b };
+const INNER = { walnut: 0xe9c99a, pepper: 0xe8412c, tofu: 0xfffbf0, paneer: 0xfff8e6, spinach: 0x3f9a3f, eggplant: 0xf1e6c4, zucchini: 0xe9f2c4, baguette: 0xf6e3b8, tomato: 0xf26a4f, potato: 0xf3e1a6, onion: 0xf6efe0, beet: 0xa3245e, cabbage: 0xdcefc4, cucumber: 0xc9e7a2, apple: 0xfbefc9, carrot: 0xf7983a, meat: 0xd9645f, fish: 0xf6c3a8, chicken: 0xf1d2b0, mushroom: 0xeedcc0, cheese: 0xffd34d, garlic: 0xfaf3df, lettuce: 0x8fd16a, herbs: 0x3aa346, tortilla: 0xe8c98b };
 
 function raw(id) {
   const d = ING[id], g = new THREE.Group(), M = mat(d.col);
@@ -101,6 +101,18 @@ function raw(id) {
       g.add(m(G.disc, mat(lab), 0.08, 0.005, 0.08, 0, 0.17, 0.15, Math.PI / 2));
       break;
     }
+    case 'walnut':
+      for (let i = 0; i < 4; i++) { const x = (i % 2 - 0.5) * 0.13, z = (Math.floor(i / 2) - 0.5) * 0.12; g.add(m(G.sph, M, 0.075, 0.065, 0.07, x, 0.07, z)); g.add(m(G.box, mat(0x8a5a2b), 0.004, 0.13, 0.14, x, 0.07, z)); }
+      break;
+    case 'pepper':
+      g.add(m(G.sph, M, 0.14, 0.15, 0.13, 0, 0.14)); for (let i = 0; i < 3; i++) g.add(m(G.sph, M, 0.07, 0.13, 0.07, Math.cos(i * 2.1) * 0.07, 0.12, Math.sin(i * 2.1) * 0.07));
+      g.add(m(G.cylLo, mat(0x3c8a3a), 0.02, 0.07, 0.02, 0, 0.3)); g.add(m(G.sph, mat(0x3c8a3a), 0.05, 0.02, 0.05, 0, 0.27)); break;
+    case 'tofu':
+      for (let i = 0; i < 2; i++) g.add(m(G.box, mat(0xfaf6ea, { roughness: 0.9 }), 0.2, 0.1, 0.16, (i - 0.5) * 0.08, 0.05 + i * 0.1, (i - 0.5) * 0.03, 0, i * 0.3)); break;
+    case 'tapioca':
+      g.add(m(G.cyl, mat(0xe8f4fb, { transparent: true, opacity: 0.5, roughness: 0.05 }), 0.1, 0.2, 0.1, 0, 0.1));
+      for (let i = 0; i < 12; i++) g.add(m(G.sphLo, mat(0x2a1a14, { roughness: 0.3 }), 0.025, 0.025, 0.025, (rnd() - 0.5) * 0.12, 0.03 + rnd() * 0.12, (rnd() - 0.5) * 0.12));
+      g.add(m(G.cyl, mat(0xd63a3a), 0.105, 0.03, 0.105, 0, 0.21)); break;
     case 'paneer':
       g.add(m(G.box, mat(0xfbf3dc, { roughness: 0.9 }), 0.28, 0.14, 0.22, 0, 0.07)); g.add(m(G.box, mat(0xf3e6c4), 0.06, 0.06, 0.06, 0.1, 0.17, 0.05)); break;
     case 'spinach':
@@ -196,7 +208,7 @@ function processed(id, s) {
     }
   }
   // шматочки / варене / смажене
-  const shape = { paneer: 'cube', spinach: 'shred', eggplant: 'round', zucchini: 'round', baguette: 'round', chickpeas: 'bean', lentils: 'grain', tomato: 'cube', potato: 'cube', beet: 'cube', apple: 'slice', cucumber: 'round', carrot: 'round', onion: 'ring', cabbage: 'shred', lettuce: 'shred', herbs: 'tiny', garlic: 'tiny', cheese: 'grate', meat: 'mince', chicken: 'cube', fish: 'slab', mushroom: 'slice', tortilla: 'chip', rice: 'grain', pasta: 'noodle', noodles: 'noodle', beans: 'bean' }[id] || 'cube';
+  const shape = { walnut: 'tiny', pepper: 'ring', tofu: 'cube', paneer: 'cube', spinach: 'shred', eggplant: 'round', zucchini: 'round', baguette: 'round', chickpeas: 'bean', lentils: 'grain', tomato: 'cube', potato: 'cube', beet: 'cube', apple: 'slice', cucumber: 'round', carrot: 'round', onion: 'ring', cabbage: 'shred', lettuce: 'shred', herbs: 'tiny', garlic: 'tiny', cheese: 'grate', meat: 'mince', chicken: 'cube', fish: 'slab', mushroom: 'slice', tortilla: 'chip', rice: 'grain', pasta: 'noodle', noodles: 'noodle', beans: 'bean' }[id] || 'cube';
   const n = { tiny: 14, grain: 30, bean: 14, noodle: 10, shred: 10, grate: 12, mince: 9, chip: 6 }[shape] || 6;
   for (let i = 0; i < n; i++) {
     const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.13, x = Math.cos(a) * r, z = Math.sin(a) * r, y = 0.025 + rnd() * 0.04;
@@ -358,6 +370,21 @@ const DISH = {
   crepe: (g) => { g.add(plateMesh()); for (let i = 0; i < 2; i++) g.add(m(G.cap, mat(0xe9c27a), 0.12, 0.3, 0.08, 0, 0.06 + i * 0.03, (i - 0.5) * 0.11, 0, 0.2, Math.PI / 2)); for (let i = 0; i < 4; i++) g.add(m(G.box, mat(0x5a3320), 0.3, 0.008, 0.015, 0, 0.12, -0.08 + i * 0.05, 0, 0.5, 0)); scatter(g, 5, (x, z) => g.add(m(G.half, mat(0xfbefc9), 0.03, 0.012, 0.03, x * 0.2, 0.06, z * 0.2 + 0.1, Math.PI / 2, x * 4))); },
   flammek: (g) => { g.add(m(G.box, mat(0x6b4426), 0.56, 0.03, 0.4, 0, 0.015)); g.add(m(G.box, mat(0xe9c27a), 0.5, 0.025, 0.34, 0, 0.04)); g.add(m(G.box, mat(0xfff8e8), 0.46, 0.008, 0.3, 0, 0.055)); scatter(g, 10, (x, z) => g.add(m(G.torThin, mat(0xc98a4a), 0.03, 0.03, 0.03, x * 0.2, 0.065, z * 0.13, Math.PI / 2))); scatter(g, 10, (x, z) => g.add(m(G.box, mat(0xf2c14e), 0.04, 0.01, 0.02, x * 0.2, 0.065, z * 0.13, 0, x * 3, 0))); },
   coqvin: (g) => { g.add(bowl(0x6a2a2a, 0xf4f1e8, 0x0055a4)); for (let i = 0; i < 2; i++) g.add(m(G.sph, mat(0xb8682a), 0.08, 0.05, 0.06, -0.05 + i * 0.1, 0.15, (i - 0.5) * 0.06)); scatter(g, 5, (x, z) => g.add(m(G.half, mat(0x8a5a33), 0.03, 0.012, 0.03, x * 0.15, 0.15, z * 0.15, Math.PI / 2, x * 4))); scatter(g, 5, (x, z) => g.add(m(G.cylLo, mat(0xf28c28), 0.025, 0.01, 0.025, x * 0.16, 0.15, z * 0.16))); g.add(m(G.sphLo, mat(0x3aa346), 0.03, 0.006, 0.02, 0, 0.17, 0.08)); },
+
+  // Грузія
+  khachapuri: (g) => { const boat = new THREE.Group(); boat.add(m(G.sph, mat(0xd9a05a), 0.34, 0.07, 0.16, 0, 0.06)); for (const s of [-1, 1]) boat.add(m(G.cone, mat(0xc98a4a), 0.07, 0.16, 0.07, s * 0.34, 0.08, 0, 0, 0, -s * Math.PI / 2)); boat.add(m(G.sph, mat(0xfff0b0), 0.22, 0.05, 0.1, 0, 0.1)); boat.add(m(G.sph, mat(0xffffff), 0.07, 0.03, 0.06, 0, 0.14)); boat.add(m(G.sph, mat(0xffa000), 0.045, 0.035, 0.045, 0, 0.16)); boat.add(m(G.box, mat(0xfff8e1), 0.06, 0.03, 0.04, 0.12, 0.15, 0)); g.add(m(G.box, mat(0x8a5a3a), 0.6, 0.03, 0.36, 0, 0.015)); boat.position.y = 0.02; g.add(boat); },
+  khinkali: (g) => { g.add(plateMesh()); for (let i = 0; i < 5; i++) { const a = i * 1.26, x = Math.cos(a) * 0.14, z = Math.sin(a) * 0.14; g.add(m(G.sph, mat(0xf3e6c8), 0.08, 0.07, 0.08, x, 0.07, z)); g.add(m(G.cone, mat(0xf3e6c8), 0.04, 0.06, 0.04, x, 0.15, z)); for (let k = 0; k < 6; k++) g.add(m(G.box, mat(0xe2d2a8), 0.004, 0.06, 0.02, x + Math.cos(k) * 0.05, 0.11, z + Math.sin(k) * 0.05, 0, k, 0.3)); } scatter(g, 12, (x, z) => g.add(m(G.sphLo, mat(0x3a2a2a), 0.008, 0.008, 0.008, x * 0.2, 0.04, z * 0.2))); },
+  lobio: (g) => { const b = bowl(0x7a2a1a, 0xc0603a, 0x8a3a1a); g.add(b); scatter(g, 18, (x, z) => g.add(m(G.sphLo, mat(0x8a3a2a), 0.022, 0.016, 0.03, x * 0.18, 0.14, z * 0.18, 0, x * 3))); scatter(g, 8, (x, z) => g.add(m(G.sphLo, mat(0x3aa346), 0.014, 0.005, 0.014, x * 0.18, 0.15, z * 0.18))); scatter(g, 4, (x, z) => g.add(m(G.torThin, mat(0xf6efe0), 0.025, 0.025, 0.025, x * 0.14, 0.15, z * 0.14, Math.PI / 2))); },
+  mtsvadi: (g) => { g.add(plateMesh()); for (let k = 0; k < 2; k++) { const z = (k - 0.5) * 0.12; g.add(m(G.cylLo, mat(0xc0c0c0, { metalness: 0.7 }), 0.008, 0.5, 0.008, 0, 0.07, z, 0, 0, Math.PI / 2)); for (let i = 0; i < 4; i++) g.add(m(G.box, mat(0x7a3a20), 0.07, 0.06, 0.06, -0.15 + i * 0.1, 0.07, z, 0.3, i)); } scatter(g, 6, (x, z) => g.add(m(G.torThin, mat(0xf6efe0), 0.03, 0.03, 0.03, x * 0.2, 0.05, z * 0.2 + 0.03, Math.PI / 2))); g.add(m(G.half, mat(0xe8412c), 0.05, 0.02, 0.05, 0.18, 0.05, 0.12, Math.PI / 2)); },
+  chakhokh: (g) => { g.add(bowl(0xc8432a, 0xffffff, 0xe8112d)); for (let i = 0; i < 2; i++) g.add(m(G.sph, mat(0xd9884a), 0.08, 0.05, 0.06, -0.05 + i * 0.1, 0.15, (i - 0.5) * 0.06)); scatter(g, 10, (x, z) => g.add(m(G.sphLo, mat(0x3aa346), 0.014, 0.005, 0.014, x * 0.18, 0.155, z * 0.18))); },
+  pkhali: (g) => { g.add(plateMesh()); for (let i = 0; i < 5; i++) { const a = i * 1.26; g.add(m(G.sph, mat(0x3f7a32), 0.06, 0.045, 0.06, Math.cos(a) * 0.14, 0.06, Math.sin(a) * 0.14)); for (let k = 0; k < 3; k++) g.add(m(G.sphLo, mat(0xc0304a), 0.01, 0.01, 0.01, Math.cos(a) * 0.14 + (k - 1) * 0.015, 0.1, Math.sin(a) * 0.14)); } g.add(m(G.sph, mat(0x3f7a32), 0.06, 0.045, 0.06, 0, 0.06, 0)); },
+  // Китай
+  jiaozi: (g) => { const b = new THREE.Group(); b.add(m(G.cyl, mat(0xd9b07a), 0.3, 0.1, 0.3, 0, 0.05)); for (let i = 0; i < 8; i++) b.add(m(G.box, mat(0xb8905a), 0.6, 0.004, 0.01, 0, 0.1, -0.24 + i * 0.07)); g.add(b); for (let i = 0; i < 6; i++) { const a = i * 1.05, x = Math.cos(a) * 0.15, z = Math.sin(a) * 0.15; g.add(m(G.half, mat(0xf6efe0), 0.08, 0.04, 0.06, x, 0.13, z, Math.PI / 2, -a + Math.PI / 2)); } g.add(m(G.cyl, mat(0x2a1a14), 0.06, 0.02, 0.06, 0, 0.12, 0)); },
+  friedrice: (g) => { const b = bowl(null, 0xffffff, 0xde2910); g.add(b); g.add(m(G.hemi, mat(0xf2d27a), 0.2, 0.09, 0.2, 0, 0.11)); scatter(g, 26, (x, z) => g.add(m(G.sphLo, mat(rnd() < 0.6 ? 0xfff3c0 : 0xffffff), 0.012, 0.009, 0.02, x * 0.17, 0.12 + (1 - Math.hypot(x, z)) * 0.07, z * 0.17))); scatter(g, 8, (x, z) => g.add(m(G.box, mat(0xffd23f), 0.03, 0.015, 0.03, x * 0.14, 0.19, z * 0.14))); scatter(g, 8, (x, z) => g.add(m(G.cylLo, mat(0x6abf4b), 0.012, 0.006, 0.012, x * 0.15, 0.2, z * 0.15))); },
+  springroll: (g) => { g.add(plateMesh()); for (let i = 0; i < 3; i++) { const z = (i - 1) * 0.1; g.add(m(G.cap, mat(0xd99a3a), 0.08, 0.28, 0.08, 0, 0.06 + (i === 1 ? 0.05 : 0), z, 0, 0.2 * (i - 1), Math.PI / 2)); } g.add(m(G.cyl, mat(0xffffff), 0.05, 0.03, 0.05, 0.2, 0.04, 0.12)); g.add(m(G.cyl, mat(0xd63a2a), 0.04, 0.032, 0.04, 0.2, 0.045, 0.12)); },
+  kungpao: (g) => { g.add(plateMesh()); g.add(m(G.sph, mat(0xffffff), 0.11, 0.06, 0.1, 0.13, 0.06, 0)); scatter(g, 10, (x, z) => g.add(m(G.sphLo, mat(0xffffff), 0.012, 0.009, 0.02, 0.13 + x * 0.08, 0.11, z * 0.08))); scatter(g, 7, (x, z) => g.add(m(G.box, mat(0xb8682a), 0.045, 0.04, 0.045, -0.07 + x * 0.12, 0.07, z * 0.12, 0.3, x * 3))); scatter(g, 6, (x, z) => g.add(m(G.box, mat(0xd63a2a), 0.04, 0.012, 0.04, -0.07 + x * 0.12, 0.1, z * 0.12, 0, x * 3, 0))); scatter(g, 5, (x, z) => g.add(m(G.sphLo, mat(0xd9a05a), 0.018, 0.014, 0.02, -0.07 + x * 0.12, 0.1, z * 0.12))); },
+  mapo: (g) => { g.add(bowl(0xc0301a, 0xffffff, 0x1a1a1a)); scatter(g, 9, (x, z) => g.add(m(G.box, mat(0xfff3e0), 0.05, 0.04, 0.05, x * 0.16, 0.14, z * 0.16, 0, x * 2))); scatter(g, 10, (x, z) => g.add(m(G.sphLo, mat(0x7a3a20), 0.014, 0.01, 0.014, x * 0.17, 0.15, z * 0.17))); scatter(g, 6, (x, z) => g.add(m(G.cylLo, mat(0x6abf4b), 0.012, 0.006, 0.012, x * 0.17, 0.155, z * 0.17))); },
+  lomein: (g) => { g.add(bowl(0xb87a3a, 0xffffff, 0xde2910)); for (let i = 0; i < 7; i++) g.add(m(G.torThin, mat(0xe8c27a), 0.05 + rnd() * 0.04, 0.05 + rnd() * 0.04, 0.05, (rnd() - 0.5) * 0.15, 0.135, (rnd() - 0.5) * 0.15, Math.PI / 2, 0, rnd() * 3)); scatter(g, 6, (x, z) => g.add(m(G.box, mat(0xd63a2a), 0.05, 0.012, 0.015, x * 0.15, 0.15, z * 0.15, 0, x * 3, 0))); scatter(g, 6, (x, z) => g.add(m(G.cylLo, mat(0xf28c28), 0.022, 0.01, 0.022, x * 0.16, 0.15, z * 0.16))); g.add(m(G.cylLo, mat(0x6b4226), 0.008, 0.4, 0.008, 0.1, 0.25, -0.05, 0.4, 0, 0.6)); g.add(m(G.cylLo, mat(0x6b4226), 0.008, 0.4, 0.008, 0.13, 0.25, -0.03, 0.4, 0, 0.7)); },
 };
 
 /* ================= напої ================= */
@@ -378,6 +405,10 @@ const DRINK = {
   lassi: { glass: true, col: 0xffc04a, straw: 0xff9933, fruit: 0xffb02e },
   masala: { col: 0xc8955a, foam: true },
   chocchaud: { col: 0x5a3320, foam: true },
+  lagidze: { glass: true, col: 0x6fd64a, bubbles: true, straw: 0xffffff },
+  grapeice: { glass: true, col: 0x6a2a6e, ice: true, fruit: 0x9b59d0 },
+  bubble: { glass: true, col: 0xd9b38a, straw: 0xde2910, pearls: true },
+  cntea: { small: true, col: 0x9ab84a, leaf: true },
   citron: { glass: true, col: 0xfff59d, ice: true, bubbles: true, fruit: 0xfff176, straw: 0x0055a4 },
 };
 function drinkMesh(rid) {
@@ -389,6 +420,7 @@ function drinkMesh(rid) {
     if (D.straw) g.add(m(G.cylLo, mat(D.straw), 0.012, 0.4, 0.012, 0.04, 0.3, 0, 0, 0, -0.2));
     if (D.fruit) { g.add(m(G.half, mat(D.fruit), 0.06, 0.015, 0.06, -0.1, 0.32, 0, Math.PI / 2, 0, 0.3)); }
     if (D.bubbles) for (let i = 0; i < 8; i++) g.add(m(G.sphLo, mat(0xffffff, { transparent: true, opacity: 0.7 }), 0.008, 0.008, 0.008, (rnd() - 0.5) * 0.15, 0.06 + rnd() * 0.2, (rnd() - 0.5) * 0.15));
+    if (D.pearls) for (let i = 0; i < 14; i++) g.add(m(G.sphLo, mat(0x2a1a14, { roughness: 0.3 }), 0.022, 0.022, 0.022, (rnd() - 0.5) * 0.14, 0.04 + rnd() * 0.04, (rnd() - 0.5) * 0.14));
     if (D.cinnamon) g.add(m(G.cylLo, mat(0x8a5a2b), 0.012, 0.3, 0.012, -0.03, 0.3, 0.02, 0, 0, 0.25));
     if (D.caramel) { g.add(m(G.sph, mat(0xfff8e1), 0.1, 0.05, 0.1, 0, 0.29)); for (let i = 0; i < 3; i++) g.add(m(G.box, mat(0xc98a2a), 0.15, 0.01, 0.012, 0, 0.33, -0.04 + i * 0.04, 0, 0.5, 0)); }
     return g;

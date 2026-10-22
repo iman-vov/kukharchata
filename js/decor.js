@@ -3,6 +3,8 @@
 import * as THREE from 'three';
 import { RECIPES } from './data.js';
 import { dishCanvas } from './icons.js';
+import { addHat } from './hats.js';
+import { GUEST_HATS } from './style.js';
 
 const matC = new Map();
 const mat = (c, o = {}) => { const k = c + JSON.stringify(o); if (!matC.has(k)) matC.set(k, new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, ...o })); return matC.get(k); };
@@ -85,6 +87,21 @@ function wallPattern(theme) {
         g.fillStyle = '#c9a227'; g.fillRect(0, H * 0.58, W, 4);
         break;
       }
+      case 'ge': { // кам'яна стіна з дерев'яним балконом-різьбленням
+        g.fillStyle = '#b8ab92'; g.fillRect(0, 0, W, H);
+        for (let j = 0; j < 6; j++) for (let i = 0; i < 9; i++) { g.fillStyle = ['#c9bfa8', '#a99c84', '#d6ccb4'][(i + j) % 3]; g.fillRect(i * 32 + (j % 2) * 16 - 16, H * 0.35 + j * 14, 30, 12); }
+        g.fillStyle = '#6b4226'; g.fillRect(0, 0, W, H * 0.3); g.fillStyle = '#8a5a3a'; for (let x = 6; x < W; x += 14) g.fillRect(x, 6, 6, H * 0.3 - 12);
+        g.fillStyle = '#e8112d'; g.fillRect(0, H * 0.3, W, 4);
+        break;
+      }
+      case 'cn': { // червоний лак і золотий меандр
+        g.fillStyle = '#b3241c'; g.fillRect(0, 0, W, H);
+        g.fillStyle = '#ffc93c'; g.fillRect(0, 10, W, 3); g.fillRect(0, 34, W, 3);
+        g.strokeStyle = '#ffc93c'; g.lineWidth = 2;
+        for (let x = 0; x < W; x += 20) { g.beginPath(); g.moveTo(x, 30); g.lineTo(x, 16); g.lineTo(x + 14, 16); g.lineTo(x + 14, 26); g.lineTo(x + 6, 26); g.lineTo(x + 6, 21); g.stroke(); }
+        g.fillStyle = '#5a1a12'; g.fillRect(0, H * 0.8, W, H * 0.2);
+        break;
+      }
       case 'us': {
         g.fillStyle = '#fdfdfb'; g.fillRect(0, 0, W, H);
         const s = 16;
@@ -96,7 +113,7 @@ function wallPattern(theme) {
     }
   };
 }
-const GARLAND = { in: ['#ff9933', '#ffc93c', '#e5484d', '#7b2d8b', '#138808'], fr: ['#0055a4', '#ffffff', '#ef4135'], ua: ['#2f6fd6', '#ffd23f'], de: ['#2f78c8', '#ffffff'], it: ['#2f9e44', '#ffffff', '#d63a3a'], mx: ['#e63946', '#ffb703', '#2a9d8f', '#8338ec', '#fb5607'], us: ['#d43a3a', '#ffffff', '#3355aa'] };
+const GARLAND = { ge: ['#e8112d', '#ffffff'], cn: ['#e53935', '#ffc93c'], in: ['#ff9933', '#ffc93c', '#e5484d', '#7b2d8b', '#138808'], fr: ['#0055a4', '#ffffff', '#ef4135'], ua: ['#2f6fd6', '#ffd23f'], de: ['#2f78c8', '#ffffff'], it: ['#2f9e44', '#ffffff', '#d63a3a'], mx: ['#e63946', '#ffb703', '#2a9d8f', '#8338ec', '#fb5607'], us: ['#d43a3a', '#ffffff', '#3355aa'] };
 const HALL = {
   ua: { floor: 0xc9a27a, cloth: 0xffffff, cloth2: 0xc8202a },
   de: { floor: 0xa87b52, cloth: 0x2f78c8, cloth2: 0xffffff },
@@ -105,6 +122,8 @@ const HALL = {
   mx: { floor: 0xe7b277, cloth: 0x2a9d8f, cloth2: 0xffb703 },
   us: { floor: 0xeeeeee, cloth: 0xd43a3a, cloth2: 0xd43a3a },
   in: { floor: 0xd9a46a, cloth: 0xff9933, cloth2: 0x7b2d8b },
+  ge: { floor: 0x9a7a5a, cloth: 0xffffff, cloth2: 0xe8112d },
+  cn: { floor: 0x7a3a24, cloth: 0xd63a2a, cloth2: 0xffc93c },
   fr: { floor: 0xb08a62, cloth: 0xffffff, cloth2: 0xef4135 },
 };
 
@@ -200,6 +219,18 @@ function wallProps(theme, x, wallZ, rnd) {
       }
       break;
     }
+    case 'ge': {
+      if (rnd() < 0.5) { // ріг для вина і килимок
+        const r = new THREE.Mesh(PLANE, new THREE.MeshStandardMaterial({ map: canvasTex(96, 128, (c, W, H) => { c.fillStyle = '#8a1a2a'; c.fillRect(0, 0, W, H); c.strokeStyle = '#ffc93c'; c.lineWidth = 3; c.strokeRect(6, 6, W - 12, H - 12); for (let y = 20; y < H; y += 26) { c.fillStyle = '#ffc93c'; c.beginPath(); c.moveTo(W / 2, y); c.lineTo(W / 2 + 14, y + 10); c.lineTo(W / 2, y + 20); c.lineTo(W / 2 - 14, y + 10); c.fill(); } }), side: THREE.DoubleSide }));
+        r.scale.set(0.45, 0.6, 1); r.position.y = y; g.add(r);
+      } else { const p = m(CONE, mat(0xc9a050), 0.07, 0.45, 0.07, 0, y, 0.06); p.rotation.z = 1.9; g.add(p); g.add(m(TOR, mat(0xffc93c), 0.06, 0.06, 0.06, -0.2, y + 0.07, 0.06)); }
+      break;
+    }
+    case 'cn': { // червоний ліхтарик і віяло
+      if (rnd() < 0.55) { g.add(m(SPH, mat(0xe53935, { emissive: 0xff4a2a, emissiveIntensity: 0.4 }), 0.2, 0.24, 0.2, 0, y + 0.15, 0.15)); g.add(m(CYL, mat(0xffc93c), 0.12, 0.05, 0.12, 0, y + 0.41, 0.15)); g.add(m(CYL, mat(0xffc93c), 0.12, 0.05, 0.12, 0, y - 0.11, 0.15)); g.add(m(CYL, mat(0xffc93c), 0.01, 0.2, 0.01, 0, y - 0.25, 0.15)); }
+      else { const f = new THREE.Mesh(new THREE.CircleGeometry(0.4, 20, Math.PI * 0.15, Math.PI * 0.7), new THREE.MeshStandardMaterial({ map: canvasTex(128, 128, (c) => { c.fillStyle = '#fff5e6'; c.fillRect(0, 0, 128, 128); c.strokeStyle = '#2a2a2a'; c.lineWidth = 3; c.beginPath(); c.moveTo(20, 100); c.quadraticCurveTo(60, 40, 110, 50); c.stroke(); c.fillStyle = '#ff7aa2'; for (let i = 0; i < 6; i++) { c.beginPath(); c.arc(40 + i * 12, 70 - i * 4, 5, 0, 7); c.fill(); } }), side: THREE.DoubleSide })); f.position.y = y - 0.15; g.add(f); }
+      break;
+    }
     case 'us': {
       const txt = ['DINER', 'OPEN', 'BURGERS', '★ USA ★'][Math.floor(rnd() * 4)];
       const n = new THREE.Mesh(PLANE, new THREE.MeshBasicMaterial({ map: canvasTex(256, 96, (c) => { c.fillStyle = '#1a1a2a'; c.fillRect(0, 0, 256, 96); c.shadowColor = '#ff3b6b'; c.shadowBlur = 14; c.strokeStyle = '#ff6b9b'; c.lineWidth = 4; c.strokeRect(8, 8, 240, 80); c.fillStyle = '#fff0f6'; c.font = 'bold 40px sans-serif'; c.textAlign = 'center'; c.fillText(txt, 128, 62); }) }));
@@ -213,14 +244,16 @@ function wallProps(theme, x, wallZ, rnd) {
 /* ---------- гості й офіціант (простіші моделі) ---------- */
 const GUEST_COLS = [0xe5484d, 0x3d7be0, 0x3cb371, 0xf2b829, 0x9b59d0, 0xf07c2a, 0x2a9d8f, 0xff8fab];
 const SKIN = [0xffd7b5, 0xf1c27d, 0xe0ac69, 0xffdbc4, 0xc68642];
-function guest(i, rnd) {
+function guest(i, rnd, theme) {
   const g = new THREE.Group();
+  const hats = GUEST_HATS[theme] || [-1], hat = hats[Math.floor(rnd() * hats.length)];
   g.add(m(SPH, mat(GUEST_COLS[Math.floor(rnd() * GUEST_COLS.length)]), 0.24, 0.24, 0.22, 0, 0.32));
   const head = m(SPH, mat(SKIN[Math.floor(rnd() * SKIN.length)]), 0.25, 0.23, 0.24, 0, 0.72); g.add(head);
   g.add(m(SPH, mat(0x1d1d24), 0.04, 0.05, 0.03, -0.08, 0.74, 0.21)); g.add(m(SPH, mat(0x1d1d24), 0.04, 0.05, 0.03, 0.08, 0.74, 0.21));
   g.add(m(SPH, mat(0xff9aa8), 0.04, 0.025, 0.02, -0.14, 0.66, 0.18)); g.add(m(SPH, mat(0xff9aa8), 0.04, 0.025, 0.02, 0.14, 0.66, 0.18));
   const hair = rnd();
-  if (hair < 0.4) g.add(m(SPH, mat([0x3a2618, 0x8a5a2a, 0xe8c46a, 0x1a1a1a][Math.floor(rnd() * 4)]), 0.26, 0.15, 0.25, 0, 0.84, -0.03));
+  if (hat >= 0) { const hg = new THREE.Group(); hg.position.set(0, 0.72, 0); hg.scale.setScalar(0.85); addHat(hg, hat, GUEST_COLS[Math.floor(rnd() * GUEST_COLS.length)]); g.add(hg); }
+  else if (hair < 0.4) g.add(m(SPH, mat([0x3a2618, 0x8a5a2a, 0xe8c46a, 0x1a1a1a][Math.floor(rnd() * 4)]), 0.26, 0.15, 0.25, 0, 0.84, -0.03));
   else if (hair < 0.6) { g.add(m(CYL, mat(0x2a2a2a), 0.17, 0.12, 0.17, 0, 0.95)); g.add(m(CYL, mat(0x2a2a2a), 0.26, 0.02, 0.26, 0, 0.9)); }
   g.userData.ph = rnd() * 6;
   return g;
@@ -317,7 +350,7 @@ export class Decor {
       const n = 2 + Math.floor(rnd() * 2);
       for (let k = 0; k < n; k++) {
         const a = k / n * Math.PI * 2 + rnd();
-        const gst = guest(k, rnd); gst.scale.setScalar(0.85);
+        const gst = guest(k, rnd, this.theme); gst.scale.setScalar(0.85);
         gst.position.set(x + Math.cos(a) * 0.8, 0.02, z + Math.sin(a) * 0.8);
         gst.rotation.y = Math.atan2(x - gst.position.x, z - gst.position.z);
         scene.add(gst); T.guests.push(gst); this.guests.push(gst);

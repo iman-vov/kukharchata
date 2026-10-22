@@ -7,7 +7,7 @@ import { tr } from './i18n.js';
 const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, ...o });
 function m(geo, mt, x = 0, y = 0, z = 0) { const o = new THREE.Mesh(geo, mt); o.position.set(x, y, z); o.castShadow = o.receiveShadow = true; return o; }
 
-const ISLAND_COL = { ua: 0x9ed36a, de: 0x8fcf73, it: 0xb7d67a, jp: 0xa6d98a, mx: 0xe2c27a, us: 0x9cc77c, in: 0xd6c47a, fr: 0xa9d58a };
+const ISLAND_COL = { ua: 0x9ed36a, de: 0x8fcf73, it: 0xb7d67a, jp: 0xa6d98a, mx: 0xe2c27a, us: 0x9cc77c, in: 0xd6c47a, fr: 0xa9d58a, ge: 0x9fcf6a, cn: 0xb5d98a };
 
 // міста розкладаємо дугою по острову країни
 export function cityPositions() {
@@ -27,6 +27,8 @@ function flag(cols, horiz) {
   if (horiz) { cols.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 64 / cols.length, 96, 64 / cols.length + 1); }); }
   else if (cols.length === 2 && cols[0] === '#ffffff') { g.fillStyle = '#fff'; g.fillRect(0, 0, 96, 64); g.fillStyle = cols[1]; g.beginPath(); g.arc(48, 32, 16, 0, 7); g.fill(); }
   else if (cols.length === 2) { g.fillStyle = cols[0]; g.fillRect(0, 0, 96, 32); g.fillStyle = cols[1]; g.fillRect(0, 32, 96, 32); }
+  else if (cols[2] === 'ge') { g.fillStyle = '#fff'; g.fillRect(0, 0, 96, 64); g.fillStyle = '#e8112d'; g.fillRect(40, 0, 16, 64); g.fillRect(0, 24, 96, 16); for (const [x, y] of [[20, 12], [76, 12], [20, 52], [76, 52]]) { g.fillRect(x - 2, y - 7, 4, 14); g.fillRect(x - 7, y - 2, 14, 4); } }
+  else if (cols[2] === 'cn') { g.fillStyle = '#de2910'; g.fillRect(0, 0, 96, 64); const star = (cx, cy, r) => { g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.4 : r; g.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } g.closePath(); g.fill(); }; g.fillStyle = '#ffde00'; star(18, 18, 10); for (const [x, y] of [[34, 7], [40, 14], [40, 24], [34, 30]]) star(x, y, 3.5); }
   else if (cols[0] === '#ff9933') { cols.forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * 64 / 3, 96, 64 / 3 + 1); }); g.strokeStyle = '#000080'; g.lineWidth = 2; g.beginPath(); g.arc(48, 32, 8, 0, 7); g.stroke(); for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; g.beginPath(); g.moveTo(48, 32); g.lineTo(48 + Math.cos(a) * 8, 32 + Math.sin(a) * 8); g.stroke(); } }
   else if (cols[0] === '#3355aa') { for (let i = 0; i < 7; i++) { g.fillStyle = i % 2 ? '#fff' : '#cc3344'; g.fillRect(0, i * 64 / 7, 96, 64 / 7 + 1); } g.fillStyle = '#3355aa'; g.fillRect(0, 0, 42, 34); }
   else { cols.forEach((col, i) => { g.fillStyle = col; g.fillRect(i * 32, 0, 33, 64); }); }
@@ -70,6 +72,18 @@ function landmark(cc) {
       g.add(m(new THREE.BoxGeometry(0.9, 0.6, 0.9), mat(0xfbf8f2), 0, 0.42));
       g.add(m(new THREE.SphereGeometry(0.38, 16, 12), mat(0xfbf8f2), 0, 0.95)); g.add(m(new THREE.ConeGeometry(0.06, 0.3, 8), mat(0xffc93c, { metalness: 0.6 }), 0, 1.42));
       for (const [x, z] of [[-0.68, -0.68], [0.68, -0.68], [-0.68, 0.68], [0.68, 0.68]]) { g.add(m(new THREE.CylinderGeometry(0.06, 0.07, 1.1, 8), mat(0xfbf8f2), x, 0.6, z)); g.add(m(new THREE.SphereGeometry(0.08, 8, 6), mat(0xfbf8f2), x, 1.2, z)); }
+      break;
+    }
+    case 'ge': { // церква на горі (Гергеті)
+      g.add(m(new THREE.ConeGeometry(1.0, 1.0, 7), mat(0x7f9a6a), 0, 0.5));
+      g.add(m(new THREE.BoxGeometry(0.5, 0.45, 0.35), mat(0xb59a7a), 0, 1.2)); g.add(m(new THREE.CylinderGeometry(0.12, 0.12, 0.35, 8), mat(0xb59a7a), 0, 1.55)); g.add(m(new THREE.ConeGeometry(0.16, 0.25, 8), mat(0x6a5a4a), 0, 1.85));
+      { const r = m(new THREE.ConeGeometry(0.42, 0.2, 4), mat(0x6a5a4a), 0, 1.5); r.rotation.y = Math.PI / 4; g.add(r); }
+      break;
+    }
+    case 'cn': { // пагода з червоними дахами
+      for (let i = 0; i < 3; i++) { g.add(m(new THREE.CylinderGeometry(0.34 - i * 0.07, 0.34 - i * 0.07, 0.3, 8), mat(0xc0392b), 0, 0.15 + i * 0.45)); g.add(m(new THREE.ConeGeometry(0.62 - i * 0.12, 0.2, 8), mat(0x1f6f5a), 0, 0.4 + i * 0.45)); }
+      g.add(m(new THREE.SphereGeometry(0.08, 8, 6), mat(0xffc93c, { metalness: 0.6 }), 0, 1.55));
+      for (const x of [-0.7, 0.7]) g.add(m(new THREE.SphereGeometry(0.12, 10, 8), mat(0xe53935, { emissive: 0xff4a2a, emissiveIntensity: 0.4 }), x, 0.5, 0.2));
       break;
     }
     case 'fr': { // Ейфелева вежа
@@ -165,7 +179,7 @@ export class MapView {
       const p = new THREE.Group(); p.position.copy(this.pts[i]);
       const base = m(new THREE.CylinderGeometry(0.55, 0.6, 0.14, 18), mat(0xffffff), 0, 0.07); p.add(base);
       const top = m(new THREE.CylinderGeometry(0.42, 0.42, 0.16, 18), mat(l.finale ? 0xffc93c : 0xe5484d), 0, 0.16); top.name = 'top'; p.add(top);
-      const lab = textSprite(tr(l.finale ? '🎉 Бенкет' : l.city), '#ffffff', 0.55, 'rgba(0,0,0,.6)'); lab.position.y = 1.0; p.add(lab);
+      const lab = textSprite(l.id === 'feast' ? tr('🎉 Бенкет') : l.finale ? '🏆 ' + tr(l.city) : tr(l.city), '#ffffff', 0.55, 'rgba(0,0,0,.6)'); lab.position.y = 1.0; p.add(lab);
       const st = textSprite('☆☆☆', '#ffd23f', 0.45, 'rgba(0,0,0,.5)'); st.position.y = 1.55; st.name = 'stars'; p.add(st);
       p.userData = { i, top, lab, starsSprite: st };
       this.scene.add(p); this.pins.push(p);

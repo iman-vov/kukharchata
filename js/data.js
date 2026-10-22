@@ -31,7 +31,7 @@ export const ING = {
   salt:      { name: 'Сіль',      icon: '🧂', col: 0xffffff, shape: 'jar' },
   honey:     { name: 'Мед',       icon: '🍯', col: 0xf2b134, shape: 'jar' },
   curry:     { name: 'Соус каррі', icon: '🥫', col: 0xd9822b, shape: 'jar' },
-  egg:       { name: 'Яйце',      icon: '🥚', col: 0xfdf6e3, shape: 'egg',    pot: 'r', oven: 'r' },
+  egg:       { name: 'Яйце',      icon: '🥚', col: 0xfdf6e3, shape: 'egg',    pot: 'r', oven: 'r', pan: 'r' },
   herbs:     { name: 'Зелень',    icon: '🌿', col: 0x3aa346, shape: 'leaf',   chop: true },
   apple:     { name: 'Яблуко',    icon: '🍎', col: 0xd8323a, shape: 'ball',   chop: true, oven: 'c' },
   carrot:    { name: 'Морква',    icon: '🥕', col: 0xf28c28, shape: 'stick',  chop: true, pot: 'c' },
@@ -47,6 +47,11 @@ export const ING = {
   eggplant:  { name: 'Баклажан',  icon: '🍆', col: 0x5b2a6e, shape: 'egg', chop: true, oven: 'c' },
   zucchini:  { name: 'Кабачок',   icon: '@zucchini', col: 0x4f8a2e, shape: 'stick', chop: true, oven: 'c' },
   baguette:  { name: 'Багет',     icon: '🥖', col: 0xd9a05a, shape: 'stick', chop: true, oven: 'c' },
+  // третя подорож: Грузія і Китай
+  walnut:    { name: 'Волоські горіхи', icon: '@walnut', col: 0xb58450, shape: 'ball', chop: true },
+  pepper:    { name: 'Перець',    icon: '🫑', col: 0xd63a2a, shape: 'ball', chop: true, pan: 'c' },
+  tofu:      { name: 'Тофу',      icon: '@tofu', col: 0xfaf6ea, shape: 'cube', chop: true, pot: 'c', pan: 'c' },
+  tapioca:   { name: 'Перлини тапіоки', icon: '@tapioca', col: 0x3a2a24, shape: 'jar' },
   // для напоїв
   ice:       { name: 'Лід',       icon: '🧊', col: 0xcfefff, shape: 'cube' },
   caramel:   { name: 'Карамель',  icon: '🍮', col: 0xc98a2a, shape: 'jar' },
@@ -63,6 +68,8 @@ export const ING = {
   lemonade:  { name: 'Лимонад',   icon: '🍋', col: 0xfff27a, liquid: true },
   chai:      { name: 'Чай масала', icon: '🫖', col: 0xb5753a, liquid: true },
   mangoj:    { name: 'Манговий сік', icon: '🥭', col: 0xffb02e, liquid: true },
+  tarragon:  { name: 'Тархун',    icon: '🌿', col: 0x6fd64a, liquid: true },
+  grapej:    { name: 'Виноградний сік', icon: '🍇', col: 0x6a2a6e, liquid: true },
 };
 
 export const COOKER = {
@@ -137,6 +144,20 @@ export const RECIPES = {
   crepe:     { name: 'Млинці з шоколадом', icon: '🥞', c: ['dough:f', 'choco:r', 'apple:c'] },
   flammek:   { name: 'Фламмкухен',         icon: '🍕', c: ['dough:k', 'onion:k', 'cheese:k'] },
   coqvin:    { name: 'Курка з грибами',    icon: '🍗', c: ['chicken:b', 'mushroom:b', 'carrot:b'] },
+  // Грузія
+  khachapuri:{ name: 'Хачапурі по-аджарськи', icon: '🫓', c: ['dough:k', 'cheese:k', 'egg:k'] },
+  khinkali:  { name: 'Хінкалі',            icon: '🥟', c: ['dough:b', 'meat:b'] },
+  lobio:     { name: 'Лобіо',              icon: '🫘', c: ['beans:b', 'onion:c', 'herbs:c'] },
+  mtsvadi:   { name: 'Мцваді з овочами',   icon: '🍢', c: ['meat:f', 'onion:c', 'tomato:c'] },
+  chakhokh:  { name: 'Чахохбілі',          icon: '🍗', c: ['chicken:b', 'tomato:b', 'herbs:c'] },
+  pkhali:    { name: 'Пхалі з горіхами',   icon: '🥬', c: ['spinach:b', 'walnut:c', 'garlic:c'] },
+  // Китай
+  jiaozi:    { name: 'Пельмені цзяоцзи',   icon: '🥟', c: ['dough:b', 'meat:b', 'cabbage:c'] },
+  friedrice: { name: 'Смажений рис',       icon: '🍚', c: ['rice:b', 'egg:f', 'onion:c'] },
+  springroll:{ name: 'Весняні роли',       icon: '🌯', c: ['dough:f', 'cabbage:c', 'carrot:c'] },
+  kungpao:   { name: 'Курка гунбао',       icon: '🍗', c: ['chicken:f', 'pepper:f', 'rice:b'] },
+  mapo:      { name: 'Мапо тофу',          icon: '🍲', c: ['tofu:b', 'meat:b', 'rice:b'] },
+  lomein:    { name: 'Локшина з овочами',  icon: '🍜', c: ['noodles:b', 'pepper:f', 'carrot:c'] },
   // напої (вмикаються перемикачем у картці рівня)
   kompot:    { drink: true, name: 'Компот з льодом',  icon: '🍹', c: ['kompot:l', 'ice:r'] },
   uzvar:     { drink: true, name: 'Узвар',            icon: '🫖', c: ['uzvar:l'] },
@@ -154,6 +175,10 @@ export const RECIPES = {
   lassi:     { drink: true, name: 'Манго-ласі',       icon: '🥭', c: ['mangoj:l', 'milk:l'] },
   masala:    { drink: true, name: 'Масала-чай',       icon: '🫖', c: ['chai:l', 'milk:l'] },
   chocchaud: { drink: true, name: 'Гарячий шоколад',  icon: '☕', c: ['milk:l', 'choco:r'] },
+  lagidze:   { drink: true, name: 'Тархунний лимонад', icon: '🥤', c: ['tarragon:l', 'soda:l'] },
+  grapeice:  { drink: true, name: 'Виноградний сік з льодом', icon: '🍇', c: ['grapej:l', 'ice:r'] },
+  bubble:    { drink: true, name: 'Бабл-ті',          icon: '🧋', c: ['tea:l', 'milk:l', 'tapioca:r'] },
+  cntea:     { drink: true, name: 'Чай у піалі',      icon: '🍵', c: ['tea:l'] },
   citron:    { drink: true, name: 'Ситронад',         icon: '🍋', c: ['lemonade:l', 'soda:l', 'ice:r'] },
 };
 
@@ -161,6 +186,7 @@ export const DRINKS = {
   ua: ['kompot', 'uzvar'], de: ['spezi', 'schorle'], it: ['espresso', 'cappuccino'], jp: ['icetea', 'matcha'],
   mx: ['limonada', 'horchata'], us: ['colaice', 'icedlatte', 'caramellatte'], feast: ['kompot', 'cappuccino', 'caramellatte'],
   in: ['lassi', 'masala'], fr: ['chocchaud', 'citron'], paris: ['citron', 'chocchaud', 'masala'],
+  ge: ['lagidze', 'grapeice'], cn: ['cntea', 'bubble'], hongkong: ['cntea', 'bubble', 'lagidze'],
 };
 // напої рівня: на перших двох кухнях країни — один простий, далі всі
 export function drinksFor(lv) {
@@ -182,6 +208,8 @@ export const COUNTRIES = {
   us: { name: 'США',      flag: ['#3355aa', '#ffffff', '#cc3344'], theme: 'us' },
   in: { name: 'Індія',    flag: ['#ff9933', '#ffffff', '#138808'], theme: 'in' },
   fr: { name: 'Франція',  flag: ['#0055a4', '#ffffff', '#ef4135'], theme: 'fr' },
+  ge: { name: 'Грузія',   flag: ['#ffffff', '#e8112d', 'ge'], theme: 'ge' },
+  cn: { name: 'Китай',    flag: ['#de2910', '#ffde00', 'cn'], theme: 'cn' },
 };
 
 const B = 'baba', R = 'racc', K = 'kids', CAT = 'cat';
@@ -654,6 +682,69 @@ export const LEVELS = [
             [R, 'Кухарчата, ви найкраща команда. Покажіть, на що здатні!']],
     outro: [[CAT, 'Мяу… ви справді готуєте краще за мене. Можна… я теж навчуся готувати разом із вами?'],
             [B, 'Звісно! На кухні місця вистачить усім. Кубок чемпіонів — наш! 🏆']] },
+
+  /* ===== Третя подорож: у гостях — Грузія і Китай (спокійніший темп) ===== */
+  { id: 'tbilisi', country: 'ge', city: 'Тбілісі', title: 'Хачапурі по-аджарськи', ease: 0.8,
+    recipes: ['khachapuri', 'khinkali'], gen: { layout: 'island' },
+    dur: 220, ordT: 110, iv: 24, maxO: 3, fire: true, wash: false, plates: 4,
+    intro: [[CAT, 'Мур-р, друзі! Моя бабуся живе в Грузії й кличе нас у гості. Вона обіцяє навчити справжніх грузинських страв!'],
+            [B, 'Хачапурі — човник із тіста, сир і яйце, усе в піч. А хінкалі варимо в каструлі.']],
+    outro: [[CAT, 'Бабуся каже, ви тримаєте хінкалі правильно — за хвостик! Їдьмо до моря, в Батумі.']] },
+  { id: 'batumi', country: 'ge', city: 'Батумі', title: 'Морський бриз', ease: 0.8,
+    recipes: ['khinkali', 'mtsvadi'], gen: { layout: 'conv' }, wind: { period: 20, dur: 4, force: 2.0 },
+    dur: 220, ordT: 110, iv: 24, maxO: 3, fire: true, wash: false, plates: 4,
+    intro: [[R, 'Тут море й легенький вітерець! Тримайте шампури міцно.'],
+            [B, 'Мцваді — смажене мʼясо з цибулею й помідором. Стрічка допоможе передавати продукти.']],
+    outro: [[B, 'Смачно! Далі — старовинний Кутаїсі.']] },
+  { id: 'kutaisi', country: 'ge', city: 'Кутаїсі', title: 'Лобіо в горщику', ease: 0.8,
+    recipes: ['lobio', 'khachapuri'], gen: { layout: 'columns' },
+    dur: 230, ordT: 110, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'Лобіо — це квасоля з зеленню. Просто, але дуже смачно!'],
+            [B, 'Повертається брудний посуд — не забувайте мити тарілки.']],
+    outro: [[CAT, 'Бабуся дуже задоволена! Тепер — до старовинної Мцхети.']] },
+  { id: 'mtskheta', country: 'ge', city: 'Мцхета', title: 'Старовинна фортеця', ease: 0.8,
+    recipes: ['chakhokh', 'pkhali'], gen: { layout: 'split', gates: true },
+    dur: 230, ordT: 115, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Кухня в старій фортеці, а брами відчиняються самі!'],
+            [B, 'Чахохбілі — курка з помідорами в каструлі. Пхалі — варений шпинат, горіхи й часник.']],
+    outro: [[B, 'Фортецю підкорено! Останнє місто Грузії — Сігнахі.']] },
+  { id: 'sighnaghi', country: 'ge', city: 'Сігнахі', title: 'Свято винограду', ease: 0.8,
+    recipes: ['mtsvadi', 'chakhokh', 'khachapuri'], gen: { layout: 'islands2' },
+    dur: 240, ordT: 115, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'У Сігнахі збирають виноград і влаштовують велике застілля!'],
+            [B, 'Три страви одразу — домовляйтеся, хто що готує.']],
+    outro: [[CAT, 'Бабуся дала нам листа від свого друга-панди з Китаю. Нас кличуть на Свято ліхтарів!']] },
+  { id: 'beijing', country: 'cn', city: 'Пекін', title: 'Пельмені цзяоцзи', ease: 0.8,
+    recipes: ['jiaozi', 'friedrice'], gen: { layout: 'island' },
+    dur: 220, ordT: 110, iv: 24, maxO: 3, fire: true, wash: false, plates: 4,
+    intro: [[B, 'Ніхао, Китаю! Тут пельмені ліплять цілими родинами.'],
+            [R, 'Смажений рис: варений рис, смажене яйце й цибулька. Я вже голодний!']],
+    outro: [[B, 'Чудово! Їдемо до сяючого Шанхаю.']] },
+  { id: 'shanghai', country: 'cn', city: 'Шанхай', title: 'Неонові вогні', ease: 0.8,
+    recipes: ['springroll', 'friedrice'], gen: { layout: 'conv' },
+    dur: 220, ordT: 110, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'Скільки вогників! Весняні роли — мої улюблені.'],
+            [B, 'Тісто смажимо, а капусту й моркву ріжемо. Стрічка везе продукти довкола.']],
+    outro: [[B, 'Ще трохи — і Сіань, місто глиняних воїнів.']] },
+  { id: 'xian', country: 'cn', city: 'Сіань', title: 'Теракотова армія', ease: 0.8,
+    recipes: ['lomein', 'jiaozi'], gen: { layout: 'lanes', gates: true },
+    dur: 230, ordT: 115, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[R, 'Тут тисячі глиняних воїнів… і жоден не вміє варити локшину!'],
+            [B, 'Локшину варимо, перець смажимо, моркву ріжемо. А двері в проходах часом зачиняються.']],
+    outro: [[B, 'Молодці! Тепер — до панд у Ченду.']] },
+  { id: 'chengdu', country: 'cn', city: 'Ченду', title: 'Панди й бамбук', ease: 0.8,
+    recipes: ['mapo', 'kungpao'], gen: { layout: 'columns', extraBoard: true },
+    dur: 230, ordT: 115, iv: 24, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[CAT, 'Мур-р, тут живуть панди! Вони дуже люблять гостей… і бамбук.'],
+            [B, 'Мапо тофу: тофу, мʼясо й рис — усе в каструлю. Гунбао: курку й перець смажимо.']],
+    outro: [[B, 'Панди аплодують! Попереду — Свято ліхтарів у Гонконгу.']] },
+  { id: 'hongkong', country: 'cn', city: 'Гонконг', title: 'Свято ліхтарів', finale: true, ease: 0.8,
+    recipes: ['kungpao', 'springroll', 'jiaozi'], gen: { layout: 'islands2' },
+    dur: 240, ordT: 115, iv: 23, maxO: 3, fire: true, wash: true, plates: 3,
+    intro: [[B, 'Свято ліхтарів! Усе місто сяє, а ми готуємо святкову вечерю для всіх друзів.'],
+            [CAT, 'І для мене, і для Шкодька, і для бабусі-кішки! Мур-р!']],
+    outro: [[B, 'Ось і скінчилася наша велика подорож. Найкраща приправа — друзі поруч. Дякую, мої Кухарчата! 🏮'],
+            [R, 'Куди поїдемо наступного разу?']] },
 ];
 
 // Розташування на карті світу: острови країн і міста (x, z на мапі)
@@ -667,6 +758,8 @@ export const MAP = {
     us: { x: -22, z: -3, r: 6.8 },
     in: { x: 31, z: 1, r: 6.6 },
     fr: { x: -13, z: -16, r: 6.6 },
+    ge: { x: 30, z: -14, r: 6.0 },
+    cn: { x: 31, z: 16, r: 6.8 },
   },
 };
 

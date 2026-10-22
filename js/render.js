@@ -6,6 +6,7 @@ import { drawIng, drawDish, drawKnife } from './icons.js';
 import { Decor } from './decor.js';
 import { tr } from './i18n.js';
 import { addHat } from './hats.js';
+import { floorTexture, counterMats, LIGHT, heroProps } from './style.js';
 import { makeIngMesh, makeItemMesh, itemKey, plateMesh, mat as fmat } from './food.js';
 export { makeItemMesh, itemKey };
 
@@ -18,6 +19,8 @@ export const THEMES = {
   us: { sky: 0xcad8ea, ground: 0x8fa0ad, floorA: 0xf4f4f4, floorB: 0x2e2e33, body: 0xc0392b, top: 0xdde1e6, accent: 0x3355aa, accent2: 0xffffff, decor: 'city' },
   in: { sky: 0xffe6c4, ground: 0xc9b86a, floorA: 0xf3d9a4, floorB: 0x5fb3a8, body: 0xd35e2a, top: 0xfaf0dc, accent: 0xff9933, accent2: 0x138808, decor: 'palm' },
   fr: { sky: 0xdfe8ff, ground: 0x9fc37a, floorA: 0xf4f1ea, floorB: 0x2f3b5c, body: 0x3c5a8a, top: 0xf7f4ee, accent: 0x0055a4, accent2: 0xef4135, decor: 'lavender' },
+  ge: { sky: 0xd8ecff, ground: 0x8fbf63, floorA: 0xc9bfa8, floorB: 0xb8ad94, body: 0x9a8a72, top: 0x9a6a40, accent: 0xe8112d, accent2: 0xffffff, decor: 'vine' },
+  cn: { sky: 0xffe9dc, ground: 0x9ccf7a, floorA: 0x6a3a24, floorB: 0x5a2f1c, body: 0xb3241c, top: 0x4a2a1a, accent: 0xde2910, accent2: 0xffde00, decor: 'bamboo' },
 };
 
 const M = {}; // спільні матеріали
@@ -260,7 +263,8 @@ export function catMesh() {
 function stationMesh(t, th) {
   const g = new THREE.Group();
   if (t.type === 'void' || t.type === 'floor') return g;
-  const bodyM = mat(th.body), topM = mat(th.top, { roughness: 0.4 });
+  const CM = th.name ? counterMats(th.name) : {};
+  const bodyM = CM.body || mat(th.body), topM = CM.top || mat(th.top, { roughness: 0.4 });
   const counter = (topCol) => {
     g.add(mesh(G.box, bodyM, 0.98, 0.78, 0.98, 0, 0.39));
     g.add(mesh(G.box, topCol ? mat(topCol, { roughness: 0.4 }) : topM, 1.0, 0.07, 1.0, 0, TOP_Y - 0.035));
@@ -344,13 +348,15 @@ function bar() {
 /* ================================================================ */
 export class KitchenView {
   constructor(renderer, sim, theme, opts = {}) {
-    this.r = renderer; this.sim = sim; this.th = THEMES[theme] || THEMES.ua; this.themeName = THEMES[theme] ? theme : 'ua'; this.opts = opts;
+    this.themeName = THEMES[theme] ? theme : 'ua';
+    this.r = renderer; this.sim = sim; this.th = { ...THEMES[this.themeName], name: this.themeName }; this.opts = opts;
     const s = this.scene = new THREE.Scene();
     s.background = new THREE.Color(this.th.sky);
     s.fog = new THREE.Fog(this.th.sky, 30, 60);
     this.cam = new THREE.PerspectiveCamera(36, 1, 0.1, 200);
-    s.add(new THREE.HemisphereLight(0xffffff, 0x8a7a66, 1.25));
-    const sun = this.sun = new THREE.DirectionalLight(0xffffff, 1.9);
+    const L = LIGHT[this.themeName] || {};
+    s.add(new THREE.HemisphereLight(L.sky ?? 0xffffff, L.ground ?? 0x8a7a66, 1.25));
+    const sun = this.sun = new THREE.DirectionalLight(L.sun ?? 0xffffff, 1.9);
     sun.position.set(sim.w / 2 - 6, 14, sim.h / 2 + 8); sun.target.position.set(sim.w / 2, 0, sim.h / 2);
     sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024);
     const sc = sun.shadow.camera; const R = Math.max(sim.w, sim.h) * 0.75 + 2; sc.left = -R; sc.right = R; sc.top = R; sc.bottom = -R; sc.near = 1; sc.far = 50;
@@ -366,14 +372,14 @@ export class KitchenView {
     // земля довкола
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(120, 120), mat(th.ground));
     ground.rotation.x = -Math.PI / 2; ground.position.set(sim.w / 2, -0.02, sim.h / 2); ground.receiveShadow = true; scene.add(ground);
-    // підлога кухні (шахівниця)
-    const fl = new THREE.Group();
-    for (const t of sim.tiles) {
-      if (t.type === 'void') continue;
-      const q = new THREE.Mesh(G.box, mat((t.x + t.y) % 2 ? th.floorA : th.floorB, { roughness: 0.8 }));
-      q.scale.set(1, 0.1, 1); q.position.set(t.x, -0.05, t.y); q.receiveShadow = true; fl.add(q);
+    // підлога кухні: національний візерунок (дошки, плитка, татамі…)
+    {
+      const base = new THREE.Mesh(G.box, mat(darker(th.body, 0.7)));
+      base.scale.set(sim.w, 0.1, sim.h); base.position.set((sim.w - 1) / 2, -0.06, (sim.h - 1) / 2); base.receiveShadow = true; scene.add(base);
+      const fm = new THREE.MeshStandardMaterial({ map: floorTexture(th.name, sim.w, sim.h), roughness: th.name === 'us' ? 0.35 : 0.8 });
+      const fl = new THREE.Mesh(new THREE.PlaneGeometry(sim.w, sim.h), fm);
+      fl.rotation.x = -Math.PI / 2; fl.position.set((sim.w - 1) / 2, -0.005, (sim.h - 1) / 2); fl.receiveShadow = true; scene.add(fl);
     }
-    scene.add(fl);
     // плінтус-край
     const edge = new THREE.Mesh(G.box, mat(darker(th.body, 0.8)));
     edge.scale.set(sim.w + 0.4, 0.14, sim.h + 0.4); edge.position.set((sim.w - 1) / 2, -0.12, (sim.h - 1) / 2); edge.receiveShadow = true; scene.add(edge);
@@ -393,6 +399,7 @@ export class KitchenView {
       const m = stationMesh(t, th); m.position.set(t.x, 0, t.y); scene.add(m); this.stations.set(t, m);
     }
     this.decor();
+    heroProps(th.name, sim, scene, !!this.opts.hall);
     this.dec = new Decor(scene, sim, this.themeName, { hall: !!this.opts.hall });
     this.hallSide = this.opts.hall ? this.dec.side : null;
   }
@@ -438,6 +445,16 @@ export class KitchenView {
           if (rnd() < 0.2) { // вулична лампа
             g.add(mesh(G.cylLo, mat(0x2a2f3a), 0.05, 2.2, 0.05, 0, 1.1)); g.add(mesh(G.box, mat(0x2a2f3a), 0.25, 0.32, 0.25, 0, 2.3)); g.add(mesh(G.box, mat(0xfff3b0, { emissive: 0xffd77a, emissiveIntensity: 0.6 }), 0.2, 0.26, 0.2, 0, 2.3));
           } else { for (let i = 0; i < 7; i++) { const x = (rnd() - 0.5) * 1.1, z = (rnd() - 0.5) * 1.1; g.add(mesh(G.cylLo, mat(0x6a9a4a), 0.02, 0.5, 0.02, x, 0.25, z)); g.add(mesh(new THREE.CapsuleGeometry(0.05, 0.2, 3, 6), mat(0x9b7fd6), 1, 1, 1, x, 0.6, z)); } }
+          break;
+        }
+        case 'vine': {
+          if (rnd() < 0.5) { g.add(mesh(G.cylLo, mat(0x5a3a2a), 0.07, 2.2, 0.07, 0, 1.1)); g.add(mesh(G.cone, mat(0x3f7f3a), 0.35, 2.0, 0.35, 0, 2.2)); } // тополя
+          else { for (const x of [-0.5, 0.5]) g.add(mesh(G.cylLo, mat(0x6b4226), 0.04, 1.0, 0.04, x, 0.5)); g.add(mesh(G.box, mat(0x4f9a3f), 1.2, 0.5, 0.25, 0, 0.9)); for (let i = 0; i < 4; i++) g.add(mesh(G.sphLo, mat(0x6a2a6e), 0.06, 0.13, 0.06, -0.4 + i * 0.27, 0.62, 0.14)); }
+          break;
+        }
+        case 'bamboo': {
+          if (rnd() < 0.2) { g.add(mesh(G.cylLo, mat(0x8a6a48), 0.05, 1.6, 0.05, 0, 0.8)); g.add(mesh(G.sph, mat(0xe53935, { emissive: 0xff4a2a, emissiveIntensity: 0.4 }), 0.2, 0.26, 0.2, 0, 1.55)); }
+          else for (let i = 0; i < 4; i++) { const x = (rnd() - 0.5) * 0.6, z = (rnd() - 0.5) * 0.6, h = 1.6 + rnd() * 1.2; g.add(mesh(G.cylLo, mat(0x7cb342), 0.04, h, 0.04, x, h / 2, z)); g.add(mesh(G.sph, mat(0x6aa84f), 0.22, 0.06, 0.08, x + 0.12, h * 0.85, z)); }
           break;
         }
         case 'city': { const h = 1 + rnd() * 3.5; g.add(mesh(G.box, mat([0x8899aa, 0x6f7f90, 0xa3b1bf, 0xc7a27a][Math.floor(rnd() * 4)]), 1.1, h, 1.1, 0, h / 2)); for (let i = 0; i < h * 2; i++) g.add(mesh(G.box, mat(0xfff3b0, { emissive: 0xffe08a, emissiveIntensity: 0.3 }), 0.9, 0.08, 1.12, 0, 0.4 + i * 0.45)); break; }

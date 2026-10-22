@@ -1130,7 +1130,7 @@ export function starThresholds(lv, humans, kid = false) {
   else ref = (lv.dur / lv.iv) * 32 * TEAM[n] * 0.6;
   // боти рахують швидше за людей на сенсорі; перші рівні — ще лагідніші
   const li = LEVELS.indexOf(lv);
-  const ease = li < 3 ? 0.72 : li < 8 ? 0.82 : li < 16 ? 0.9 : 0.95;
+  const ease = lv.ease ?? (li < 3 ? 0.72 : li < 8 ? 0.82 : li < 16 ? 0.9 : li < 31 ? 0.95 : 0.9);
   const solo = n === 1 ? 0.85 : 1;
   ref *= ease * solo * (kid ? 0.6 : 1);
   const r = v => Math.max(10, Math.round(v / 10) * 10);

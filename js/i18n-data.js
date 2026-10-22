@@ -32,7 +32,7 @@ export const UI = [
   ['Ведмежі вушка', 'Bärenohren', 'Bear ears'], ['Віночок', 'Blumenkranz', 'Flower wreath'], ['Берет', 'Baskenmütze', 'Beret'], ['Сомбреро', 'Sombrero', 'Sombrero'],
   ['Ковбойський капелюх', 'Cowboyhut', 'Cowboy hat'], ['Шолом вікінга', 'Wikingerhelm', 'Viking helmet'], ['Вушка зайчика', 'Hasenohren', 'Bunny ears'], ['Капелюх чарівника', 'Zauberhut', 'Wizard hat'],
   ['Тірольський капелюх', 'Tirolerhut', 'Tyrolean hat'], ['Циліндр', 'Zylinder', 'Top hat'], ['Піратський капелюх', 'Piratenhut', 'Pirate hat'], ['Шапка з помпоном', 'Bommelmütze', 'Bobble hat'],
-  ['Навушники', 'Kopfhörer', 'Headphones'], ['Пов’язка хачімакі', 'Hachimaki-Stirnband', 'Hachimaki headband'],
+  ['Навушники', 'Kopfhörer', 'Headphones'], ['Тюрбан', 'Turban', 'Turban'], ['Конічний капелюх', 'Kegelhut', 'Conical hat'], ['Папаха', 'Papacha', 'Papakha'], ['Пов’язка хачімакі', 'Hachimaki-Stirnband', 'Hachimaki headband'],
   ['Наблизити', 'Heranzoomen', 'Zoom in'], ['Віддалити', 'Herauszoomen', 'Zoom out'],
   // титул і загальне
   ['Кулінарна подорож світом 🌍', 'Eine kulinarische Weltreise 🌍', 'A culinary trip around the world 🌍'],
@@ -237,6 +237,8 @@ export const UI = [
 
 // назви інгредієнтів, страв, країн, міст: id → [de, en]
 export const ING_T = {
+  walnut: ['Walnüsse', 'Walnuts'], pepper: ['Paprika', 'Bell pepper'], tofu: ['Tofu', 'Tofu'], tapioca: ['Tapiokaperlen', 'Tapioca pearls'],
+  tarragon: ['Estragon-Limo', 'Tarragon soda'], grapej: ['Traubensaft', 'Grape juice'],
   paneer: ['Paneer', 'Paneer'], spinach: ['Spinat', 'Spinach'], chickpeas: ['Kichererbsen', 'Chickpeas'], lentils: ['Linsen', 'Lentils'],
   eggplant: ['Aubergine', 'Eggplant'], zucchini: ['Zucchini', 'Zucchini'], baguette: ['Baguette', 'Baguette'], chai: ['Masala-Tee', 'Masala tea'], mangoj: ['Mangosaft', 'Mango juice'],
   tomato: ['Tomate', 'Tomato'], lettuce: ['Salatblatt', 'Lettuce'], cucumber: ['Gurke', 'Cucumber'], onion: ['Zwiebel', 'Onion'],
@@ -252,6 +254,11 @@ export const ING_T = {
   coffee: ['Kaffee', 'Coffee'], milk: ['Milch', 'Milk'], tea: ['Grüner Tee', 'Green tea'], horchata: ['Horchata', 'Horchata'], lemonade: ['Limonade', 'Lemonade'],
 };
 export const REC_T = {
+  khachapuri: ['Adscharisches Chatschapuri', 'Adjarian khachapuri'], khinkali: ['Chinkali', 'Khinkali'], lobio: ['Lobio', 'Lobio'], mtsvadi: ['Mzwadi mit Gemüse', 'Mtsvadi with veggies'],
+  chakhokh: ['Tschachochbili', 'Chakhokhbili'], pkhali: ['Pchali mit Nüssen', 'Pkhali with walnuts'],
+  jiaozi: ['Jiaozi-Teigtaschen', 'Jiaozi dumplings'], friedrice: ['Gebratener Reis', 'Fried rice'], springroll: ['Frühlingsrollen', 'Spring rolls'], kungpao: ['Kung-Pao-Hähnchen', 'Kung pao chicken'],
+  mapo: ['Mapo Tofu', 'Mapo tofu'], lomein: ['Gemüsenudeln', 'Veggie lo mein'],
+  lagidze: ['Estragon-Limonade', 'Tarragon lemonade'], grapeice: ['Traubensaft mit Eis', 'Grape juice on ice'], bubble: ['Bubble Tea', 'Bubble tea'], cntea: ['Tee in der Schale', 'Tea in a bowl'],
   butterchk: ['Butter Chicken', 'Butter chicken'], naan: ['Naan mit Kräutern', 'Herb naan'], samosa: ['Samosas', 'Samosas'], chana: ['Chana Masala', 'Chana masala'],
   palak: ['Palak Paneer', 'Palak paneer'], dal: ['Dal mit Naan', 'Dal with naan'], biryani: ['Biryani', 'Biryani'], fishcurry: ['Fischcurry', 'Fish curry'],
   nicoise: ['Salade Niçoise', 'Salade niçoise'], ratatouille: ['Ratatouille', 'Ratatouille'], bouill: ['Bouillabaisse', 'Bouillabaisse'], onionsoup: ['Zwiebelsuppe', 'Onion soup'],
@@ -277,10 +284,30 @@ export const REC_T = {
   horchata: ['Horchata mit Eis', 'Horchata with ice'], limonada: ['Limonada', 'Limonada'], colaice: ['Cola mit Eis', 'Cola with ice'],
   caramellatte: ['Karamell-Latte', 'Caramel latte'], icedlatte: ['Eiskaffee Latte', 'Iced latte'],
 };
-export const COUNTRY_T = { ua: ['Ukraine', 'Ukraine'], de: ['Deutschland', 'Germany'], it: ['Italien', 'Italy'], jp: ['Japan', 'Japan'], mx: ['Mexiko', 'Mexico'], us: ['USA', 'USA'], in: ['Indien', 'India'], fr: ['Frankreich', 'France'] };
+export const COUNTRY_T = { ua: ['Ukraine', 'Ukraine'], de: ['Deutschland', 'Germany'], it: ['Italien', 'Italy'], jp: ['Japan', 'Japan'], mx: ['Mexiko', 'Mexico'], us: ['USA', 'USA'], in: ['Indien', 'India'], fr: ['Frankreich', 'France'], ge: ['Georgien', 'Georgia'], cn: ['China', 'China'] };
 
 // міста, назви рівнів, історія: id → { de: [city, title, ...рядки], en: [...] } — рядки в тому самому порядку, що intro, потім outro
 export const STORY = {
+  tbilisi: { de: ['Tiflis', 'Adscharisches Chatschapuri', 'Schnurr, Freunde! Meine Oma wohnt in Georgien und lädt uns ein. Sie will uns echte georgische Gerichte beibringen!', 'Chatschapuri – ein Teigschiffchen, Käse und Ei, alles in den Ofen. Und Chinkali kochen wir im Topf.', 'Oma sagt, ihr haltet Chinkali richtig – am Zipfel! Fahren wir ans Meer, nach Batumi.'],
+             en: ['Tbilisi', 'Adjarian khachapuri', 'Purr, friends! My grandma lives in Georgia and invites us over. She promises to teach us real Georgian dishes!', 'Khachapuri – a dough boat, cheese and egg, all into the oven. And khinkali we boil in the pot.', 'Grandma says you hold khinkali the right way – by the little tail! Let’s go to the sea, to Batumi.'] },
+  batumi: { de: ['Batumi', 'Meeresbrise', 'Hier gibt’s Meer und eine leichte Brise! Haltet die Spieße gut fest.', 'Mzwadi – gebratenes Fleisch mit Zwiebel und Tomate. Das Band hilft beim Weiterreichen.', 'Lecker! Weiter geht’s ins alte Kutaissi.'],
+            en: ['Batumi', 'Sea breeze', 'There’s the sea and a light breeze! Hold your skewers tight.', 'Mtsvadi – fried meat with onion and tomato. The belt helps pass the ingredients.', 'Tasty! Next – old Kutaisi.'] },
+  kutaisi: { de: ['Kutaissi', 'Lobio im Tontopf', 'Lobio sind Bohnen mit Kräutern. Einfach, aber sehr lecker!', 'Schmutziges Geschirr kommt zurück – vergesst nicht, die Teller zu spülen.', 'Oma ist sehr zufrieden! Jetzt ins alte Mzcheta.'],
+             en: ['Kutaisi', 'Lobio in a clay pot', 'Lobio is beans with herbs. Simple, but very tasty!', 'Dirty dishes come back – don’t forget to wash the plates.', 'Grandma is very pleased! Now to ancient Mtskheta.'] },
+  mtskheta: { de: ['Mzcheta', 'Alte Festung', 'Die Küche ist in einer alten Festung, und die Tore öffnen sich von selbst!', 'Tschachochbili – Hähnchen mit Tomaten im Topf. Pchali – gekochter Spinat, Nüsse und Knoblauch.', 'Die Festung ist erobert! Die letzte Stadt in Georgien ist Signagi.'],
+              en: ['Mtskheta', 'Old fortress', 'The kitchen is in an old fortress, and the gates open by themselves!', 'Chakhokhbili – chicken with tomatoes in the pot. Pkhali – boiled spinach, walnuts and garlic.', 'The fortress is ours! The last town in Georgia is Sighnaghi.'] },
+  sighnaghi: { de: ['Signagi', 'Traubenfest', 'In Signagi wird Wein gelesen und ein großes Festmahl gefeiert!', 'Drei Gerichte auf einmal – sprecht ab, wer was kocht.', 'Oma hat uns einen Brief von ihrem Freund, einem Panda aus China, gegeben. Wir sind zum Laternenfest eingeladen!'],
+               en: ['Sighnaghi', 'Grape festival', 'In Sighnaghi they harvest grapes and throw a big feast!', 'Three dishes at once – agree who cooks what.', 'Grandma gave us a letter from her friend, a panda in China. We’re invited to the Lantern Festival!'] },
+  beijing: { de: ['Peking', 'Jiaozi-Teigtaschen', 'Nǐ hǎo, China! Hier falten ganze Familien zusammen Teigtaschen.', 'Gebratener Reis: gekochter Reis, Spiegelei und Frühlingszwiebel. Ich habe schon Hunger!', 'Super! Wir fahren ins leuchtende Shanghai.'],
+             en: ['Beijing', 'Jiaozi dumplings', 'Nǐ hǎo, China! Here whole families fold dumplings together.', 'Fried rice: boiled rice, a fried egg and spring onion. I’m hungry already!', 'Great! Off to glittering Shanghai.'] },
+  shanghai: { de: ['Shanghai', 'Neonlichter', 'So viele Lichter! Frühlingsrollen sind meine Lieblinge.', 'Den Teig braten wir, Kohl und Karotte schneiden wir. Das Band fährt die Zutaten herum.', 'Noch ein bisschen – dann Xi’an, die Stadt der Tonkrieger.'],
+              en: ['Shanghai', 'Neon lights', 'So many lights! Spring rolls are my favourite.', 'Fry the dough, chop the cabbage and carrot. The belt carries the ingredients around.', 'A bit more – then Xi’an, the city of clay warriors.'] },
+  xian: { de: ['Xi’an', 'Terrakotta-Armee', 'Hier gibt es tausende Tonkrieger… und keiner kann Nudeln kochen!', 'Nudeln kochen, Paprika braten, Karotte schneiden. Und die Türen in den Gängen schließen sich manchmal.', 'Gut gemacht! Jetzt zu den Pandas nach Chengdu.'],
+          en: ['Xi’an', 'Terracotta army', 'Thousands of clay warriors here… and not one can cook noodles!', 'Boil the noodles, fry the pepper, chop the carrot. And the doors in the aisles close now and then.', 'Well done! Now to the pandas in Chengdu.'] },
+  chengdu: { de: ['Chengdu', 'Pandas und Bambus', 'Schnurr, hier leben Pandas! Sie lieben Gäste… und Bambus.', 'Mapo Tofu: Tofu, Fleisch und Reis – alles in den Topf. Kung Pao: Hähnchen und Paprika braten.', 'Die Pandas klatschen! Vor uns – das Laternenfest in Hongkong.'],
+             en: ['Chengdu', 'Pandas and bamboo', 'Purr, pandas live here! They love guests… and bamboo.', 'Mapo tofu: tofu, meat and rice – all into the pot. Kung pao: fry the chicken and pepper.', 'The pandas are clapping! Ahead – the Lantern Festival in Hong Kong.'] },
+  hongkong: { de: ['Hongkong', 'Laternenfest', 'Laternenfest! Die ganze Stadt leuchtet, und wir kochen ein Festessen für alle Freunde.', 'Auch für mich, für Schabernack und für Oma Katze! Schnurr!', 'Nun ist unsere große Reise zu Ende. Die beste Würze sind Freunde an deiner Seite. Danke, meine Kukharchata! 🏮', 'Wohin fahren wir das nächste Mal?'],
+              en: ['Hong Kong', 'Lantern Festival', 'Lantern Festival! The whole city glows, and we’re cooking a festive dinner for all our friends.', 'For me too, and for Mischief, and for Grandma Cat! Purr!', 'And so our big journey ends. The best spice is friends by your side. Thank you, my Kukharchata! 🏮', 'Where shall we go next time?'] },
   delhi: { de: ['Delhi', 'Tandur und Curry', 'Kinder, ein Brief! Wir sind zur Weltmeisterschaft der Köche in Paris eingeladen! Aber zuerst die Qualifikation in Indien und Frankreich.', 'Schnurr… Ich bin Kater Schnurrli, der schlaueste Koch der Welt. Der Sieg gehört mir – und eure Zutaten auch!', 'Vorsicht, er klaut heimlich Zutaten von den Theken! Lasst sie nicht unbewacht – und wenn ihr den Kater seht, rennt hin: Bei einem Sprint lässt er alles fallen.', 'Das Curry ist großartig! Schnurrli hat wütend mit dem Schwanz gewedelt und ist nach Mumbai gezogen.'],
            en: ['Delhi', 'Tandoor and curry', 'Kids, a letter! We’re invited to the World Cooking Championship in Paris! But first – qualifiers in India and France.', 'Purr… I’m Purrcy the Cat, the craftiest cook in the world. Victory will be mine – and so will your ingredients!', 'Careful, he sneaks ingredients off the counters! Don’t leave them unattended – and if you see the cat, run at him: one dash and he drops everything.', 'The curry was a triumph! Purrcy angrily swished his tail and headed to Mumbai.'] },
   mumbai: { de: ['Mumbai', 'Samosas von der Straße', 'Auf dem Markt in Mumbai gibt es so viele Leckereien… Ich nehme die besten!', 'Samosas braten wir in der Pfanne, die Füllung kochen wir. Chana sind Kichererbsen mit Tomaten im Topf. Mehr Schritte, mehr Hände!', 'Schnurrli ist wieder entwischt! Anscheinend in die rosa Stadt – nach Jaipur.'],
