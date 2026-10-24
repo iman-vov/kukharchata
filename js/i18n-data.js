@@ -20,6 +20,13 @@ export const UI = [
   ['Розмір', 'Größe', 'Size'], ['Ближче до центру', 'Näher zur Mitte', 'Closer to centre'], ['Вище', 'Höher', 'Higher'], ['Як було', 'Zurücksetzen', 'Reset'],
   ['👓 Висококонтрастний режим', '👓 Kontrastmodus', '👓 High-contrast mode'],
   ['Темні замовлення з великими значками, а над кожним продуктом на стійці — його значок', 'Dunkle Bestellungen mit großen Symbolen und über jeder Zutat auf der Theke ihr Symbol', 'Dark order tickets with big icons, and an icon above every ingredient on the counters'],
+  ['👓 Помітність', '👓 Sichtbarkeit', '👓 Visibility'],
+  ['Контрастні замовлення й таймер', 'Kontrastreiche Bestellungen und Timer', 'High-contrast orders and timer'],
+  ['Темні картки з жовтою рамкою й великими значками', 'Dunkle Karten mit gelbem Rahmen und großen Symbolen', 'Dark cards with a yellow frame and big icons'],
+  ['Значки над продуктами на стійках', 'Symbole über Zutaten auf den Theken', 'Icons above ingredients on counters'],
+  ['Над кожним продуктом видно, що це і чи нарізане', 'Über jeder Zutat sieht man, was es ist und ob es geschnitten ist', 'Each ingredient shows what it is and whether it’s chopped'],
+  ['Хмаринка, коли щось додаєш у посуд', 'Wölkchen beim Hinzufügen ins Geschirr', 'Puff when you add something to a dish'],
+  ['Видно, що лід чи продукт справді потрапив у чашку чи тарілку', 'Man sieht, dass Eis oder eine Zutat wirklich im Becher oder Teller gelandet ist', 'Shows that ice or an ingredient really landed in the cup or plate'],
   // слоти й чат
   ['Грати', 'Spielen', 'Play'],
   ['Моя гра', 'Mein Spiel', 'My game'], ['Слот: ', 'Spielstand: ', 'Save: '], ['Слот ', 'Spielstand ', 'Save '],

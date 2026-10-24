@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.18';
+const VERSION = '1.19';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -312,7 +312,7 @@ function beginLevel(P) {
   app.myIds = new Set(mine.map(p => p.id));
   app.sim = sim; app.lvl = P; app.paused = false; app.over = false; app.prevSnap = new Map(); app.snapT = 0; app.keyT = 0; app.posT = 0;
   app.evOut = []; app.lastSec = 999; app.hurry = false; app.catTold = false;
-  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall, hc: !!S.set.hc });
+  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall, ingIcons: !!S.set.ingIcons, addFx: S.set.addFx !== false });
   app.view.setZoom(app.zoom || 1);
   app.scene = 'level';
   show('#title', false); show('#mapUI', false); show('#hud', true);
@@ -558,7 +558,10 @@ function openSettings() {
     <div class="assist" style="background:#fff"><div style="flex:1">🍽 Зала з гостями й офіціант<br><span class="sub" style="font-size:13px">Вимкни, якщо пристрій гальмує</span></div><button class="toggle ${st.hall ? 'on' : ''}" id="sHall"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🎯 Кидати продукти<br><span class="sub" style="font-size:13px">Як в Overcooked: кнопка 🎯, геймпад Ⓨ, клавіша Q. Можна ловити на льоту!</span></div><button class="toggle ${st.throw ? 'on' : ''}" id="sThrow"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🧸 Дитячий режим<br><span class="sub" style="font-size:13px">Для найменших: роботи спритніші й самі подають страви, гості чекають довше, зірки легші</span></div><button class="toggle ${st.kid ? 'on' : ''}" id="sKid"></button></div>
-    <div class="assist" style="background:#fff"><div style="flex:1">👓 Висококонтрастний режим<br><span class="sub" style="font-size:13px">Темні замовлення з великими значками, а над кожним продуктом на стійці — його значок</span></div><button class="toggle ${st.hc ? 'on' : ''}" id="sHc"></button></div>
+    <h3>👓 Помітність</h3>
+    <div class="assist" style="background:#fff"><div style="flex:1">Контрастні замовлення й таймер<br><span class="sub" style="font-size:13px">Темні картки з жовтою рамкою й великими значками</span></div><button class="toggle ${st.hc ? 'on' : ''}" id="sHc"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">Значки над продуктами на стійках<br><span class="sub" style="font-size:13px">Над кожним продуктом видно, що це і чи нарізане</span></div><button class="toggle ${st.ingIcons ? 'on' : ''}" id="sIng"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">Хмаринка, коли щось додаєш у посуд<br><span class="sub" style="font-size:13px">Видно, що лід чи продукт справді потрапив у чашку чи тарілку</span></div><button class="toggle ${st.addFx !== false ? 'on' : ''}" id="sAdd"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">💡 Підказки на перших рівнях</div><button class="toggle ${st.hints ? 'on' : ''}" id="sHints"></button></div>
     <p class="kbd">Підключені геймпади: ${input.pads().map(p => esc(p.id.slice(0, 40))).join(', ') || 'немає (натисни кнопку на геймпаді, щоб браузер його побачив)'}</p>
     <h3>Прогрес</h3>
@@ -575,7 +578,9 @@ function openSettings() {
   tog('#sHall', () => st.hall = !st.hall);
   tog('#sThrow', () => st.throw = !st.throw);
   tog('#sKid', () => st.kid = !st.kid);
-  tog('#sHc', () => { st.hc = !st.hc; document.body.classList.toggle('hc', st.hc); if (app.view) app.view.opts.hc = st.hc; });
+  tog('#sHc', () => { st.hc = !st.hc; document.body.classList.toggle('hc', st.hc); });
+  tog('#sIng', () => { st.ingIcons = !st.ingIcons; if (app.view) app.view.opts.ingIcons = st.ingIcons; });
+  tog('#sAdd', () => { st.addFx = st.addFx === false; if (app.view) app.view.opts.addFx = st.addFx; });
   document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang));
   $('#sReset').onclick = () => { if (confirm(tr('Скинути всі зірки й пройдені міста?'))) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
   $('#sOk').onclick = () => { sfx('click'); closeModal(); };
