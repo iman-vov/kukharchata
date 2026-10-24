@@ -12,6 +12,12 @@ export const UI = [
   ['Мяу!', 'Miau!', 'Meow!'], ['Цап!', 'Schnapp!', 'Snatch!'], ['Ш-ш-ш!', 'Fauch!', 'Hiss!'],
   ['🐱 Кіт Мурчало крадеться! Наздожени його ривком', '🐱 Kater Schnurrli schleicht herum! Fang ihn mit einem Sprint', '🐱 Purrcy the Cat is sneaking around! Catch him with a dash'],
   ['🐱 Мурчало втік із продуктом!', '🐱 Schnurrli ist mit einer Zutat entwischt!', '🐱 Purrcy ran off with an ingredient!'],
+  ['📱 Екранні кнопки й джойстик', '📱 Bildschirmtasten und Joystick', '📱 On-screen buttons and joystick'],
+  ['Вимкни, якщо граєш геймпадом — тоді кнопки не показуються', 'Ausschalten, wenn du mit Gamepad spielst – dann werden die Tasten ausgeblendet', 'Turn off if you play with a gamepad – the buttons are then hidden'],
+  ['🎮 Розмір і місце кнопок', '🎮 Größe und Position der Tasten', '🎮 Button size and position'],
+  ['Більші кнопки, ближче до центру чи вище', 'Größere Tasten, näher zur Mitte oder höher', 'Bigger buttons, closer to the centre or higher'],
+  ['Налаштувати', 'Anpassen', 'Adjust'], ['Спробуй натискати кнопки й джойстик просто зараз', 'Probier Tasten und Joystick gleich aus', 'Try the buttons and joystick right now'],
+  ['Розмір', 'Größe', 'Size'], ['Ближче до центру', 'Näher zur Mitte', 'Closer to centre'], ['Вище', 'Höher', 'Higher'], ['Як було', 'Zurücksetzen', 'Reset'],
   // слоти й чат
   ['Грати', 'Spielen', 'Play'],
   ['Моя гра', 'Mein Spiel', 'My game'], ['Слот: ', 'Spielstand: ', 'Save: '], ['Слот ', 'Spielstand ', 'Save '],

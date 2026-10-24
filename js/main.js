@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.16';
+const VERSION = '1.17';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -58,6 +58,9 @@ renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
 renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const input = new Input($('#touch'));
+// розмір і місце кнопок: на великих планшетах трохи більші за замовчуванням
+if (!S.set.ctl) S.set.ctl = { s: Math.min(screen.width, screen.height) >= 700 ? 1.25 : 1, x: 0, y: 0 };
+input.setLayout(S.set.ctl);
 const net = new Net();
 
 const app = { scene: 'title', view: null, sim: null, map: null, paused: false, modal: null, lvl: null };
@@ -547,7 +550,8 @@ function openSettings() {
     <div class="field"><label>🔊 Звуки</label><input type="range" min="0" max="1" step="0.05" value="${st.sfx}" id="sSfx"></div>
     <h3>🌐 Мова</h3><div class="row" style="justify-content:flex-start">${LANGS.map(([c, f, n]) => `<button class="chip ${c === LANG ? 'on' : ''}" data-lang="${c}">${f} ${n}</button>`).join('')}</div>
     <h3>Керування</h3>
-    <div class="assist" style="background:#fff"><div style="flex:1">📱 Сенсорне керування / клавіатура</div><button class="toggle ${st.touch ? 'on' : ''}" id="sTouch"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">📱 Екранні кнопки й джойстик<br><span class="sub" style="font-size:13px">Вимкни, якщо граєш геймпадом — тоді кнопки не показуються</span></div><button class="toggle ${st.touch ? 'on' : ''}" id="sTouch"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">🎮 Розмір і місце кнопок<br><span class="sub" style="font-size:13px">Більші кнопки, ближче до центру чи вище</span></div><button class="btn small" id="sCtl">Налаштувати</button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">👆👆 Двоє гравців на одному екрані<br><span class="sub" style="font-size:13px">Ліва й права половини екрана — окремі кухарі</span></div><button class="toggle ${st.shared ? 'on' : ''}" id="sShared"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🎮 Перший геймпад керує мною<br><span class="sub" style="font-size:13px">Вимкнено: кожен геймпад — окремий кухарчик</span></div><button class="toggle ${st.padMode === 'me' ? 'on' : ''}" id="sPad"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🍽 Зала з гостями й офіціант<br><span class="sub" style="font-size:13px">Вимкни, якщо пристрій гальмує</span></div><button class="toggle ${st.hall ? 'on' : ''}" id="sHall"></button></div>
@@ -562,6 +566,7 @@ function openSettings() {
   $('#sSfx').oninput = e => { st.sfx = vol.sfx = +e.target.value; setVolumes(); sfx('pick'); save(); };
   const tog = (id, f) => { $(id).onclick = () => { f(); save(); sendLocals(); sfx('click'); $(id).classList.toggle('on'); }; };
   tog('#sTouch', () => st.touch = !st.touch);
+  $('#sCtl').onclick = () => { sfx('click'); closeModal(); openCtlEditor(back); };
   tog('#sShared', () => st.shared = !st.shared);
   tog('#sPad', () => st.padMode = st.padMode === 'me' ? 'own' : 'me');
   tog('#sHints', () => st.hints = !st.hints);
@@ -594,6 +599,29 @@ function inviteLink() {
   const t = turnCfg(); if (t) u.searchParams.set('t', btoa(unescape(encodeURIComponent(JSON.stringify(t)))));
   return u.toString();
 }
+/* ---------- розмір і місце екранних кнопок ---------- */
+function openCtlEditor(back) {
+  const L = S.set.ctl, wasShown = !$('#touch').classList.contains('hide');
+  const dim = document.createElement('div'); dim.id = 'ctlDim'; document.body.appendChild(dim);
+  const P = document.createElement('div'); P.id = 'ctlPanel';
+  P.innerHTML = `<b>🎮 Розмір і місце кнопок</b><span class="sub" style="font-size:13px">Спробуй натискати кнопки й джойстик просто зараз</span>
+    <label>Розмір <input type="range" id="cS" min="0.8" max="1.8" step="0.05" value="${L.s}"></label>
+    <label>Ближче до центру <input type="range" id="cX" min="0" max="320" step="5" value="${L.x}"></label>
+    <label>Вище <input type="range" id="cY" min="0" max="260" step="5" value="${L.y}"></label>
+    <div class="row" style="justify-content:flex-end;gap:8px"><button class="btn small" id="cR">Як було</button><button class="btn pri small" id="cOk">Готово</button></div>`;
+  document.body.appendChild(P);
+  input.setMode('single', !!S.set.throw); input.show(true);
+  const upd = () => { L.s = +$('#cS').value; L.x = +$('#cX').value; L.y = +$('#cY').value; input.setLayout(L); };
+  ['#cS', '#cX', '#cY'].forEach(id => $(id).oninput = upd);
+  $('#cR').onclick = () => { $('#cS').value = Math.min(screen.width, screen.height) >= 700 ? 1.25 : 1; $('#cX').value = 0; $('#cY').value = 0; upd(); sfx('click'); };
+  $('#cOk').onclick = () => {
+    save(); sfx('click'); P.remove(); dim.remove();
+    if (app.scene === 'level') { input.setMode(S.set.shared ? 'shared' : 'single', !!(app.lvl && app.lvl.throw)); input.show(wasShown); }
+    else input.show(false);
+    openSettings();
+  };
+}
+
 /* ---------- вибір слота збереження ---------- */
 function openSlots(back) {
   stashSlot();

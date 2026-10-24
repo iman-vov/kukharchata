@@ -107,15 +107,15 @@ b.ic i{position:absolute;right:-5px;bottom:-4px;width:16px;height:16px;display:f
 #count{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(30vw,190px);font-weight:900;color:#fff;text-shadow:0 8px 0 #e0611d,0 14px 30px rgba(0,0,0,.3);z-index:15;pointer-events:none}
 #count.go{font-size:min(16vw,110px)}
 /* сенсорне керування */
-#touch{position:fixed;inset:0;z-index:7;pointer-events:none}
+#touch{position:fixed;inset:0;z-index:7;pointer-events:none;--ts:1;--tx:0px;--ty:0px}
 .tzone{position:absolute;bottom:0;top:30%;display:flex;pointer-events:none}
 .tzone.zf{left:0;right:0}.tzone.zl{left:0;width:50%}.tzone.zr{right:0;width:50%;border-left:2px dashed rgba(255,255,255,.4)}
 .joy{flex:1;position:relative;pointer-events:auto;touch-action:none}
-.base{position:absolute;left:110px;top:calc(100% - 120px);width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.55);opacity:.55;transition:opacity .15s}
+.base{position:absolute;left:110px;top:calc(100% - 120px - var(--ty));width:calc(120px * var(--ts));height:calc(120px * var(--ts));margin:calc(-60px * var(--ts)) 0 0 calc(-60px * var(--ts));border-radius:50%;background:rgba(255,255,255,.22);border:3px solid rgba(255,255,255,.55);opacity:.55;transition:opacity .15s}
 .base.on{opacity:1}
-.knob{position:absolute;left:50%;top:50%;width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 3px 10px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
-.zf .base{left:calc(120px + var(--safeL))}
-.btns{position:relative;width:230px;pointer-events:none;margin-right:var(--safeR)}
+.knob{position:absolute;left:50%;top:50%;width:calc(58px * var(--ts));height:calc(58px * var(--ts));border-radius:50%;background:rgba(255,255,255,.92);box-shadow:0 3px 10px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+.zf .base{left:calc(120px + var(--safeL) + var(--tx))}
+.btns{position:relative;width:230px;pointer-events:none;margin-right:var(--safeR);transform:translate(calc(-1 * var(--tx)), calc(-1 * var(--ty))) scale(var(--ts));transform-origin:right bottom}
 .zl .btns,.zr .btns{width:170px}
 .tb{position:absolute;pointer-events:auto;touch-action:none;border-radius:50%;background:rgba(255,255,255,.88);box-shadow:0 4px 0 rgba(0,0,0,.18);font-size:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
 .tb small{font-size:11px;font-weight:900;margin-top:2px}
@@ -147,6 +147,9 @@ b.ic i{position:absolute;right:-5px;bottom:-4px;width:16px;height:16px;display:f
 #chQuick button{flex:0 0 auto;background:#fff;border-radius:12px;padding:6px 10px;font-weight:700;font-size:14px;box-shadow:0 1px 0 var(--line)}
 #chForm{gap:6px;flex-wrap:nowrap}
 #chIn{flex:1;min-width:0;font-size:16px;padding:10px 12px;border-radius:14px;border:2px solid var(--line);background:#fff}
+#ctlPanel{position:fixed;left:50%;top:calc(10px + var(--safeT));transform:translateX(-50%);z-index:35;background:#fffaf2;border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.3);padding:12px 16px;width:min(420px,92vw);display:flex;flex-direction:column;gap:8px}
+#ctlPanel label{display:flex;align-items:center;gap:10px;font-weight:800}#ctlPanel input[type=range]{flex:1}
+#ctlDim{position:fixed;inset:0;z-index:6;background:rgba(60,30,10,.35)}
 #chatPop{position:fixed;left:50%;top:calc(120px + var(--safeT));transform:translateX(-50%);z-index:41;display:flex;flex-direction:column;gap:6px;align-items:center;max-width:min(520px,90vw)}
 #chatPop div{background:#fff;border-radius:16px;padding:8px 14px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.25);animation:pop .25s;cursor:pointer;border-left:6px solid var(--pri)}
 #chatPop div b{margin-right:6px}

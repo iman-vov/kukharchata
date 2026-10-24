@@ -31,6 +31,11 @@ export class Input {
     addEventListener('blur', () => this.keys.clear());
     this.build();
   }
+  // розмір і місце екранних кнопок: s — масштаб, x — ближче до центру, y — вище (px)
+  setLayout(L = {}) {
+    this.ts = L.s || 1;
+    this.layer.style.setProperty('--ts', this.ts); this.layer.style.setProperty('--tx', (L.x || 0) + 'px'); this.layer.style.setProperty('--ty', (L.y || 0) + 'px');
+  }
   setMode(m, throwOn = this.throwOn) { this.mode = m; this.throwOn = throwOn; this.build(); }
   show(on) { this.layer.classList.toggle('hide', !on); }
   build() {
@@ -47,7 +52,7 @@ export class Input {
       const S = this.src['touch' + z] = { mx: 0, my: 0, grab: false, use: false, dash: false, _g: 0, _d: 0, _t: 0 };
       const joy = zone.querySelector('.joy'), base = zone.querySelector('.base'), knob = zone.querySelector('.knob');
       let pid = null, ox = 0, oy = 0;
-      const R = 52;
+      const R = () => 52 * (this.ts || 1);
       joy.addEventListener('pointerdown', e => {
         e.preventDefault(); pid = e.pointerId; joy.setPointerCapture(pid);
         const r = joy.getBoundingClientRect(); ox = e.clientX; oy = e.clientY;
@@ -57,11 +62,11 @@ export class Input {
       joy.addEventListener('pointermove', e => {
         if (e.pointerId !== pid) return;
         let dx = e.clientX - ox, dy = e.clientY - oy; const d = Math.hypot(dx, dy);
-        if (d > R) { // база тягнеться за пальцем
-          const k = (d - R) / d; ox += dx * k; oy += dy * k; dx = e.clientX - ox; dy = e.clientY - oy;
+        if (d > R()) { // база тягнеться за пальцем
+          const k = (d - R()) / d; ox += dx * k; oy += dy * k; dx = e.clientX - ox; dy = e.clientY - oy;
           const r = joy.getBoundingClientRect(); base.style.left = (ox - r.left) + 'px'; base.style.top = (oy - r.top) + 'px';
         }
-        S.mx = dx / R; S.my = dy / R;
+        S.mx = dx / R(); S.my = dy / R();
         knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
       });
       const end = e => { if (e.pointerId !== pid) return; pid = null; S.mx = S.my = 0; base.classList.remove('on'); knob.style.transform = 'translate(-50%,-50%)'; };
