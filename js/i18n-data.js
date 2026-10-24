@@ -18,6 +18,8 @@ export const UI = [
   ['Більші кнопки, ближче до центру чи вище', 'Größere Tasten, näher zur Mitte oder höher', 'Bigger buttons, closer to the centre or higher'],
   ['Налаштувати', 'Anpassen', 'Adjust'], ['Спробуй натискати кнопки й джойстик просто зараз', 'Probier Tasten und Joystick gleich aus', 'Try the buttons and joystick right now'],
   ['Розмір', 'Größe', 'Size'], ['Ближче до центру', 'Näher zur Mitte', 'Closer to centre'], ['Вище', 'Höher', 'Higher'], ['Як було', 'Zurücksetzen', 'Reset'],
+  ['👓 Висококонтрастний режим', '👓 Kontrastmodus', '👓 High-contrast mode'],
+  ['Темні замовлення з великими значками, а над кожним продуктом на стійці — його значок', 'Dunkle Bestellungen mit großen Symbolen und über jeder Zutat auf der Theke ihr Symbol', 'Dark order tickets with big icons, and an icon above every ingredient on the counters'],
   // слоти й чат
   ['Грати', 'Spielen', 'Play'],
   ['Моя гра', 'Mein Spiel', 'My game'], ['Слот: ', 'Spielstand: ', 'Save: '], ['Слот ', 'Spielstand ', 'Save '],

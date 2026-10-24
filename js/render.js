@@ -531,6 +531,7 @@ export class KitchenView {
       if (it && (it.t === 'p' || it.t === 'c') && it.c.length) {
         const full = this.fullRecipe(it); if (full) { big = full; bk = 'B' + full; } else { bItems = it.c; bk = 'p' + k; }
       } else if (ck && ck.c.length) { bItems = ck.c; bk = 'k' + ck.c.map(c => c.id + c.s).join(','); }
+      else if (this.opts.hc && it && it.t === 'i') { bItems = [it]; bk = 'i' + k; } // висококонтрастний: значок над кожним продуктом
       else if (t.type === 'plates' && (t.clean || t.dirty)) bk = 'pl' + t.clean + '/' + t.dirty;
       else if (t.type === 'sink' && (t.clean || t.dirty)) bk = 'sk' + t.clean + '/' + t.dirty;
       let b = this.bubbles.get(idx);
@@ -688,7 +689,7 @@ export class KitchenView {
     this.dec.update(dt);
     // ефекти
     for (const f of this.fx) { f.t += dt; f.o.position.y += dt * f.vy; if (f.vx) f.o.position.x += dt * f.vx; if (f.grow) f.o.scale.multiplyScalar(1 + dt * 0.8); if (f.spin) f.vy -= dt * 6; if (f.o.material) f.o.material.opacity = Math.max(0, 1 - f.t / f.life); if (f.spin) f.o.rotation.y += dt * 6; }
-    for (const f of this.fx.filter(f => f.t >= f.life)) scene.remove(f.o);
+    for (const f of this.fx.filter(f => f.t >= f.life)) { scene.remove(f.o); if (f.o.isSprite) { if (f.o.material.map) f.o.material.map.dispose(); f.o.material.dispose(); } }
     this.fx = this.fx.filter(f => f.t < f.life);
   }
   fullRecipe(pl) {
@@ -705,6 +706,18 @@ export class KitchenView {
   floatText(x, y, text, color = '#ffd23f', h = 1.6) {
     const s = textSprite(text, color, 0.42); s.position.set(x, h, y); this.scene.add(s);
     this.fx.push({ o: s, t: 0, life: 1.3, vy: 0.9 });
+  }
+  // щось додали в тарілку/чашку/каструлю: хмаринка кольору продукту і його значок, що злітає вгору
+  addedFx(e) {
+    const col = ING[e.id] ? ING[e.id].col : 0xffffff;
+    const h = e.hands ? 1.0 : TOP_Y + 0.25;
+    for (let i = 0; i < 7; i++) {
+      const m = new THREE.Mesh(G.sphLo, new THREE.MeshBasicMaterial({ color: i % 2 ? col : 0xffffff, transparent: true, opacity: 0.85, depthWrite: false }));
+      m.scale.setScalar(0.07 + Math.random() * 0.07); m.position.set(e.x + (Math.random() - 0.5) * 0.45, h, e.y + (Math.random() - 0.5) * 0.45);
+      this.scene.add(m); this.fx.push({ o: m, t: 0, life: 0.6 + Math.random() * 0.3, vy: 0.8 + Math.random() * 0.8, grow: true });
+    }
+    const sp = canvasSprite(96, 96, (c) => { c.fillStyle = 'rgba(255,255,255,.95)'; c.beginPath(); c.arc(48, 48, 44, 0, 7); c.fill(); c.strokeStyle = '#3cb371'; c.lineWidth = 6; c.stroke(); drawIng(c, e.id, e.s, 48, 48, 78, true); }, 0.5);
+    sp.position.set(e.x, h + 0.35, e.y); this.scene.add(sp); this.fx.push({ o: sp, t: 0, life: 1.0, vy: 0.9 });
   }
   puff(x, y, color = 0x888888) {
     for (let i = 0; i < 6; i++) {
@@ -737,6 +750,7 @@ export class KitchenView {
       case 'wrong': this.floatText(e.x, e.y, '✗', '#ff5a5a'); break;
       case 'cooked': this.floatText(e.x, e.y, '✓', '#5ad16a', 1.9); break;
       case 'washed': this.puff(e.x, e.y, 0x9ed8ff); break;
+      case 'added': this.addedFx(e); break;
       case 'catin': this.puff(e.x, e.y, 0xffc48a); this.floatText(e.x, e.y, tr('Мяу!'), '#f0943a', 1.5); break;
       case 'steal': this.floatText(e.x, e.y, tr('Цап!'), '#ff4d4d', 1.6); break;
       case 'scared': this.puff(e.x, e.y, 0xffffff); this.floatText(e.x, e.y, tr('Ш-ш-ш!'), '#ff4d4d', 1.5); break;

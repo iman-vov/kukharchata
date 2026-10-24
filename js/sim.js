@@ -346,8 +346,14 @@ export class Sim {
     if (!t) return false;
     if (t.fire > 0) { this.emit({ e: 'nope', x: t.x, y: t.y }); return false; }
     const H = p.held;
+    // що лежало в посуді до дії — щоб показати «додано»
+    const cnt = it => it && it.c ? it.c.length : 0;
+    const before = new Map([[H, cnt(H)], [t.item, cnt(t.item)], [t.ck, cnt(t.ck)]]);
     const ok = this._grab(p, t, H);
-    if (ok) this.emit({ e: H && !p.held ? 'drop' : 'pick', x: t.x, y: t.y, pid: p.id });
+    if (ok) {
+      for (const [it, n] of before) if (it && cnt(it) > n) { const add = it.c[it.c.length - 1]; const inHands = it === p.held; this.emit({ e: 'added', x: inHands ? p.x : t.x, y: inHands ? p.y : t.y, id: add.id, s: add.s, pid: p.id, hands: inHands }); break; }
+      this.emit({ e: H && !p.held ? 'drop' : 'pick', x: t.x, y: t.y, pid: p.id });
+    }
     return ok;
   }
   _grab(p, t, H) {

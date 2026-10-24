@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.17';
+const VERSION = '1.18';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -61,6 +61,7 @@ const input = new Input($('#touch'));
 // розмір і місце кнопок: на великих планшетах трохи більші за замовчуванням
 if (!S.set.ctl) S.set.ctl = { s: Math.min(screen.width, screen.height) >= 700 ? 1.25 : 1, x: 0, y: 0 };
 input.setLayout(S.set.ctl);
+document.body.classList.toggle('hc', !!S.set.hc);
 const net = new Net();
 
 const app = { scene: 'title', view: null, sim: null, map: null, paused: false, modal: null, lvl: null };
@@ -311,7 +312,7 @@ function beginLevel(P) {
   app.myIds = new Set(mine.map(p => p.id));
   app.sim = sim; app.lvl = P; app.paused = false; app.over = false; app.prevSnap = new Map(); app.snapT = 0; app.keyT = 0; app.posT = 0;
   app.evOut = []; app.lastSec = 999; app.hurry = false; app.catTold = false;
-  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall });
+  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall, hc: !!S.set.hc });
   app.view.setZoom(app.zoom || 1);
   app.scene = 'level';
   show('#title', false); show('#mapUI', false); show('#hud', true);
@@ -403,7 +404,7 @@ function levelFrame(dt) {
 function handleEvent(e) {
   const v = app.view;
   if (v) v.onEvent(e);
-  const S2 = { pick: 'pick', drop: 'drop', chopped: 'chopped', serve: 'serve', wrong: 'wrong', order: 'order', expired: 'expired', fire: 'fire', out: 'out', cooked: 'cooked', washed: 'washed', dash: 'dash', plate: 'plate', trash: 'trash', nope: 'nope', gate: 'gate', wind: 'wind', throw: 'throw', catch: 'pick', land: 'drop', catin: 'meow', steal: 'steal', scared: 'hiss' }[e.e];
+  const S2 = { pick: 'pick', drop: 'drop', chopped: 'chopped', serve: 'serve', wrong: 'wrong', order: 'order', expired: 'expired', fire: 'fire', out: 'out', cooked: 'cooked', washed: 'washed', dash: 'dash', plate: 'plate', trash: 'trash', nope: 'nope', gate: 'gate', wind: 'wind', throw: 'throw', catch: 'pick', land: 'drop', added: 'plate', catin: 'meow', steal: 'steal', scared: 'hiss' }[e.e];
   if (S2) {
     // підняти/покласти — лише для своїх, щоб не було какофонії
     if ((e.e === 'pick' || e.e === 'drop') && e.pid && !app.myIds.has(e.pid)) return;
@@ -557,6 +558,7 @@ function openSettings() {
     <div class="assist" style="background:#fff"><div style="flex:1">🍽 Зала з гостями й офіціант<br><span class="sub" style="font-size:13px">Вимкни, якщо пристрій гальмує</span></div><button class="toggle ${st.hall ? 'on' : ''}" id="sHall"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🎯 Кидати продукти<br><span class="sub" style="font-size:13px">Як в Overcooked: кнопка 🎯, геймпад Ⓨ, клавіша Q. Можна ловити на льоту!</span></div><button class="toggle ${st.throw ? 'on' : ''}" id="sThrow"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">🧸 Дитячий режим<br><span class="sub" style="font-size:13px">Для найменших: роботи спритніші й самі подають страви, гості чекають довше, зірки легші</span></div><button class="toggle ${st.kid ? 'on' : ''}" id="sKid"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">👓 Висококонтрастний режим<br><span class="sub" style="font-size:13px">Темні замовлення з великими значками, а над кожним продуктом на стійці — його значок</span></div><button class="toggle ${st.hc ? 'on' : ''}" id="sHc"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">💡 Підказки на перших рівнях</div><button class="toggle ${st.hints ? 'on' : ''}" id="sHints"></button></div>
     <p class="kbd">Підключені геймпади: ${input.pads().map(p => esc(p.id.slice(0, 40))).join(', ') || 'немає (натисни кнопку на геймпаді, щоб браузер його побачив)'}</p>
     <h3>Прогрес</h3>
@@ -573,6 +575,7 @@ function openSettings() {
   tog('#sHall', () => st.hall = !st.hall);
   tog('#sThrow', () => st.throw = !st.throw);
   tog('#sKid', () => st.kid = !st.kid);
+  tog('#sHc', () => { st.hc = !st.hc; document.body.classList.toggle('hc', st.hc); if (app.view) app.view.opts.hc = st.hc; });
   document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang));
   $('#sReset').onclick = () => { if (confirm(tr('Скинути всі зірки й пройдені міста?'))) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
   $('#sOk').onclick = () => { sfx('click'); closeModal(); };

@@ -207,27 +207,56 @@ function processed(id, s) {
       case 'rice': case 'pasta': case 'noodles': case 'beans': case 'chickpeas': case 'lentils': break;
     }
   }
-  // шматочки / варене / смажене
-  const shape = { walnut: 'tiny', pepper: 'ring', tofu: 'cube', paneer: 'cube', spinach: 'shred', eggplant: 'round', zucchini: 'round', baguette: 'round', chickpeas: 'bean', lentils: 'grain', tomato: 'cube', potato: 'cube', beet: 'cube', apple: 'slice', cucumber: 'round', carrot: 'round', onion: 'ring', cabbage: 'shred', lettuce: 'shred', herbs: 'tiny', garlic: 'tiny', cheese: 'grate', meat: 'mince', chicken: 'cube', fish: 'slab', mushroom: 'slice', tortilla: 'chip', rice: 'grain', pasta: 'noodle', noodles: 'noodle', beans: 'bean' }[id] || 'cube';
-  const n = { tiny: 14, grain: 30, bean: 14, noodle: 10, shred: 10, grate: 12, mince: 9, chip: 6 }[shape] || 6;
-  for (let i = 0; i < n; i++) {
-    const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.13, x = Math.cos(a) * r, z = Math.sin(a) * r, y = 0.025 + rnd() * 0.04;
-    switch (shape) {
-      case 'cube': g.add(m(G.box, i % 3 ? I : O, 0.06, 0.05, 0.06, x, y, z, rnd(), rnd(), rnd())); break;
-      case 'round': { const p = new THREE.Group(); p.add(m(G.cylLo, O, 0.05, 0.02, 0.05)); p.add(m(G.cylLo, I, 0.042, 0.022, 0.042)); p.position.set(x, y, z); p.rotation.set(rnd() * 0.6, 0, rnd() * 0.6); g.add(p); break; }
-      case 'ring': g.add(m(G.torThin, I, 0.04, 0.04, 0.04, x, y, z, Math.PI / 2 + rnd() * 0.5, 0, 0)); break;
-      case 'shred': g.add(m(G.box, i % 2 ? I : O, 0.015, 0.01, 0.12, x, y, z, 0, rnd() * 3, 0)); break;
-      case 'tiny': g.add(m(G.sphLo, I, 0.015, 0.012, 0.015, x, y * 0.6, z)); break;
-      case 'grate': g.add(m(G.box, I, 0.012, 0.01, 0.07, x, y, z, 0, rnd() * 3, 0.2)); break;
-      case 'mince': g.add(m(G.sphLo, I, 0.035, 0.028, 0.035, x, y, z)); break;
-      case 'slab': g.add(m(G.box, I, 0.09, 0.025, 0.05, x * 0.8, y, z * 0.8, 0, rnd() * 3, 0)); break;
-      case 'slice': g.add(m(G.half, I, 0.05, 0.02, 0.05, x, y, z, Math.PI / 2, rnd() * 3, 0)); break;
-      case 'chip': g.add(m(G.tri, mat(tint(0xf0c060)), 0.06, 0.01, 0.06, x, y, z, rnd() * 0.5, rnd() * 3, rnd() * 0.5)); break;
-      case 'grain': g.add(m(G.sphLo, I, 0.012, 0.009, 0.02, x * 0.9, 0.03 + rnd() * 0.03, z * 0.9, 0, rnd() * 3, 0)); break;
-      case 'bean': g.add(m(G.sphLo, I, 0.022, 0.016, 0.03, x * 0.9, y * 0.7, z * 0.9, 0, rnd() * 3, 0)); break;
-      case 'noodle': g.add(m(G.torThin, I, 0.06 + rnd() * 0.03, 0.06, 0.06 + rnd() * 0.03, x * 0.4, 0.03 + i * 0.006, z * 0.4, Math.PI / 2 + rnd() * 0.3, 0, rnd())); break;
+  // шматочки / варене / смажене: великі впізнавані купки (у кожного продукту своя форма й колір)
+  const T = c => mat(tint(c));
+  const ring = (n, r0, f) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + rnd() * 0.4, r = r0 * (0.6 + rnd() * 0.5); f(Math.cos(a) * r, Math.sin(a) * r, i, a); } };
+  const rounds = (rim, core, n = 6, R = 0.07, seeds = null) => ring(n, 0.1, (x, z, i, a) => {
+    const p = new THREE.Group(); p.add(m(G.cylLo, T(rim), R, 0.025, R)); p.add(m(G.cylLo, T(core), R * 0.82, 0.028, R * 0.82));
+    if (seeds) for (let k = 0; k < 4; k++) p.add(m(G.sphLo, T(seeds), 0.008, 0.004, 0.012, Math.cos(k * 1.6) * R * 0.35, 0.016, Math.sin(k * 1.6) * R * 0.35));
+    p.position.set(x, 0.03 + (i % 3) * 0.018, z); p.rotation.set(0.25 * Math.sin(a), 0, 0.25 * Math.cos(a)); g.add(p);
+  });
+  const cubes = (cols, n = 7, S = 0.075) => ring(n, 0.11, (x, z, i) => g.add(m(G.box, T(cols[i % cols.length]), S, S * 0.85, S, x, 0.04 + (i % 2) * 0.05, z, rnd() * 0.5, rnd() * 3, rnd() * 0.5)));
+  const leaves = (c1, c2, n = 6, S = 0.12) => ring(n, 0.08, (x, z, i, a) => { g.add(m(G.sph, T(i % 2 ? c1 : c2), S * 0.75, 0.018, S, x, 0.03 + i * 0.012, z, 0.3 * Math.sin(a), a, 0)); g.add(m(G.box, T(C(c1, 0xffffff, 0.5)), 0.006, 0.02, S * 1.4, x, 0.05 + i * 0.012, z, 0, a, 0)); });
+  switch (id) {
+    case 'tomato': rounds(0xd8321c, 0xf26a4f, 6, 0.07, 0xffe08a); g.add(m(G.cone, T(0x3c9a3c), 0.05, 0.03, 0.05, 0, 0.12, 0)); break;
+    case 'apple': rounds(0xc8242e, 0xfbefc9, 5, 0.07, 0x5a3a1a); g.add(m(G.cylLo, T(0x6b4226), 0.008, 0.05, 0.008, 0, 0.12, 0)); g.add(m(G.sph, T(0x3a9a3a), 0.035, 0.008, 0.02, 0.02, 0.14, 0)); break;
+    case 'cucumber': rounds(0x2f7d2a, 0xc9e7a2, 6, 0.065, 0xeef6d0); break;
+    case 'zucchini': rounds(0x4f8a2e, 0xf1f2c4, 5, 0.075, 0xd9dca0); break;
+    case 'eggplant': rounds(0x4a1f5a, 0xf1e6c4, 5, 0.08, 0xb8a070); break;
+    case 'carrot': rounds(0xe06d18, 0xf7a24a, 7, 0.055); { const t = new THREE.Group(); for (let k = 0; k < 3; k++) t.add(m(G.cone, T(0x3a9a3a), 0.02, 0.1, 0.02, 0, 0.05, 0, 0, 0, (k - 1) * 0.4)); t.position.set(0.12, 0.08, -0.08); g.add(t); } break;
+    case 'baguette': rounds(0xb8742e, 0xf6e3b8, 5, 0.075); break;
+    case 'onion': ring(6, 0.09, (x, z, i) => g.add(m(G.tor, T(i % 2 ? 0xf6efe0 : 0xe9d7c0), 0.06, 0.06, 0.05, x, 0.03 + (i % 3) * 0.02, z, Math.PI / 2 + (rnd() - 0.5) * 0.4, 0, 0))); g.add(m(G.hemi, T(0xe9c79a), 0.08, 0.06, 0.08, 0.02, 0.03, 0.02)); break;
+    case 'pepper': ring(6, 0.09, (x, z, i) => g.add(m(G.tor, T(0xd63a2a), 0.06, 0.06, 0.08, x, 0.03 + (i % 3) * 0.02, z, Math.PI / 2 + (rnd() - 0.5) * 0.4, 0, 0))); g.add(m(G.cylLo, T(0x3c8a3a), 0.015, 0.05, 0.015, 0, 0.1, 0)); break;
+    case 'lettuce': leaves(0x7ccf55, 0x5fb33f, 6, 0.13); break;
+    case 'spinach': leaves(0x2f6d2a, 0x3f8a3a, 7, 0.12); break;
+    case 'cabbage': for (let i = 0; i < 18; i++) { const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.12; g.add(m(G.box, T(i % 2 ? 0xdcefc4 : 0xc4e3a0), 0.02, 0.012, 0.13, Math.cos(a) * r, 0.03 + rnd() * 0.06, Math.sin(a) * r, 0, rnd() * 3, 0)); } break;
+    case 'herbs': ring(7, 0.1, (x, z, i, a) => { g.add(m(G.cylLo, T(0x2e7d32), 0.006, 0.12, 0.006, x, 0.03, z, Math.PI / 2, 0, a)); for (let k = 0; k < 3; k++) g.add(m(G.sph, T(0x3aa346), 0.025, 0.01, 0.035, x + Math.cos(a) * (k - 1) * 0.035, 0.04, z + Math.sin(a) * (k - 1) * 0.035, 0, a, 0)); }); break;
+    case 'garlic': ring(4, 0.07, (x, z, i, a) => g.add(m(G.sph, T(0xf6efdf), 0.035, 0.03, 0.055, x, 0.035, z, 0, a, 0.3))); for (let i = 0; i < 10; i++) g.add(m(G.sphLo, T(0xfaf3df), 0.012, 0.01, 0.012, (rnd() - 0.5) * 0.2, 0.02, (rnd() - 0.5) * 0.2)); break;
+    case 'potato': cubes([0xf3e1a6, 0xeed596, 0xc79a5b], 7, 0.08); break;
+    case 'beet': cubes([0x8e1b4f, 0xa3245e], 7, 0.075); break;
+    case 'paneer': cubes([0xfff8e6, 0xf6ebcc], 6, 0.085); break;
+    case 'tofu': cubes([0xfffbf0, 0xf4efe0], 6, 0.09); break;
+    case 'meat': ring(6, 0.1, (x, z, i) => { const c = new THREE.Group(); c.add(m(G.box, T(0xc94a4a), 0.09, 0.075, 0.09)); c.add(m(G.box, T(0xf6e3d6), 0.092, 0.015, 0.092, 0, 0.015)); c.position.set(x, 0.045 + (i % 2) * 0.05, z); c.rotation.set(rnd() * 0.4, rnd() * 3, rnd() * 0.4); g.add(c); }); break;
+    case 'chicken': cubes([0xf1d2b0, 0xe7b98a], 6, 0.085); break;
+    case 'fish': ring(3, 0.06, (x, z, i, a) => { g.add(m(G.box, T(0xf4a07a), 0.16, 0.04, 0.07, x, 0.03 + i * 0.03, z, 0, a + 1, 0)); for (let k = 0; k < 3; k++) g.add(m(G.box, T(0xffffff), 0.006, 0.042, 0.07, x + Math.cos(a + 1) * (k - 1) * 0.04, 0.032 + i * 0.03, z - Math.sin(a + 1) * (k - 1) * 0.04, 0, a + 1, 0)); }); break;
+    case 'cheese': ring(6, 0.09, (x, z, i) => g.add(m(G.tri, T(0xf5c84a), 0.06, 0.05, 0.06, x, 0.04 + (i % 2) * 0.04, z, 0, rnd() * 3, 0))); for (let i = 0; i < 10; i++) g.add(m(G.box, T(0xffd34d), 0.012, 0.01, 0.07, (rnd() - 0.5) * 0.22, 0.02, (rnd() - 0.5) * 0.22, 0, rnd() * 3, 0)); break;
+    case 'mushroom': ring(5, 0.09, (x, z, i, a) => { const p = new THREE.Group(); p.add(m(G.half, T(0xc9a27e), 0.06, 0.02, 0.06, 0, 0.03, 0, Math.PI / 2)); p.add(m(G.box, T(0xeedcc0), 0.03, 0.02, 0.05, 0, 0, -0.03)); p.position.set(x, 0.02, z); p.rotation.y = a; g.add(p); }); break;
+    case 'walnut': ring(6, 0.09, (x, z, i) => { g.add(m(G.sph, T(0xc8925a), 0.04, 0.03, 0.035, x, 0.03, z)); g.add(m(G.sph, T(0xb58450), 0.035, 0.028, 0.03, x + 0.025, 0.035, z)); }); break;
+    case 'tortilla': ring(6, 0.1, (x, z, i) => g.add(m(G.tri, T(0xf0c060), 0.08, 0.012, 0.08, x, 0.02 + (i % 3) * 0.015, z, rnd() * 0.4, rnd() * 3, rnd() * 0.4))); break;
+    default: {
+      // крупи, макарони, квасоля тощо — дрібніші, але купкою
+      const shape = { chickpeas: 'bean', lentils: 'grain', rice: 'grain', pasta: 'noodle', noodles: 'noodle', beans: 'bean' }[id] || 'cube';
+      const n = { grain: 34, bean: 16, noodle: 10 }[shape] || 7;
+      for (let i = 0; i < n; i++) {
+        const a = rnd() * 6.28, r = Math.sqrt(rnd()) * 0.13, x = Math.cos(a) * r, z = Math.sin(a) * r, y = 0.025 + rnd() * 0.04;
+        if (shape === 'grain') g.add(m(G.sphLo, I, 0.014, 0.01, 0.024, x * 0.9, 0.03 + rnd() * 0.035, z * 0.9, 0, rnd() * 3, 0));
+        else if (shape === 'bean') g.add(m(G.sphLo, I, 0.026, 0.019, 0.034, x * 0.9, y * 0.8, z * 0.9, 0, rnd() * 3, 0));
+        else if (shape === 'noodle') g.add(m(G.torThin, I, 0.06 + rnd() * 0.03, 0.06, 0.06 + rnd() * 0.03, x * 0.4, 0.03 + i * 0.006, z * 0.4, Math.PI / 2 + rnd() * 0.3, 0, rnd()));
+        else g.add(m(G.box, i % 3 ? I : O, 0.075, 0.06, 0.075, x, y, z, rnd(), rnd(), rnd()));
+      }
     }
   }
+  g.scale.setScalar(1.35);
   return g;
 }
 export function makeIngMesh(id, s = 'r') { return s === 'r' ? raw(id) : processed(id, s); }
