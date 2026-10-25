@@ -14,7 +14,7 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.19';
+const VERSION = '1.20';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -209,9 +209,9 @@ function localCooks() {
   if (S.set.shared) list.push({ lid: 't1', srcs: ['touch1'], label: '👆 Другий на екрані' });
   pads.forEach((p, k) => { if (meMerged && k === 0) return; list.push({ lid: 'p' + p.index, srcs: ['pad' + p.index], label: '🎮 Геймпад ' + (p.index + 1) }); });
   if (!list.length) list.push({ lid: 't0', srcs: ['touch0', 'kb'], label: '📱 Я' });
-  return list.slice(0, 6).map((c, k) => ({ ...c, name: k ? myName() + ' ' + (k + 1) : myName(), color: (S.color + k * 2) % 6, hat: k ? (S.hat + k * 3) % 20 : S.hat }));
+  return list.slice(0, 6).map((c, k) => ({ ...c, name: k ? myName() + ' ' + (k + 1) : myName(), color: (S.color + k * 2) % 6, hat: k ? (S.hat + k * 3) % 20 : S.hat, aim: !!S.set.aim }));
 }
-function sendLocals() { if (net.role === 'guest') net.send({ k: 'locals', name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) }); }
+function sendLocals() { if (net.role === 'guest') net.send({ k: 'locals', name: myName(), locals: localCooks().map(({ lid, name, color, hat, aim }) => ({ lid, name, color, hat, aim })) }); }
 addEventListener('gamepadconnected', e => { toast('🎮 Геймпад підключено: ' + (e.gamepad.id || '').slice(0, 30)); sendLocals(); if (app.modal && app.modal.card !== undefined) openCard(app.modal.card); });
 addEventListener('gamepaddisconnected', () => { toast('🎮 Геймпад відключено'); sendLocals(); });
 
@@ -225,7 +225,7 @@ function buildPlayers() {
     if (out.length >= 6) break;
     let c = l.color; if (used.has(c)) { for (let k = 0; k < 6; k++) if (!used.has((c + k) % 6)) { c = (c + k) % 6; break; } }
     used.add(c);
-    out.push({ id: d.dev + ':' + l.lid, dev: d.dev, name: l.name, color: c, hat: l.hat });
+    out.push({ id: d.dev + ':' + l.lid, dev: d.dev, name: l.name, color: c, hat: l.hat, aim: !!l.aim });
   }
   return out;
 }
@@ -304,7 +304,7 @@ function beginLevel(P) {
   for (const pl of P.players) {
     const mine = pl.dev === SID;
     const p = sim.addPlayer({ id: pl.id, name: pl.bot ? tr(pl.name) : pl.name, color: pl.color, hat: pl.hat, bot: host && pl.bot, remote: !mine && !(host && pl.bot) });
-    p.isBot = !!pl.bot; p.dev = pl.dev;
+    p.isBot = !!pl.bot; p.dev = pl.dev; p.aim = !!pl.aim;
   }
   const cooks = localCooks();
   const mine = P.players.filter(p => p.dev === SID);
@@ -312,7 +312,7 @@ function beginLevel(P) {
   app.myIds = new Set(mine.map(p => p.id));
   app.sim = sim; app.lvl = P; app.paused = false; app.over = false; app.prevSnap = new Map(); app.snapT = 0; app.keyT = 0; app.posT = 0;
   app.evOut = []; app.lastSec = 999; app.hurry = false; app.catTold = false;
-  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall, ingIcons: !!S.set.ingIcons, addFx: S.set.addFx !== false });
+  app.view = new KitchenView(renderer, sim, COUNTRIES[lv.country].theme, { hall: S.set.hall, ingIcons: !!S.set.ingIcons, addFx: S.set.addFx !== false, heldIcons: !!S.set.heldIcons });
   app.view.setZoom(app.zoom || 1);
   app.scene = 'level';
   show('#title', false); show('#mapUI', false); show('#hud', true);
@@ -561,6 +561,8 @@ function openSettings() {
     <h3>👓 Помітність</h3>
     <div class="assist" style="background:#fff"><div style="flex:1">Контрастні замовлення й таймер<br><span class="sub" style="font-size:13px">Темні картки з жовтою рамкою й великими значками</span></div><button class="toggle ${st.hc ? 'on' : ''}" id="sHc"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">Значки над продуктами на стійках<br><span class="sub" style="font-size:13px">Над кожним продуктом видно, що це і чи нарізане</span></div><button class="toggle ${st.ingIcons ? 'on' : ''}" id="sIng"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">Що в руках — над кухарчиком<br><span class="sub" style="font-size:13px">Над кожним кухарем хмаринка з тим, що він тримає</span></div><button class="toggle ${st.heldIcons ? 'on' : ''}" id="sHeld"></button></div>
+    <div class="assist" style="background:#fff"><div style="flex:1">🧲 Автонаведення<br><span class="sub" style="font-size:13px">Якщо стоїш поруч, гра сама вибирає потрібну стійку, дошку, мийку чи плиту — легше влучити</span></div><button class="toggle ${st.aim ? 'on' : ''}" id="sAim"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">Хмаринка, коли щось додаєш у посуд<br><span class="sub" style="font-size:13px">Видно, що лід чи продукт справді потрапив у чашку чи тарілку</span></div><button class="toggle ${st.addFx !== false ? 'on' : ''}" id="sAdd"></button></div>
     <div class="assist" style="background:#fff"><div style="flex:1">💡 Підказки на перших рівнях</div><button class="toggle ${st.hints ? 'on' : ''}" id="sHints"></button></div>
     <p class="kbd">Підключені геймпади: ${input.pads().map(p => esc(p.id.slice(0, 40))).join(', ') || 'немає (натисни кнопку на геймпаді, щоб браузер його побачив)'}</p>
@@ -579,6 +581,8 @@ function openSettings() {
   tog('#sThrow', () => st.throw = !st.throw);
   tog('#sKid', () => st.kid = !st.kid);
   tog('#sHc', () => { st.hc = !st.hc; document.body.classList.toggle('hc', st.hc); });
+  tog('#sHeld', () => { st.heldIcons = !st.heldIcons; if (app.view) app.view.opts.heldIcons = st.heldIcons; });
+  tog('#sAim', () => { st.aim = !st.aim; if (app.sim) for (const p of app.sim.players) if (app.myIds && app.myIds.has(p.id)) p.aim = st.aim; });
   tog('#sIng', () => { st.ingIcons = !st.ingIcons; if (app.view) app.view.opts.ingIcons = st.ingIcons; });
   tog('#sAdd', () => { st.addFx = st.addFx === false; if (app.view) app.view.opts.addFx = st.addFx; });
   document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang));
@@ -810,7 +814,7 @@ async function joinRoom(code) {
 }
 function afterGuestJoin() {
   sfx('join');
-  net.send({ k: 'hello', dev: SID, name: myName(), locals: localCooks().map(({ lid, name, color, hat }) => ({ lid, name, color, hat })) });
+  net.send({ k: 'hello', dev: SID, name: myName(), locals: localCooks().map(({ lid, name, color, hat, aim }) => ({ lid, name, color, hat, aim })) });
   toast('Ти в кімнаті! 👫');
   closeModal();
   if (app.scene === 'level') { endLevelCleanup(); }
@@ -881,7 +885,7 @@ net.listen('lost', () => {
   if (app.scene === 'level') { endLevelCleanup(); closeModal(); }
   goMap();
 });
-function playersMeta() { return app.sim.players.map(p => ({ id: p.id, dev: p.dev, name: p.name, color: p.color, hat: p.hat, bot: !!p.isBot })); }
+function playersMeta() { return app.sim.players.map(p => ({ id: p.id, dev: p.dev, name: p.name, color: p.color, hat: p.hat, bot: !!p.isBot, aim: !!p.aim })); }
 net.listen('data', (conn, d) => { if (net.role === 'host') hostMsg(conn, d); else guestMsg(d); });
 
 function hostMsg(conn, d) {
@@ -901,7 +905,7 @@ function hostMsg(conn, d) {
           if (app.sim.players.filter(p => !p.isBot).length >= 6) break;
           const id = e.dev + ':' + l.lid; if (app.sim.players.some(p => p.id === id)) continue;
           let c = l.color; for (let k = 0; k < 6 && used.has(c); k++) c = (c + 1) % 6; used.add(c);
-          const p = app.sim.addPlayer({ id, name: l.name, color: c, hat: l.hat, remote: true }); p.dev = e.dev;
+          const p = app.sim.addPlayer({ id, name: l.name, color: c, hat: l.hat, remote: true }); p.dev = e.dev; p.aim = !!l.aim;
         }
         conn.send({ ...app.lvl, k: 'start', players: playersMeta(), late: true });
         conn.send({ k: 'snap', s: app.sim.snapshot(null), ev: [] });
@@ -927,7 +931,7 @@ function guestMsg(d) {
     case 'card': app.guestHumans = d.humans; app.guestDrinks = d.drinks; if (app.scene !== 'map') { goMap(); } if (app.map) app.map.place(d.li); openCard(d.li); break;
     case 'closecard': if (app.modal && app.modal.card !== undefined) closeModal(); break;
     case 'start': app.hostName = d.hostName || app.hostName; beginLevel(d); break;
-    case 'players': if (app.sim) for (const m of d.list) { let p = app.sim.players.find(q => q.id === m.id); if (!p) { p = app.sim.addPlayer({ id: m.id, remote: true }); } Object.assign(p, { name: m.name, color: m.color, hat: m.hat, dev: m.dev, isBot: m.bot }); } break;
+    case 'players': if (app.sim) for (const m of d.list) { let p = app.sim.players.find(q => q.id === m.id); if (!p) { p = app.sim.addPlayer({ id: m.id, remote: true }); } Object.assign(p, { name: m.name, color: m.color, hat: m.hat, dev: m.dev, isBot: m.bot, aim: !!m.aim }); } break;
     case 'snap':
       if (app.scene === 'level' && app.sim) {
         const wasStarted = app.sim.started;

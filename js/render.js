@@ -80,6 +80,22 @@ function bubble(items, big) { // items: [{id,s}] або recipe-емодзі
     else items.forEach((it, i) => drawIng(g, it.id, it.s, 12 + S / 2 + i * S, (H - 10) / 2, 60));
   }, big ? 0.5 : 0.42);
 }
+// хмаринка «що в руках» над кухарчиком
+function heldSprite(H, full) {
+  return canvasSprite(110, 110, (g) => {
+    g.fillStyle = 'rgba(255,255,255,.95)'; g.strokeStyle = 'rgba(58,42,31,.45)'; g.lineWidth = 4;
+    g.beginPath(); g.arc(55, 50, 44, 0, 7); g.fill(); g.stroke();
+    g.beginPath(); g.moveTo(46, 90); g.lineTo(64, 90); g.lineTo(55, 106); g.fill();
+    const list = H.c || [];
+    if (H.t === 'i') drawIng(g, H.id, H.s, 55, 50, 70);
+    else if (full) drawDish(g, full, 55, 50, 78);
+    else if ((H.t === 'p' || H.t === 'c' || H.t === 'k') && list.length) list.slice(0, 4).forEach((it, i, a) => { const n = a.length, x = n === 1 ? 55 : 55 + ((i % 2) - 0.5) * 34, y = n <= 2 ? 50 : 50 + (Math.floor(i / 2) - 0.5) * 32; drawIng(g, it.id, it.s, n === 1 ? 55 : x, n <= 2 && n > 1 ? 50 : y, n === 1 ? 66 : 38, n === 1); });
+    else if (H.t === 'p' || H.t === 'd') { g.fillStyle = H.t === 'd' ? '#c6b596' : '#fff'; g.strokeStyle = H.t === 'd' ? '#9a8565' : '#6fa8dc'; g.lineWidth = 5; g.beginPath(); g.arc(55, 50, 26, 0, 7); g.fill(); g.stroke(); if (H.t === 'd') { g.fillStyle = '#8a6a3a'; for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(46 + i * 7, 46 + (i % 2) * 8, 3, 0, 7); g.fill(); } } }
+    else if (H.t === 'c') { g.fillStyle = '#eaf6fb'; g.strokeStyle = '#90a4ae'; g.lineWidth = 4; g.beginPath(); g.moveTo(38, 28); g.lineTo(72, 28); g.lineTo(68, 76); g.lineTo(42, 76); g.closePath(); g.fill(); g.stroke(); }
+    else if (H.t === 'k') { g.fillStyle = '#555a60'; g.beginPath(); g.ellipse(55, 54, 26, 16, 0, 0, 7); g.fill(); g.fillRect(78, 50, 18, 6); }
+    else if (H.t === 'x') { g.fillStyle = '#e53935'; g.beginPath(); g.roundRect(43, 26, 24, 50, 8); g.fill(); g.fillStyle = '#37474f'; g.fillRect(49, 18, 12, 9); g.fillStyle = '#fff'; g.fillRect(47, 44, 16, 10); }
+  }, 0.42);
+}
 export function textSprite(text, color = '#fff', size = 0.34, stroke = 'rgba(0,0,0,.55)') {
   const fs = 64;
   const c = document.createElement('canvas'); const g = c.getContext('2d');
@@ -673,6 +689,13 @@ export class KitchenView {
       c.g.rotation.y += d * Math.min(1, dt * 16);
       animateCook(c, p, dt);
       c.root.rotation.y = c.spin;
+      // що в руках — хмаринкою над головою (вмикається в налаштуваннях)
+      const hk = this.opts.heldIcons && p.held ? itemKey(p.held) : '';
+      if (hk !== (c.hbk || '')) {
+        if (c.hb) { c.root.remove(c.hb); if (c.hb.material.map) c.hb.material.map.dispose(); c.hb.material.dispose(); c.hb = null; }
+        c.hbk = hk;
+        if (hk) { c.hb = heldSprite(p.held, (p.held.t === 'p' || p.held.t === 'c') ? this.fullRecipe(p.held) : null); c.hb.position.y = 1.78; c.root.add(c.hb); }
+      }
       // підсвітка цілі для своїх
       let h = this.hl.get(p.id);
       if (myIds.has(p.id)) {

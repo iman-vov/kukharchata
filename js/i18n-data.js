@@ -27,6 +27,10 @@ export const UI = [
   ['Над кожним продуктом видно, що це і чи нарізане', 'Über jeder Zutat sieht man, was es ist und ob es geschnitten ist', 'Each ingredient shows what it is and whether it’s chopped'],
   ['Хмаринка, коли щось додаєш у посуд', 'Wölkchen beim Hinzufügen ins Geschirr', 'Puff when you add something to a dish'],
   ['Видно, що лід чи продукт справді потрапив у чашку чи тарілку', 'Man sieht, dass Eis oder eine Zutat wirklich im Becher oder Teller gelandet ist', 'Shows that ice or an ingredient really landed in the cup or plate'],
+  ['Що в руках — над кухарчиком', 'Was in der Hand ist – über dem Koch', 'What’s in hand – above the cook'],
+  ['Над кожним кухарем хмаринка з тим, що він тримає', 'Über jedem Koch eine Wolke mit dem, was er trägt', 'A bubble above each cook showing what they carry'],
+  ['🧲 Автонаведення', '🧲 Zielhilfe', '🧲 Aim assist'],
+  ['Якщо стоїш поруч, гра сама вибирає потрібну стійку, дошку, мийку чи плиту — легше влучити', 'Wenn du nah dran stehst, wählt das Spiel selbst die passende Theke, das Brett, die Spüle oder den Herd – leichter zu treffen', 'When you stand nearby, the game picks the right counter, board, sink or stove for you – easier to hit'],
   // слоти й чат
   ['Грати', 'Spielen', 'Play'],
   ['Моя гра', 'Mein Spiel', 'My game'], ['Слот: ', 'Spielstand: ', 'Save: '], ['Слот ', 'Spielstand ', 'Save '],

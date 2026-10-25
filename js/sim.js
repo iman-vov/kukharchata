@@ -269,6 +269,8 @@ export class Sim {
 
   // клітинка, на яку дивиться кухар
   facing(p) {
+    // автонаведення лише коли кухарчик стоїть — при бігу повз нічого не «примагнічується»
+    if (p.aim && !p.moving) { const a = this.aimTarget(p); if (a) return a; }
     const tx = Math.round(p.x + p.fx * 0.78), ty = Math.round(p.y + p.fy * 0.78);
     let t = this.tile(tx, ty);
     if (t && t.type !== 'floor' && t.type !== 'void') return t;
@@ -278,6 +280,53 @@ export class Sim {
     t = ax ? this.tile(cx + Math.sign(p.fx), cy) : this.tile(cx, cy + Math.sign(p.fy));
     if (t && t.type !== 'floor' && t.type !== 'void') return t;
     return null;
+  }
+
+  // автонаведення: серед сусідніх стійок вибираємо ту, що попереду й корисна для того, що в руках
+  aimTarget(p) {
+    const H = p.held, cx = Math.round(p.x), cy = Math.round(p.y);
+    let best = null, bs = Infinity;
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      const t = this.tile(cx + dx, cy + dy);
+      if (!t || t.type === 'floor' || t.type === 'void' || t.blocked) continue;
+      const vx = t.x - p.x, vy = t.y - p.y, d = Math.hypot(vx, vy);
+      if (d > 1.4 || d < 0.01) continue;
+      const dot = (vx * p.fx + vy * p.fy) / d;
+      if (dot < -0.15) continue;
+      const sc = d - dot * 0.9 - this.aimUse(t, H) * 0.6;
+      if (sc < bs) { bs = sc; best = t; }
+    }
+    return best;
+  }
+  aimUse(t, H) { // наскільки клітинка корисна зараз (0…1)
+    const I = t.type === 'oven' ? t.ck : t.item;
+    if (t.fire > 0) return H && H.t === 'x' ? 1 : 0;
+    if (!H) {
+      if (I) return 1;
+      if (t.type === 'crate' || t.type === 'mugs') return 0.9;
+      if (t.type === 'plates' && t.clean > 0) return 0.9;
+      if (t.type === 'sink' && (t.dirty > 0 || t.clean > 0)) return 0.9;
+      return 0;
+    }
+    if (H.t === 'i') {
+      if (t.type === 'board' && !I && ING[H.id].chop && H.s === 'r') return 1;
+      if (t.type === 'trash') return 0.2;
+      if (I && (isCont(I) || I.t === 'k')) return this.combine({ ...H }, JSON.parse(JSON.stringify(I))) ? 1 : 0;
+      if (t.type === 'oven' && t.ck && this.cookerAccepts(t.ck, H)) return 1;
+      return I ? 0 : (t.type === 'counter' ? 0.4 : 0.2);
+    }
+    if (isCont(H)) {
+      if (t.type === 'serve') return this.matchOrder(H) ? 1 : 0.1;
+      if (t.type === 'crate') return this.plateAccepts(H, [mkIng(t.ing)]) ? 0.8 : 0;
+      if (t.type === 'tap') return H.t === 'c' && !I ? 0.9 : 0;
+      if (I) return this.combine(JSON.parse(JSON.stringify(H)), JSON.parse(JSON.stringify(I))) ? 1 : 0;
+      if (t.type === 'oven' && t.ck && t.ck.c.length) return 0.9;
+      return t.type === 'counter' ? 0.4 : 0;
+    }
+    if (H.t === 'k') return t.type === 'stove' && !I ? 1 : I && isCont(I) ? 0.9 : t.type === 'counter' && !I ? 0.3 : 0;
+    if (H.t === 'd') return t.type === 'sink' ? 1 : 0;
+    if (H.t === 'x') return 0;
+    return 0;
   }
 
   /* ---------- правила поєднання ---------- */
@@ -344,6 +393,7 @@ export class Sim {
     }
     const t = this.facing(p);
     if (!t) return false;
+    if (p.aim) { const vx = t.x - p.x, vy = t.y - p.y, d = Math.hypot(vx, vy) || 1; p.fx = vx / d; p.fy = vy / d; }
     if (t.fire > 0) { this.emit({ e: 'nope', x: t.x, y: t.y }); return false; }
     const H = p.held;
     // що лежало в посуді до дії — щоб показати «додано»
