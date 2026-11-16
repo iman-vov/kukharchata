@@ -67,7 +67,7 @@ class Conn {
 }
 
 /* ---------- стиснення SDP для QR ---------- */
-async function pack(obj) {
+export async function pack(obj) {
   const txt = JSON.stringify(obj);
   if (window.CompressionStream) {
     try {
@@ -79,7 +79,7 @@ async function pack(obj) {
   }
   return 'K0.' + btoa(unescape(encodeURIComponent(txt)));
 }
-async function unpack(code) {
+export async function unpack(code) {
   code = code.trim();
   if (code.startsWith('K0.')) return JSON.parse(decodeURIComponent(escape(atob(code.slice(3)))));
   if (!code.startsWith('K1.')) throw new Error('bad');

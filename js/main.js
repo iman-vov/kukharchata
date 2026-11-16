@@ -6,7 +6,7 @@ import { KitchenView, makeCook, animateCook, THEMES } from './render.js';
 import { MapView } from './map.js';
 import { Input } from './input.js';
 import { audioInit, sfx, music, musicRate, stopMusic, vol, setVolumes } from './audio.js';
-import { Net, qrCanvas, scanQR, cameraOn, cameraOff } from './net.js';
+import { Net, qrCanvas, scanQR, cameraOn, cameraOff, pack, unpack } from './net.js';
 import { ingHTML, recipeHTML, dishHTML, snapURL } from './icons.js';
 import { HATS } from './hats.js';
 import { makeHeadPreview } from './render.js';
@@ -14,12 +14,14 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.20';
+const VERSION = '1.21';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* ================= збереження ================= */
 const SAVE_KEY = 'kukharchata.v1';
+// Нова адреса гри. Коли задана, на старій адресі (GitHub Pages) з'являється кнопка переїзду з прогресом.
+const MOVED_TO = '';
 function defaults() {
   return { name: '', color: Math.floor(Math.random() * 6), hat: 0, stars: {}, best: {}, fails: {}, assist: {}, drinks: {}, at: 0, room: '', lastJoin: '', dev: rid(), seen: {},
     set: { music: 0.5, sfx: 0.8, padMode: 'own', shared: false, touch: true, hints: true, hall: true, drinks: false, throw: false, turn: { meteredUrl: '', turnUrl: '', turnUser: '', turnPass: '' } } };
@@ -567,6 +569,9 @@ function openSettings() {
     <div class="assist" style="background:#fff"><div style="flex:1">💡 Підказки на перших рівнях</div><button class="toggle ${st.hints ? 'on' : ''}" id="sHints"></button></div>
     <p class="kbd">Підключені геймпади: ${input.pads().map(p => esc(p.id.slice(0, 40))).join(', ') || 'немає (натисни кнопку на геймпаді, щоб браузер його побачив)'}</p>
     <h3>Прогрес</h3>
+    <h3>💾 Перенести прогрес</h3>
+    <p class="kbd" style="margin:0 0 6px">На інший пристрій чи нову адресу гри: скопіюй код тут і встав його там.</p>
+    <div class="row" style="justify-content:flex-start;gap:8px"><button class="btn small" id="sExp">📤 Скопіювати код</button><button class="btn small" id="sImp">📥 Вставити код</button></div>
     <div class="row" style="justify-content:flex-start"><button class="btn small" id="sReset">🗑 Скинути прогрес</button></div>
     <div class="btnrow"><button class="btn pri" id="sOk">Готово</button></div>`, back);
   $('#sMus').oninput = e => { st.music = vol.music = +e.target.value; setVolumes(); save(); };
@@ -586,6 +591,8 @@ function openSettings() {
   tog('#sIng', () => { st.ingIcons = !st.ingIcons; if (app.view) app.view.opts.ingIcons = st.ingIcons; });
   tog('#sAdd', () => { st.addFx = st.addFx === false; if (app.view) app.view.opts.addFx = st.addFx; });
   document.querySelectorAll('[data-lang]').forEach(b => b.onclick = () => setLang(b.dataset.lang));
+  $('#sExp').onclick = () => { sfx('click'); exportSave(); };
+  $('#sImp').onclick = () => { sfx('click'); openImport(); };
   $('#sReset').onclick = () => { if (confirm(tr('Скинути всі зірки й пройдені міста?'))) { S.stars = {}; S.best = {}; S.fails = {}; S.assist = {}; S.at = 0; save(); toast('Прогрес скинуто'); if (app.scene === 'map') goMap(); } };
   $('#sOk').onclick = () => { sfx('click'); closeModal(); };
 }
@@ -611,6 +618,43 @@ function inviteLink() {
   const t = turnCfg(); if (t) u.searchParams.set('t', btoa(unescape(encodeURIComponent(JSON.stringify(t)))));
   return u.toString();
 }
+/* ---------- перенесення прогресу (код або посилання) ---------- */
+async function saveCode() { stashSlot(); save(); return pack(JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); }
+async function exportSave() {
+  const code = await saveCode();
+  let ok = false;
+  try { await navigator.clipboard.writeText(code); ok = true; } catch (_) { }
+  if (navigator.share) { try { await navigator.share({ text: code }); ok = true; } catch (_) { } }
+  if (ok) toast('Код прогресу скопійовано — встав його на іншому пристрої', 3500);
+  openModal(`<h2>📤 Код прогресу</h2><p class="kbd">Скопіюй увесь текст і встав його в іншій грі: ⚙️ → «📥 Вставити код».</p>
+    <textarea id="expTxt" readonly style="width:100%;height:120px;font-size:12px;border-radius:12px;padding:8px">${esc(code)}</textarea>
+    <div class="btnrow"><button class="btn pri" id="expOk">Готово</button></div>`, openSettings);
+  $('#expTxt').onfocus = () => $('#expTxt').select();
+  $('#expOk').onclick = () => { sfx('click'); openSettings(); };
+}
+async function applySave(code) {
+  const o = await unpack(String(code || '').trim());
+  if (!o || typeof o !== 'object' || !('stars' in o || 'slots' in o)) throw new Error('bad');
+  localStorage.setItem(SAVE_KEY, JSON.stringify(o));
+  location.replace(location.pathname);
+}
+function openImport(prefill = '') {
+  openModal(`<h2>📥 Вставити код прогресу</h2><p class="kbd">Прогрес на цьому пристрої буде замінено тим, що в коді (усі слоти, зірки, імʼя й налаштування).</p>
+    <textarea id="impTxt" style="width:100%;height:120px;font-size:12px;border-radius:12px;padding:8px" placeholder="K1.…">${esc(prefill)}</textarea>
+    <p class="status" id="impSt"></p>
+    <div class="btnrow"><button class="btn" id="impNo">Скасувати</button><button class="btn pri" id="impOk">Перенести</button></div>`, openSettings);
+  $('#impNo').onclick = () => { sfx('click'); prefill ? closeModal() : openSettings(); };
+  $('#impOk').onclick = async () => { try { await applySave($('#impTxt').value); } catch (_) { sfx('nope'); $('#impSt').className = 'status bad'; $('#impSt').textContent = tr('Код не підходить. Скопіюй його ще раз повністю.'); } };
+}
+// стара адреса: кнопка переїзду з прогресом
+function movedBanner() {
+  if (!MOVED_TO || !/github\.io$/.test(location.hostname) || $('#moveBox')) return;
+  const box = document.createElement('div'); box.id = 'moveBox';
+  box.innerHTML = `<b>🏠 Гра переїхала на нову адресу!</b><span>Натисни — відкриється нова гра, і твій прогрес перенесеться. Потім додай її на головний екран замість цієї.</span><button class="btn pri" id="moveGo">Перейти з прогресом</button>`;
+  $('#title').prepend(box);
+  $('#moveGo').onclick = async () => { const url = MOVED_TO + '#import=' + (await saveCode()); window.open(url, '_blank') || (location.href = url); };
+}
+
 /* ---------- розмір і місце екранних кнопок ---------- */
 function openCtlEditor(back) {
   const L = S.set.ctl, wasShown = !$('#touch').classList.contains('hide');
@@ -1001,12 +1045,21 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) net.
 document.addEventListener('pointerdown', () => audioInit(), { once: true });
 initLang(S.set.lang);
 goTitle();
+movedBanner();
 resize();
 requestAnimationFrame(frame);
 // запрошення за посиланням: ?join=1234&t=...
 {
   const q = new URLSearchParams(location.search);
   if (q.get('t')) { try { Object.assign(S.set.turn, JSON.parse(decodeURIComponent(escape(atob(q.get('t')))))); save(); } catch (_) { } }
+  // перенесення прогресу за посиланням: …#import=K1.…
+  if (location.hash.startsWith('#import=')) {
+    const code = decodeURIComponent(location.hash.slice(8));
+    history.replaceState(null, '', location.pathname + location.search);
+    const has = Object.keys(S.stars || {}).length || (S.slots || []).length > 1;
+    if (!has) applySave(code).catch(() => toast('Не вдалося перенести прогрес'));
+    else setTimeout(() => openImport(code), 300);
+  }
   if (q.get('join')) {
     S.lastJoin = q.get('join').replace(/\D/g, '').slice(0, 4); save();
     history.replaceState(null, '', location.pathname);

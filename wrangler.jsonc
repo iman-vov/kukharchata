@@ -1,0 +1,11 @@
+{
+  // Cloudflare Workers — статичні файли гри (без серверного коду).
+  // Команда розгортання в Cloudflare: npx wrangler deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kukharchata",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./",
+    "not_found_handling": "single-page-application"
+  }
+}

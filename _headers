@@ -1,0 +1,9 @@
+# сервіс-воркер, сторінка й маніфест — завжди свіжі, щоб оновлення гри приходили одразу
+/sw.js
+  Cache-Control: no-cache
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/manifest.webmanifest
+  Cache-Control: no-cache

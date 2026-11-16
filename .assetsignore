@@ -1,0 +1,13 @@
+# не викладати на сайт
+.git/
+.github/
+.gitignore
+.assetsignore
+.nojekyll
+.wrangler/
+node_modules/
+tools/
+wrangler.jsonc
+package.json
+package-lock.json
+README.md
