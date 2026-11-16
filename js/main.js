@@ -650,8 +650,11 @@ function openImport(prefill = '') {
 function movedBanner() {
   if (!MOVED_TO || !/github\.io$/.test(location.hostname) || $('#moveBox')) return;
   const box = document.createElement('div'); box.id = 'moveBox';
-  box.innerHTML = `<b>🏠 Гра переїхала на нову адресу!</b><span>Натисни — відкриється нова гра, і твій прогрес перенесеться. Потім додай її на головний екран замість цієї.</span><button class="btn pri" id="moveGo">Перейти з прогресом</button>`;
+  // На iPhone/iPad кожен значок на головному екрані має власну пам'ять, тож посилання саме по собі
+  // може перенести прогрес не туди. Надійний шлях — код: скопіювати тут, вставити в новій грі.
+  box.innerHTML = `<b>🏠 Гра переїхала на chefs.playhut.eu!</b><span>Щоб забрати прогрес: 1) натисни «Скопіювати код»; 2) відкрий нову гру (новий значок) → ⚙️ → «📥 Вставити код» → «Перенести».</span><button class="btn pri" id="moveCopy">📤 Скопіювати код</button><button class="btn" id="moveGo">Відкрити нову гру</button>`;
   $('#title').prepend(box);
+  $('#moveCopy').onclick = () => { sfx('click'); exportSave(); };
   $('#moveGo').onclick = async () => { const url = MOVED_TO + '#import=' + (await saveCode()); window.open(url, '_blank') || (location.href = url); };
 }
 
