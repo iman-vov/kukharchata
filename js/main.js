@@ -14,14 +14,14 @@ import { iconSrc } from './uiicons.js';
 import { initLang, tr, LANGS, LANG } from './i18n.js';
 
 const $ = s => document.querySelector(s);
-const VERSION = '1.21';
+const VERSION = '1.22';
 const rid = () => Math.random().toString(36).slice(2, 8);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /* ================= збереження ================= */
 const SAVE_KEY = 'kukharchata.v1';
 // Нова адреса гри. Коли задана, на старій адресі (GitHub Pages) з'являється кнопка переїзду з прогресом.
-const MOVED_TO = '';
+const MOVED_TO = 'https://chefs.playhut.eu/';
 function defaults() {
   return { name: '', color: Math.floor(Math.random() * 6), hat: 0, stars: {}, best: {}, fails: {}, assist: {}, drinks: {}, at: 0, room: '', lastJoin: '', dev: rid(), seen: {},
     set: { music: 0.5, sfx: 0.8, padMode: 'own', shared: false, touch: true, hints: true, hall: true, drinks: false, throw: false, turn: { meteredUrl: '', turnUrl: '', turnUser: '', turnPass: '' } } };
